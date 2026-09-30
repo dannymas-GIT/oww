@@ -1,0 +1,55 @@
+---
+description: Standardized NY RFP / RFQ response evidence — PDF deliverable with synopsis + mapped screenshots
+alwaysApply: true
+---
+
+# RFP response evidence (NY standard practice)
+
+When responding to a New York RFP / RFQ / Phase quote for a SaaS or workforce product, the **ultimate shippable artifact is a PDF** — request vs provided coverage with **live staging screenshots** — not a prose-only checklist or canvas-only draft.
+
+## Required deliverable shape
+
+1. **PDF response package** — Generate and attach `*-rfp-coverage.pdf` (OWW: `docs/oww-rfp-coverage.pdf` via `scripts/generate_rfp_coverage_pdf.py`). This is what reviewers receive.
+2. **Requirement inventory** — Every RFP section, Phase quote line, matching appendix, and public-site parity item in one matrix. Status vocabulary only: **Provided** · **Partial** · **Gap** · **Later**.
+3. **Site synopsis (one page)** — Before the matrix: what visitors get vs what operators get; brand lockup; audiences; staging URL. Reviewers read this first.
+4. **Evidence gallery** — Representative screenshots from the staged build, each mapped to a requirement cluster. Store PNGs in `*-rfp-evidence/`; embed them in the PDF; cite filename + staging host under each image.
+5. **Gaps callout** — Partial / Gap / Later with clear prioritization (not buried in the table alone).
+6. **Playbook footer** — Short “next RFP” checklist so the artifact doubles as process documentation.
+
+## Working draft vs shippable
+
+- **Canvas** (`*.canvas.tsx`) — optional interactive working draft while assembling coverage.
+- **HTML** (`docs/*-rfp-coverage.html`) — **in-Cursor preview**. Cursor SSH remotes have no PDF renderer (files open as raw binary text); open the HTML instead (or Simple Browser against a local `python3 -m http.server` in `docs/`).
+- **PDF** — the deliverable that goes in the response package. Open with a **system PDF viewer** (`xdg-open`), not Cursor’s text editor. Regenerate after evidence changes.
+- **Repo notes** (`docs/rfp-coverage.md`) — durable pointer + implementation detail for engineers.
+
+**Why PDF looks like code in Cursor:** no PDF custom editor on this remote (`tomoki1207.pdf` is blocked for this setup). That is expected — use HTML in Cursor and PDF outside.
+
+## Capture rules
+
+- Prefer **staging** behind IP whitelist with seeded demo personas that map to RFP audiences (seeker, employer, educator, ambassador, platform admin).
+- Use **View as role** (preview) for persona-specific screens when the signed-in admin is not that role.
+- One image per requirement cluster is enough; do not spam near-duplicate crops.
+- Never put secrets, OTP codes, or live Stripe keys in screenshots or the PDF.
+- Keep public UI free of “proposal document” / RFP meta-copy — the coverage PDF is the RFP artifact, not the product chrome.
+
+## Artifact locations (OWW reference)
+
+- **PDF (deliverable):** `saas-repos/oww/docs/oww-rfp-coverage.pdf`
+- Generator: `saas-repos/oww/scripts/generate_rfp_coverage_pdf.py`
+- Evidence: Cursor `canvases/oww-rfp-evidence/*.png`
+- Canvas draft: `canvases/oww-rfp-coverage.canvas.tsx`
+- Repo notes: `saas-repos/oww/docs/rfp-coverage.md`
+- Staging: `https://oww.aquasafe-solutions.us`
+
+## Do not
+
+- Ship a coverage table without screenshots when a staged build exists.
+- Stop at canvas-only when the engagement needs a shareable PDF.
+- Claim **Provided** for UI-only stubs that lack AuthZ / API backing.
+- Pretend Partial photography/CRM/SSO items are complete.
+
+## Reference
+
+- Agent: `/opt/projects/agents/rfp-response-evidence.json`
+- Dual-sync: `agent-rules-dual-sync.mdc`

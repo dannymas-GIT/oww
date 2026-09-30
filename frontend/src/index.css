@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* OWW logo: navy #002050 · accent #005df8 */
+    --background: 210 40% 98%;
+    --foreground: 216 100% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 100% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 100% 16%;
+    --primary: 218 100% 49%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 216 100% 16%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 218 100% 95%;
+    --accent-foreground: 218 100% 32%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 218 100% 49%;
+    --chart-1: 218 100% 49%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 216 100% 16%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --oww-navy: #002050;
+    --oww-accent: #005df8;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 1.125rem;
+    line-height: 1.55;
+    background-color: #f4f7fb;
+  }
+
+  h1, h2, h3 {
+    font-family: Sora, system-ui, sans-serif;
+  }
+}
+
+.oww-tour-highlight {
+  outline: 3px solid #005df8 !important;
+  outline-offset: 4px;
+  border-radius: 8px;
+  position: relative;
+  z-index: 40;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .oww-rise {
+    animation: oww-rise 420ms ease both;
+  }
+  .oww-flyout {
+    animation: oww-fly 200ms ease both;
+  }
+}
+
+@keyframes oww-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes oww-fly {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oww-rise,
+  .oww-flyout {
+    animation: none;
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border-radius: 0.75rem;
+  z-index: 0;
+}

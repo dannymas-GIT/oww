@@ -1,0 +1,254 @@
+
+categories:
+  - id: career_area
+    label: Career area
+    multi: true
+    individual_prompt: Which water sector career areas interest you?
+    employer_prompt: For which water sector career areas are you seeking talent?
+    options:
+      - {id: drinking_water_treatment, label: Drinking water treatment}
+      - {id: water_distribution, label: Water distribution and field operations}
+      - {id: wastewater_treatment, label: Wastewater treatment}
+      - {id: wastewater_collection, label: Wastewater collection and field operations}
+      - {id: stormwater, label: Stormwater management}
+      - {id: laboratory, label: Laboratory and water quality}
+      - {id: regulatory, label: Environmental regulatory safety and compliance}
+      - {id: watershed, label: Watershed and source water protection}
+      - {id: engineering, label: Engineering and design}
+      - {id: project_construction_mgmt, label: Project and construction management}
+      - {id: construction, label: Construction and infrastructure}
+      - {id: skilled_trades, label: Electrical mechanical instrumentation and skilled trades}
+      - {id: technology, label: Technology data automation and cybersecurity}
+      - {id: manufacturing, label: Manufacturing and product development}
+      - {id: sales, label: Technical sales and business development}
+      - {id: customer_services, label: Customer and utility services}
+      - {id: administration, label: Administration finance and human resources}
+      - {id: communications, label: Communications education and community outreach}
+      - {id: leadership, label: Management and organizational leadership}
+      - {id: exploring, label: Not sure and would like help exploring}
+  - id: opportunity_type
+    label: Opportunity type
+    multi: true
+    individual_prompt: What type of opportunity are you seeking?
+    employer_prompt: What type of opportunity are you offering?
+    options:
+      - {id: career_exploration, label: Career exploration}
+      - {id: job_shadow, label: Facility tour or job shadow}
+      - {id: internship, label: Internship}
+      - {id: apprenticeship, label: Apprenticeship}
+      - {id: entry_level, label: Entry level job}
+      - {id: experienced, label: Experienced professional job}
+      - {id: management, label: Management or leadership job}
+      - {id: contract, label: Contract or consulting work}
+      - {id: mentoring, label: Mentoring}
+      - {id: training, label: Training or certification}
+      - {id: volunteer, label: Volunteer opportunity}
+  - id: timing
+    label: Timing
+    multi: false
+    options:
+      - {id: immediately, label: Immediately / Open now}
+      - {id: within_30_days, label: Within 30 days}
+      - {id: within_1_3_months, label: Within 1 to 3 months}
+      - {id: within_3_6_months, label: Within 3 to 6 months}
+      - {id: within_6_12_months, label: Within 6 to 12 months}
+      - {id: future, label: More than one year / exploring}
+  - id: skills
+    label: Skills and transferable experience
+    multi: true
+    options:
+      - {id: treatment_ops, label: Treatment or process operations}
+      - {id: infrastructure, label: Infrastructure inspection or maintenance}
+      - {id: sampling, label: Sampling or monitoring}
+      - {id: mechanical_electrical, label: Mechanical or electrical work}
+      - {id: construction_plumbing, label: Construction plumbing or pipe installation}
+      - {id: equipment, label: Equipment operation}
+      - {id: engineering_design, label: Engineering or design}
+      - {id: project_mgmt, label: Project or construction management}
+      - {id: lab_env, label: Laboratory or environmental work}
+      - {id: regulatory_safety, label: Regulatory compliance or safety}
+      - {id: manufacturing_qc, label: Manufacturing production or quality control}
+      - {id: sales_bd, label: Technical sales business development}
+      - {id: tech_cyber, label: Technology data automation or cybersecurity}
+      - {id: customer_comm, label: Customer service or public communication}
+      - {id: admin_hr, label: Administration finance or human resources}
+      - {id: outreach, label: Marketing education or outreach}
+      - {id: supervision, label: Supervision leadership or training}
+      - {id: none_yet, label: No related experience yet}
+  - id: workplace_activities
+    label: Workplace activities
+    multi: true
+    options:
+      - {id: procedures, label: Followed procedures or safety requirements}
+      - {id: plans, label: Read plans diagrams manuals}
+      - {id: math, label: Used math measurements or calculations}
+      - {id: tools, label: Used tools equipment vehicles}
+      - {id: inspection, label: Inspected equipment products facilities}
+      - {id: problem_solving, label: Identified or solved technical problems}
+      - {id: data, label: Collected analyzed or reported data}
+      - {id: reports, label: Prepared reports logs proposals}
+      - {id: software, label: Used databases or specialized software}
+      - {id: project_mgmt_act, label: Managed a project schedule budget}
+      - {id: explain, label: Explained technical information}
+      - {id: sold, label: Sold recommended or supported products}
+      - {id: outdoors, label: Worked outdoors shifts weekends or on call}
+      - {id: crew, label: Worked on a crew or project team}
+      - {id: led, label: Led trained mentored or supervised others}
+  - id: professional_experience
+    label: Professional experience
+    multi: false
+    options:
+      - {id: none, label: No professional experience yet}
+      - {id: education_only, label: Education or exploration only}
+      - {id: internship, label: Internship apprenticeship or work based learning}
+      - {id: lt_1, label: Less than 1 year}
+      - {id: 1_3, label: 1 to 3 years}
+      - {id: 4_9, label: 4 to 9 years}
+      - {id: 10_19, label: 10 to 19 years}
+      - {id: 20_plus, label: 20 or more years}
+  - id: transferable_industries
+    label: Transferable industries
+    multi: true
+    options:
+      - {id: water, label: Water or wastewater}
+      - {id: public_works, label: Public works or government}
+      - {id: construction, label: Construction}
+      - {id: manufacturing, label: Manufacturing}
+      - {id: energy, label: Energy or utilities}
+      - {id: engineering, label: Engineering or consulting}
+      - {id: environmental, label: Environmental services}
+      - {id: military, label: Military}
+      - {id: transportation, label: Transportation or logistics}
+      - {id: lab_health, label: Laboratory or health care}
+      - {id: technology, label: Technology}
+      - {id: sales, label: Sales or customer service}
+      - {id: admin, label: Administration or finance}
+      - {id: education, label: Education}
+  - id: education
+    label: Education
+    multi: false
+    options:
+      - {id: hs, label: High school or equivalent}
+      - {id: cte, label: Career and technical education}
+      - {id: apprenticeship, label: Apprenticeship}
+      - {id: certificate, label: Industry certificate or training}
+      - {id: some_college, label: Some college}
+      - {id: associates, label: Associate degree}
+      - {id: bachelors, label: Bachelor degree}
+      - {id: graduate, label: Graduate or professional degree}
+  - id: licenses
+    label: Licenses and credentials
+    multi: true
+    options:
+      - {id: dw_operator, label: Drinking water operator certification}
+      - {id: ww_operator, label: Wastewater operator certification}
+      - {id: cdl, label: Commercial driver license}
+      - {id: pe, label: Professional Engineer license}
+      - {id: eit, label: Engineer in Training}
+      - {id: pm, label: Project or construction management credential}
+      - {id: osha, label: OSHA or safety training}
+      - {id: confined, label: Confined space training}
+      - {id: first_aid, label: First aid or CPR}
+      - {id: lab, label: Laboratory credential}
+      - {id: trade, label: Electrical plumbing or skilled trade license}
+      - {id: it, label: IT cybersecurity GIS CAD certification}
+  - id: training
+    label: Training and development
+    multi: true
+    options:
+      - {id: fundamentals, label: Water sector fundamentals}
+      - {id: operator, label: Technical or operator skills}
+      - {id: math, label: Applied math}
+      - {id: writing, label: Technical reading and writing}
+      - {id: tools, label: Tools and equipment}
+      - {id: digital, label: Digital technology data or cybersecurity}
+      - {id: eng_biz, label: Engineering project or business skills}
+      - {id: sales_comm, label: Sales customer service or communication}
+      - {id: cert_prep, label: Certification exam preparation}
+      - {id: leadership, label: Leadership or supervision}
+  - id: organization_type
+    label: Organization type
+    multi: true
+    options:
+      - {id: public_utility, label: Public utility}
+      - {id: government, label: Municipal county state or federal government}
+      - {id: consulting, label: Engineering or environmental consulting}
+      - {id: contractor, label: Construction contractor}
+      - {id: manufacturer, label: Manufacturer or supplier}
+      - {id: laboratory, label: Laboratory}
+      - {id: technology, label: Technology or software company}
+      - {id: education, label: Educational or training organization}
+      - {id: nonprofit, label: Nonprofit or professional association}
+  - id: location
+    label: Location
+    multi: false
+    options:
+      - {id: capital, label: Capital Region}
+      - {id: western, label: Western NY}
+      - {id: central, label: Central NY}
+      - {id: hudson, label: Hudson Valley}
+      - {id: nyc, label: NYC Metro}
+      - {id: long_island, label: Long Island}
+      - {id: north_country, label: North Country}
+      - {id: southern_tier, label: Southern Tier}
+  - id: schedule
+    label: Schedule and availability
+    multi: true
+    options:
+      - {id: full_time, label: Full time}
+      - {id: part_time, label: Part time}
+      - {id: seasonal, label: Seasonal}
+      - {id: internship, label: Internship}
+      - {id: apprenticeship, label: Apprenticeship}
+      - {id: contract, label: Contract or consulting}
+      - {id: weekday, label: Standard weekday}
+      - {id: shifts, label: Rotating shifts}
+      - {id: weekends, label: Weekends}
+      - {id: on_call, label: On call}
+  - id: work_environment
+    label: Work environment
+    multi: true
+    options:
+      - {id: office, label: Office}
+      - {id: laboratory, label: Laboratory}
+      - {id: treatment, label: Treatment facility}
+      - {id: manufacturing, label: Manufacturing or production facility}
+      - {id: construction, label: Construction site}
+      - {id: outdoor, label: Outdoor fieldwork}
+      - {id: confined, label: Confined spaces}
+      - {id: industrial, label: Industrial equipment noise chemicals or weather}
+  - id: travel
+    label: Travel
+    multi: false
+    options:
+      - {id: none, label: None}
+      - {id: local, label: Local}
+      - {id: regional, label: Regional}
+      - {id: statewide, label: Statewide}
+      - {id: national, label: Multi state or national}
+  - id: compensation
+    label: Compensation and benefits
+    multi: true
+    options:
+      - {id: health, label: Health dental or vision}
+      - {id: retirement, label: Retirement or pension}
+      - {id: pto, label: Paid time off}
+      - {id: overtime, label: Overtime or shift differential}
+      - {id: tuition, label: Tuition or certification assistance}
+      - {id: flexible, label: Flexible work arrangement}
+  - id: outreach
+    label: Outreach and connection
+    multi: true
+    options:
+      - {id: share_yes, label: Share profile with matched employers}
+      - {id: ask_first, label: Ask before each introduction}
+      - {id: mentoring, label: Mentoring training events}
+      - {id: email, label: Contact by email}
+      - {id: phone, label: Contact by phone}
+      - {id: text, label: Contact by text}
+
+match_types:
+  - {id: ready_now, label: Ready now}
+  - {id: strong_transferable, label: Strong transferable match}
+  - {id: developing, label: Developing match}
+  - {id: future, label: Future match}

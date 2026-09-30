@@ -1,0 +1,252 @@
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowRight, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
+import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { OwwSection } from '@/components/oww/OwwSection';
+import { OwwLogo } from '@/components/oww/OwwLogo';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { publicPathways } from '@/config/nav';
+import { DEFAULT_STATE } from '@/lib/constants';
+import { listTestimonials } from '@/services/publicService';
+import type { Testimonial } from '@/types';
+import {
+  owwImpactStats,
+  owwMission,
+  owwTrainingCenter,
+  pathwayContent,
+} from '@/content/owwPublicContent';
+
+const icons = {
+  career: Users,
+  hire: Briefcase,
+  educate: GraduationCap,
+  ambassador: HeartHandshake,
+} as const;
+
+export default function HomePage() {
+  const params = useParams();
+  const state = (params.state || DEFAULT_STATE).toLowerCase();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    void listTestimonials({ state }).then(setTestimonials).catch(() => setTestimonials([]));
+  }, [state]);
+
+  return (
+    <div className="space-y-10">
+      {/* Brand-first landing plane — logo is the hero signal */}
+      <section
+        data-tour="brand"
+        className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(70% 90% at 100% 0%, rgba(0,93,248,0.12), transparent 55%), radial-gradient(50% 70% at 0% 100%, rgba(0,32,80,0.08), transparent 50%)',
+          }}
+        />
+        <div className="relative grid gap-8 px-6 py-8 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:px-10 md:py-12">
+          <div className="space-y-5">
+            <OwwLogo to={`/${state}`} size="hero" onDark={false} />
+            <p className="max-w-xl text-lg leading-relaxed text-slate-700">{owwMission.summary}</p>
+            <p className="text-base font-semibold text-oww-navy">
+              {owwMission.supportLine}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" data-tour="interest-cta" asChild>
+                <Link to={`/${state}/interest`}>Express interest</Link>
+              </Button>
+              <Button variant="outline" className="min-h-[44px] border-oww-navy/20 text-base text-oww-navy" data-tour="jobs-cta" asChild>
+                <Link to={`/${state}/jobs`}>Browse jobs</Link>
+              </Button>
+              <Button variant="secondary" className="min-h-[44px] text-base" asChild>
+                <Link to="/login">Create account</Link>
+              </Button>
+            </div>
+            <p className="text-sm text-slate-500">
+              {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
+            </p>
+          </div>
+          <div className="relative hidden min-h-[220px] overflow-hidden rounded-xl bg-oww-navy md:block">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-80"
+              style={{
+                background:
+                  'radial-gradient(80% 70% at 70% 30%, rgba(0,93,248,0.55), transparent 60%), radial-gradient(60% 80% at 20% 90%, rgba(0,92,232,0.35), transparent 55%)',
+              }}
+            />
+            <div className="relative flex h-full flex-col justify-end gap-3 p-6 text-white">
+              <p className="font-display text-2xl font-semibold leading-snug">
+                {owwMission.tagline}
+              </p>
+              <p className="text-base text-slate-200">
+                Career awareness, Gold Standard training, hiring infrastructure, and measurable workforce outcomes—in one place.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <OwwSection
+        id="mission"
+        title="Why One Water Workforce"
+        description={owwMission.whyItMatters}
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="mission">
+          {owwImpactStats.map(stat => (
+            <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-5">
+              <p className="font-display text-3xl font-semibold text-oww-navy">{stat.value}</p>
+              <p className="mt-1 text-base font-semibold text-slate-800">{stat.label}</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{stat.detail}</p>
+            </div>
+          ))}
+        </div>
+      </OwwSection>
+
+      <OwwSection
+        title="Choose your pathway"
+        description="Four doors into water careers—each opens into tools, checklists, and next steps."
+      >
+        <div className="grid gap-4 sm:grid-cols-2" data-tour="pathways">
+          {publicPathways.map(p => {
+            const Icon = icons[p.slug];
+            const deep = pathwayContent[p.slug];
+            return (
+              <Card key={p.slug} className="border-slate-200 transition hover:border-oww-cyan/40 hover:shadow-md">
+                <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+                  <div className="rounded-lg bg-[#e8f0ff] p-3 text-oww-cyan">
+                    <Icon className="h-6 w-6" aria-hidden />
+                  </div>
+                  <div>
+                    <CardTitle className="font-display text-xl text-oww-navy">{deep.rfpLabel}</CardTitle>
+                    <p className="mt-2 text-base text-slate-600">{deep.description}</p>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <ul className="space-y-1 text-base text-slate-700">
+                    {deep.youCan.slice(0, 3).map(item => (
+                      <li key={item} className="flex gap-2">
+                        <span className="text-oww-cyan" aria-hidden>
+                          •
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                    <Link to={`/${state}/${p.slug}`}>
+                      Explore this pathway <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </OwwSection>
+
+      <OwwSection
+        title={owwTrainingCenter.title}
+        description={`In partnership with ${owwTrainingCenter.partner} · ${owwTrainingCenter.locations.join(' · ')}`}
+      >
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <p className="text-lg leading-relaxed text-slate-700">{owwTrainingCenter.summary}</p>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {owwTrainingCenter.offerings.map(item => (
+              <li key={item} className="text-base text-slate-700">
+                • {item}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" asChild>
+              <Link to={`/${state}/educate`}>Educate pathway</Link>
+            </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to={`/${state}/programs/submit`}>Submit a workforce program</Link>
+            </Button>
+            {owwTrainingCenter.externalLinks.slice(0, 2).map(link => (
+              <Button key={link.href} variant="outline" className="min-h-[44px] text-base" asChild>
+                <a href={link.href} target="_blank" rel="noreferrer">
+                  {link.label}
+                </a>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </OwwSection>
+
+      <OwwSection title="Voices from the field" description="Stories from operators, managers, and educators.">
+        <div className="grid gap-4 md:grid-cols-2">
+          {(testimonials.length
+            ? testimonials
+            : [
+                {
+                  id: 0,
+                  quote:
+                    'Workforce development is no longer a future challenge—it is a current operational necessity. Communities need qualified operators, supervisors, and utility leaders.',
+                  author_name: 'Jenny Ingrao-Aman',
+                  author_role: 'Executive Director',
+                  organization: 'NYSAWWA / One Water Workforce',
+                },
+              ]
+          )
+            .slice(0, 4)
+            .map(t => (
+              <blockquote key={t.id} className="rounded-xl border border-slate-200 bg-white p-5">
+                <p className="text-lg leading-relaxed text-slate-800">“{t.quote}”</p>
+                <footer className="mt-3 text-sm text-slate-600">
+                  — {t.author_name}
+                  {t.author_role ? `, ${t.author_role}` : ''}
+                  {t.organization ? ` · ${t.organization}` : ''}
+                </footer>
+              </blockquote>
+            ))}
+        </div>
+      </OwwSection>
+
+      <OwwSection title="Partner with NYSAWWA" description="Looking to deepen Training Center, outreach, or multi-state collaboration?">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 text-lg leading-relaxed text-slate-700">
+          <p>
+            Interested in partnering with One Water Workforce? Contact {owwMission.contact.partnerLabel} at{' '}
+            <a className="font-medium text-oww-cyan underline" href={`mailto:${owwMission.contact.partnerEmail}`}>
+              {owwMission.contact.partnerEmail}
+            </a>
+            .
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <a href={owwMission.contact.publicSite} target="_blank" rel="noreferrer">
+                onewaterworkforce.org
+              </a>
+            </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <a href={owwMission.contact.nysawwa} target="_blank" rel="noreferrer">
+                nysawwa.org
+              </a>
+            </Button>
+            <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" asChild>
+              <Link to={`/${state}/ambassador`}>Become an ambassador</Link>
+            </Button>
+          </div>
+        </div>
+      </OwwSection>
+
+      {/* compact secondary hero for interior consistency */}
+      <OwwPageHero
+        eyebrow="Ready when you are"
+        title={owwMission.tagline}
+        description="Express interest, create an account, or jump straight into jobs and employers."
+        actions={
+          <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" asChild>
+            <Link to={`/${state}/career`}>Start a career pathway</Link>
+          </Button>
+        }
+      />
+    </div>
+  );
+}
