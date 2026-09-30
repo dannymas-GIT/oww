@@ -1,4 +1,4 @@
-# OWW requirements coverage (RFP + Phase I/II + matching docs)
+# OWW requirements coverage
 
 **Standard practice:** The **PDF** is the shippable deliverable for NY RFP / RFQ responses. Use the **HTML** twin for team review and in-Cursor preview. Canvas is the working draft while assembling evidence.
 
@@ -9,22 +9,11 @@
 - **Rule:** `rfp-response-evidence.mdc` (OWW / WW360 / Mission Control workspace)
 - **Agent:** `/opt/projects/agents/rfp-response-evidence.json`
 
-Sources reviewed:
-- `Request for Proposals - NYSAWWA-OWW.pdf`
-- `OneWaterWorkforce-PhaseI-Signed.pdf` (Scriptable Solutions Phase I quote)
-- `ss phase 2 proposal.pdf` (scanned Phase II expansion)
-- `OWW_Website_Individual_Employer_Matching_Framework.docx`
-- `OWW_Website_Individual_Employer_Profile_Questions.docx`
-- Public research: onewaterworkforce.org, NYSAWWA/B&L Training Center, NY workforce context
-- Official logo lockup (droplet + **From GED to PhD: A Job for Everyone**)
-
-Interactive report (working draft beside chat):
-[`oww-rfp-coverage.canvas.tsx`](/home/dmas/.cursor/projects/opt-projects-saas-repos-ww360/canvases/oww-rfp-coverage.canvas.tsx) — site synopsis, 20 evidence screenshots, full matrix, gaps, next-RFP playbook.
+Brand lockup: official droplet logo + **From GED to PhD: A Job for Everyone**.
 
 **Shippable PDF:** [`docs/oww-rfp-coverage.pdf`](./oww-rfp-coverage.pdf) (regenerate after evidence changes).
 
-Evidence PNGs (staging captures, 2026-09-30):
-`canvases/oww-rfp-evidence/01-home.png` … `20-candidate-dashboard.png` in the WW360 Cursor project.
+Evidence PNGs (staging captures, 2026-09-30): `docs/oww-rfp-evidence/` (mirrored to `frontend/public/oww-rfp-evidence/` on generate).
 
 Staging: https://oww.aquasafe-solutions.us (IP-whitelisted)
 
@@ -108,7 +97,7 @@ Demo accounts (password from `OWW_SEED_ADMIN_PASSWORD`): `oww-admin`, `dmas` / `
 
 ## Playbook — next NY RFP
 
-1. Pull RFP + Phase quotes + appendices into one requirement inventory.
+1. Pull RFP sections and appendices into one requirement inventory.
 2. Clone the coverage canvas structure; status vocabulary: Provided / Partial / Gap / Later.
 3. Stage a branded build behind IP whitelist; seed demo personas for RFP audiences.
 4. Capture evidence screenshots per requirement cluster into `*-rfp-evidence/`.
