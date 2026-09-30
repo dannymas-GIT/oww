@@ -56,17 +56,17 @@ EVIDENCE_ITEMS = [
     ("06-jobs-board.png", "RFP 4.3 / Phase I", "Provided", "Public job board", "Statewide job board with filter/sort"),
     ("07-interest-form.png", "RFP 4.2", "Provided", "Pathways Interest & Access", "Structured interest form feeding the pipeline"),
     ("08-pricing.png", "RFP 4.3 / Phase I", "Provided", "Membership / paywall", "Membership information + payment to post jobs"),
-    ("09-login.png", "Phase I quote", "Provided", "Local account sign-in", "Auth for candidates, employers, admins"),
+    ("09-login.png", "Phase I", "Provided", "Local account sign-in", "Auth for candidates, employers, admins"),
     ("10-mobile-home.png", "RFP Tech", "Partial", "Mobile responsive", "Mobile-friendly experience + accessible type"),
-    ("11-admin-dashboard.png", "Phase I quote", "Provided", "Platform admin dashboard", "Admin backend — memberships, expiring/expired, outreach"),
-    ("12-admin-memberships.png", "Phase I quote", "Provided", "Memberships inventory", "Existing / expiring / expired membership visibility"),
-    ("13-admin-communications.png", "Phase I quote", "Provided", "Communications portal", "Member outreach by role and membership state"),
+    ("11-admin-dashboard.png", "Phase I", "Provided", "Platform admin dashboard", "Admin backend — memberships, expiring/expired, outreach"),
+    ("12-admin-memberships.png", "Phase I", "Provided", "Memberships inventory", "Existing / expiring / expired membership visibility"),
+    ("13-admin-communications.png", "Phase I", "Provided", "Communications portal", "Member outreach by role and membership state"),
     ("14-admin-users.png", "Phase I / AquaSafe", "Provided", "Users & access", "Role hierarchy: platform, utility admin/manager, student, etc."),
     ("15-admin-roles.png", "Phase I / security", "Provided", "Roles & permissions", "Protected national/state roles; utility fine-tune only"),
     ("16-admin-analytics.png", "RFP 4.1", "Provided", "Pipeline analytics", "Dashboards interest→employment by region / stage"),
     ("17-view-as-role.png", "SaaS standard", "Provided", "View as role", "Admin preview of product as each persona"),
     ("18-employer-workspace.png", "RFP 4.3 / Phase I", "Provided", "Employer hiring workspace", "Employer dashboard, jobs, candidates, membership status"),
-    ("19-employer-jobs.png", "Phase I quote", "Provided", "Job posting (gated)", "Employer post/edit jobs; payment gate when required"),
+    ("19-employer-jobs.png", "Phase I", "Provided", "Job posting (gated)", "Employer post/edit jobs; payment gate when required"),
     ("20-candidate-dashboard.png", "Matching / Phase I", "Provided", "Candidate / matching", "Individual profile + matching questionnaire"),
 ]
 
@@ -268,7 +268,7 @@ def build():
         topMargin=0.65 * inch,
         bottomMargin=0.75 * inch,
         title="OWW RFP Coverage & Site Synopsis",
-        author="AquaSafe / Scriptable Solutions",
+        author="AquaSafe Solutions",
     )
     story = []
 
@@ -288,7 +288,6 @@ def build():
     story.append(Spacer(1, 0.2 * inch))
     story.append(Paragraph("Staging: https://oww.aquasafe-solutions.us (IP-whitelisted)", s["cover_sub"]))
     story.append(Paragraph("Updated: 2026-09-30 · Brand: navy #002050 · accent #005df8", s["cover_sub"]))
-    story.append(Paragraph("Sources: NYSAWWA RFP · Phase I/II quotes · matching framework · public OWW materials", s["cover_sub"]))
     story.append(Spacer(1, 0.45 * inch))
 
     provided = sum(1 for r in MATRIX if r[2] == "Provided")
@@ -446,7 +445,7 @@ def build():
     story.append(
         ListFlowable(
             [
-                ListItem(Paragraph("Pull RFP + Phase quotes + appendices into one requirement inventory.", s["body"]), leftIndent=12),
+                ListItem(Paragraph("Pull RFP sections and appendices into one requirement inventory.", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Draft coverage in the interactive canvas; status: Provided / Partial / Gap / Later.", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Stage a branded build behind IP whitelist; seed demo personas for RFP audiences.", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Capture evidence screenshots per requirement cluster into *-rfp-evidence/.", s["body"]), leftIndent=12),
@@ -726,7 +725,7 @@ def build_html() -> None:
 
   <h2>5. Playbook — next NY RFP</h2>
   <ol>
-    <li>Inventory RFP + Phase quotes + appendices.</li>
+    <li>Inventory RFP sections and appendices.</li>
     <li>Draft coverage (Provided / Partial / Gap / Later).</li>
     <li>Stage branded build; seed demo personas.</li>
     <li>Capture screenshots into <code>*-rfp-evidence/</code>.</li>
