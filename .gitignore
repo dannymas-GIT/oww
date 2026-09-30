@@ -1,0 +1,35 @@
+# Dependencies / build
+node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+backend/.venv/
+
+# Env / secrets
+.env
+.env.local
+*.pem
+*.key
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.turbo/
+
+# Uploads / local data
+backend/uploads/
+*.log
