@@ -1,0 +1,32 @@
+---
+description: Admin View as role / impersonation (preview + act-as) for SaaS apps
+alwaysApply: true
+---
+
+# SaaS impersonation (View as role)
+
+When a SaaS app has administration / Users & access, ship **View as role** so platform (and usually state) admins can experience the product as another persona.
+
+## Required behavior
+
+1. **Modes**
+   - **Preview (default):** read-only. Mutating HTTP methods return `403 IMPERSONATION_READ_ONLY` except allowlisted stop/session endpoints.
+   - **Act-as:** writes allowed; requires `platform_admin` + non-empty reason; audit start/end and mutating requests.
+2. **AuthZ** — Enforce start/stop and target eligibility server-side. Cannot impersonate `platform_admin`. State admins stay in-state. Nested impersonation forbidden.
+3. **JWT** — `sub` = viewed (target) user; `act_as` claim carries `actor_user_id`, `mode`, `session_id`, `persona_key`. UI and AuthZ treat actor vs target correctly.
+4. **Banner** — Sticky amber bar: who you are viewing as, mode chip, expiry, **Exit preview**.
+5. **Blocked while impersonating** — Self-service password change, billing checkout/cancel, and privilege elevation. UI hide is not enough.
+6. **Persona catalog** — Curated demo personas (tier + narrative) preferred over raw user pickers for walkthroughs.
+7. **Type / a11y** — Controls ≥ `text-base`, touch ≥ 44px.
+
+## Do not
+
+- Rely on UI-only role switching without JWT + server checks.
+- Allow preview sessions to mutate data.
+- Log passwords, OTP codes, or card data in impersonation audit rows.
+
+## Reference
+
+- WW360: `impersonation.py`, `ImpersonationContext.tsx`, `PersonaSwitcher.tsx`
+- OWW: `/api/v1/impersonation/*`, `PersonaSwitcher`, seed personas in `seed_demo.py`
+- Agent: `/opt/projects/agents/saas-impersonation.json`

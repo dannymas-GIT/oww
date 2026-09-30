@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OWW RFP Coverage &amp; Site Synopsis</title>
+<style>
+  :root {
+    --navy: #002050;
+    --cyan: #005df8;
+    --light: #f4f7fb;
+    --border: #d0d7e2;
+    --gray: #5a6577;
+    --green: #1b7f4a;
+    --amber: #a15c00;
+    --red: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.55;
+    color: #122;
+    background: #fff;
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 2rem 1.5rem 1.75rem;
+  }
+  header h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+  header p { margin: 0.35rem 0; color: #c9d7ef; font-size: 1rem; }
+  main { max-width: 52rem; margin: 0 auto; padding: 1.5rem; }
+  h2 { color: var(--navy); margin-top: 2rem; border-bottom: 2px solid var(--cyan); padding-bottom: 0.35rem; }
+  h3 { color: var(--navy); margin-bottom: 0.35rem; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+  .stat {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem;
+    text-align: center;
+  }
+  .stat strong { display: block; font-size: 1.5rem; color: var(--navy); }
+  .stat span { font-size: 0.875rem; color: var(--gray); }
+  .callout {
+    background: #eef4ff;
+    border-left: 4px solid var(--cyan);
+    padding: 0.9rem 1rem;
+    margin: 1rem 0;
+    font-size: 1rem;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: var(--light);
+  }
+  .card h3 { margin-top: 0; }
+  ul { padding-left: 1.2rem; }
+  .evidence {
+    margin: 1.5rem 0 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .req { font-weight: 600; margin: 0.25rem 0; }
+  .meta { font-size: 0.875rem; color: var(--gray); }
+  .pill {
+    display: inline-block;
+    background: #e8eef8;
+    color: var(--navy);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-right: 0.35rem;
+  }
+  .status {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+  }
+  .status-provided { color: var(--green); background: #e8f6ee; }
+  .status-partial { color: var(--amber); background: #fff4e0; }
+  .status-gap { color: var(--red); background: #fdecea; }
+  .status-later { color: var(--cyan); background: #eef4ff; }
+  figure { margin: 0.75rem 0 0; }
+  figure img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+  }
+  figcaption { font-size: 0.875rem; color: var(--gray); margin-top: 0.35rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.5rem;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { background: var(--navy); color: #fff; }
+  tr:nth-child(even) td { background: var(--light); }
+  footer {
+    margin-top: 2.5rem;
+    padding: 1rem 0 2rem;
+    font-size: 0.875rem;
+    color: var(--gray);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>One Water Workforce — RFP Coverage Report</h1>
+  <p>Request vs provided with live staging evidence · Updated 2026-09-30</p>
+  <p>Staging: https://oww.aquasafe-solutions.us · Brand: navy #002050 · accent #005df8</p>
+</header>
+<main>
+  <div class="callout">
+    <strong>Internal review package:</strong> request vs provided coverage for One Water Workforce,
+    with live staging screenshots. Staging app:
+    <a href="https://oww.aquasafe-solutions.us">https://oww.aquasafe-solutions.us</a>
+    (IP-whitelisted). PDF twin: <code>docs/oww-rfp-coverage.pdf</code>.
+  </div>
+
+  <div class="stats">
+    <div class="stat"><strong>20</strong><span>Provided</span></div>
+    <div class="stat"><strong>9</strong><span>Partial</span></div>
+    <div class="stat"><strong>0</strong><span>Gap</span></div>
+    <div class="stat"><strong>1</strong><span>Later</span></div>
+    <div class="stat"><strong>30</strong><span>Tracked</span></div>
+  </div>
+
+  <h2>1. Site synopsis</h2>
+  <p>One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: public microsite for New York,
+  authenticated hiring and candidate workspaces, membership paywall (sample Stripe), and a platform administration
+  suite. Brand lockup uses the official droplet logo, tagline “From GED to PhD: A Job for Everyone,” navy #002050
+  and accent #005df8. Primary audiences: job seekers/students, employers/utilities, educators, ambassadors,
+  state partners, and platform operators.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>What visitors get</h3>
+      <ul>
+        <li>State home (/ny) with pathways, jobs, companies, interest, programs</li>
+        <li>Four deepened pathways (Career / Hire / Educate / Ambassador)</li>
+        <li>Public job board and company directory</li>
+        <li>Membership pricing + sample checkout</li>
+        <li>Local password sign-in (OTP optional)</li>
+        <li>Page-aware in-app tours</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What operators get</h3>
+      <ul>
+        <li>Platform dashboard: memberships, ARR, accounts by role</li>
+        <li>Memberships + communications portal</li>
+        <li>Users &amp; access (WW360-aligned tiers)</li>
+        <li>View as role (preview / act-as)</li>
+        <li>Analytics, CMS, programs, locations, national map</li>
+        <li>Employer hiring workspace (jobs, candidates, billing)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>2. Evidence gallery</h2>
+  <p>Screenshots from staging, each mapped to an RFP / Phase I requirement cluster.</p>
+  
+<section class="evidence">
+  <h3>Public landing + pathways</h3>
+  <p class="req">Homepage CTA + Career / Hire / Educate / Ambassador navigation</p>
+  <p class="meta"><span class="pill">RFP 4.3</span>
+    <span class="status status-provided">Provided</span>
+    · 01-home.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/01-home.png" alt="Public landing + pathways" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 01-home.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Career pathway depth</h3>
+  <p class="req">Job board, checklist, training awareness, next steps</p>
+  <p class="meta"><span class="pill">RFP 4.3 Career</span>
+    <span class="status status-partial">Partial</span>
+    · 02-career-pathway.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/02-career-pathway.png" alt="Career pathway depth" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 02-career-pathway.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Hire pathway</h3>
+  <p class="req">Employer portal entry + hiring tools</p>
+  <p class="meta"><span class="pill">RFP 4.3 Employer</span>
+    <span class="status status-provided">Provided</span>
+    · 03-hire-pathway.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/03-hire-pathway.png" alt="Hire pathway" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 03-hire-pathway.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Educate pathway</h3>
+  <p class="req">Lesson plans, courses, outreach for educators</p>
+  <p class="meta"><span class="pill">RFP 4.3 Educator</span>
+    <span class="status status-partial">Partial</span>
+    · 04-educate-pathway.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/04-educate-pathway.png" alt="Educate pathway" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 04-educate-pathway.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Ambassador pathway</h3>
+  <p class="req">Outreach toolkits, workforce stats, legislative tools</p>
+  <p class="meta"><span class="pill">RFP 4.3 Ambassador</span>
+    <span class="status status-partial">Partial</span>
+    · 05-ambassador-pathway.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/05-ambassador-pathway.png" alt="Ambassador pathway" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 05-ambassador-pathway.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Public job board</h3>
+  <p class="req">Statewide job board with filter/sort</p>
+  <p class="meta"><span class="pill">RFP 4.3 / Phase I</span>
+    <span class="status status-provided">Provided</span>
+    · 06-jobs-board.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/06-jobs-board.png" alt="Public job board" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 06-jobs-board.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Pathways Interest &amp; Access</h3>
+  <p class="req">Structured interest form feeding the pipeline</p>
+  <p class="meta"><span class="pill">RFP 4.2</span>
+    <span class="status status-provided">Provided</span>
+    · 07-interest-form.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/07-interest-form.png" alt="Pathways Interest &amp; Access" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 07-interest-form.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Membership / paywall</h3>
+  <p class="req">Membership information + payment to post jobs</p>
+  <p class="meta"><span class="pill">RFP 4.3 / Phase I</span>
+    <span class="status status-provided">Provided</span>
+    · 08-pricing.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/08-pricing.png" alt="Membership / paywall" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 08-pricing.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Local account sign-in</h3>
+  <p class="req">Auth for candidates, employers, admins</p>
+  <p class="meta"><span class="pill">Phase I quote</span>
+    <span class="status status-provided">Provided</span>
+    · 09-login.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/09-login.png" alt="Local account sign-in" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 09-login.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Mobile responsive</h3>
+  <p class="req">Mobile-friendly experience + accessible type</p>
+  <p class="meta"><span class="pill">RFP Tech</span>
+    <span class="status status-partial">Partial</span>
+    · 10-mobile-home.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/10-mobile-home.png" alt="Mobile responsive" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 10-mobile-home.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Platform admin dashboard</h3>
+  <p class="req">Admin backend — memberships, expiring/expired, outreach</p>
+  <p class="meta"><span class="pill">Phase I quote</span>
+    <span class="status status-provided">Provided</span>
+    · 11-admin-dashboard.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/11-admin-dashboard.png" alt="Platform admin dashboard" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 11-admin-dashboard.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Memberships inventory</h3>
+  <p class="req">Existing / expiring / expired membership visibility</p>
+  <p class="meta"><span class="pill">Phase I quote</span>
+    <span class="status status-provided">Provided</span>
+    · 12-admin-memberships.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/12-admin-memberships.png" alt="Memberships inventory" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 12-admin-memberships.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Communications portal</h3>
+  <p class="req">Member outreach by role and membership state</p>
+  <p class="meta"><span class="pill">Phase I quote</span>
+    <span class="status status-provided">Provided</span>
+    · 13-admin-communications.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/13-admin-communications.png" alt="Communications portal" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 13-admin-communications.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Users &amp; access</h3>
+  <p class="req">Role hierarchy: platform, utility admin/manager, student, etc.</p>
+  <p class="meta"><span class="pill">Phase I / AquaSafe</span>
+    <span class="status status-provided">Provided</span>
+    · 14-admin-users.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/14-admin-users.png" alt="Users &amp; access" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 14-admin-users.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Roles &amp; permissions</h3>
+  <p class="req">Protected national/state roles; utility fine-tune only</p>
+  <p class="meta"><span class="pill">Phase I / security</span>
+    <span class="status status-provided">Provided</span>
+    · 15-admin-roles.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/15-admin-roles.png" alt="Roles &amp; permissions" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 15-admin-roles.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Pipeline analytics</h3>
+  <p class="req">Dashboards interest→employment by region / stage</p>
+  <p class="meta"><span class="pill">RFP 4.1</span>
+    <span class="status status-provided">Provided</span>
+    · 16-admin-analytics.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/16-admin-analytics.png" alt="Pipeline analytics" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 16-admin-analytics.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>View as role</h3>
+  <p class="req">Admin preview of product as each persona</p>
+  <p class="meta"><span class="pill">SaaS standard</span>
+    <span class="status status-provided">Provided</span>
+    · 17-view-as-role.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/17-view-as-role.png" alt="View as role" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 17-view-as-role.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Employer hiring workspace</h3>
+  <p class="req">Employer dashboard, jobs, candidates, membership status</p>
+  <p class="meta"><span class="pill">RFP 4.3 / Phase I</span>
+    <span class="status status-provided">Provided</span>
+    · 18-employer-workspace.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/18-employer-workspace.png" alt="Employer hiring workspace" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 18-employer-workspace.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Job posting (gated)</h3>
+  <p class="req">Employer post/edit jobs; payment gate when required</p>
+  <p class="meta"><span class="pill">Phase I quote</span>
+    <span class="status status-provided">Provided</span>
+    · 19-employer-jobs.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/19-employer-jobs.png" alt="Job posting (gated)" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 19-employer-jobs.png</figcaption>
+  </figure>
+</section>
+<section class="evidence">
+  <h3>Candidate / matching</h3>
+  <p class="req">Individual profile + matching questionnaire</p>
+  <p class="meta"><span class="pill">Matching / Phase I</span>
+    <span class="status status-provided">Provided</span>
+    · 20-candidate-dashboard.png</p>
+  <figure>
+    <img src="oww-rfp-evidence/20-candidate-dashboard.png" alt="Candidate / matching" loading="lazy" />
+    <figcaption>Staging: https://oww.aquasafe-solutions.us · 20-candidate-dashboard.png</figcaption>
+  </figure>
+</section>
+
+  <h2>3. Full request vs provided</h2>
+  <table>
+    <thead>
+      <tr><th>Source</th><th>Request</th><th>Status</th><th>What we provided</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>RFP 4.3</td><td>Homepage CTA + pathway navigation (Career / Hire / Educate / Ambassador)</td><td><span class="status status-provided">Provided</span></td><td>Landing + Pathways flyout + four deepened pathway pages</td></tr><tr><td>RFP 4.3</td><td>Microvideo + testimonials on homepage</td><td><span class="status status-partial">Partial</span></td><td>Testimonials live; authentic OWW microvideo still needed</td></tr><tr><td>RFP 4.3</td><td>Real photography brand alignment</td><td><span class="status status-partial">Partial</span></td><td>Official logo + navy/cyan palette; licensed photo library pending</td></tr><tr><td>RFP 4.2</td><td>Pathways Interest &amp; Access form</td><td><span class="status status-provided">Provided</span></td><td>/:state/interest with structured fields → engagement pipeline</td></tr><tr><td>RFP 4.1</td><td>Pipeline interest→engagement→training→interview→employment</td><td><span class="status status-provided">Provided</span></td><td>engagement_events + admin analytics + CSV</td></tr><tr><td>RFP 4.1</td><td>Dashboards by region / career stage / outcomes</td><td><span class="status status-provided">Provided</span></td><td>Admin analytics filters + export</td></tr><tr><td>RFP 4.3 Career</td><td>Job board, training map, checklist, CEU, resume tools</td><td><span class="status status-partial">Partial</span></td><td>Jobs + checklist; CEU/map lightweight</td></tr><tr><td>RFP 4.3 Employer</td><td>Job posting, resume bank, employer dashboard</td><td><span class="status status-provided">Provided</span></td><td>Hiring workspace + paywall + candidate search</td></tr><tr><td>RFP 4.3 Educator</td><td>Lesson plans, courses, outreach toolkits</td><td><span class="status status-partial">Partial</span></td><td>Pathway + educator CRUD; CMS resources stub</td></tr><tr><td>RFP 4.3 Ambassador</td><td>Outreach toolkits, stats, legislative tools</td><td><span class="status status-partial">Partial</span></td><td>Stats/talking points; legislative toolkit light</td></tr><tr><td>RFP 5.1</td><td>Workforce program submission + admin approval</td><td><span class="status status-provided">Provided</span></td><td>Public submit + admin programs queue</td></tr><tr><td>RFP 5.2</td><td>Multi-state / national map / state microsites</td><td><span class="status status-partial">Partial</span></td><td>state_code + /:state + national map; NY staged</td></tr><tr><td>RFP Tech</td><td>Mobile responsive + WCAG approach</td><td><span class="status status-partial">Partial</span></td><td>Responsive + type/touch floors; formal audit pending</td></tr><tr><td>RFP Tech</td><td>CRM / email integration readiness</td><td><span class="status status-partial">Partial</span></td><td>Webhook + SMTP/Twilio hooks; live CRM not connected</td></tr><tr><td>Phase I</td><td>Local accounts + OTP for community</td><td><span class="status status-provided">Provided</span></td><td>Password primary (email/username); OTP secondary</td></tr><tr><td>Phase I</td><td>Candidate dashboard + matching questionnaire</td><td><span class="status status-provided">Provided</span></td><td>17 categories + 4 match types</td></tr><tr><td>Phase I</td><td>Employer jobs + match feed + applicants</td><td><span class="status status-provided">Provided</span></td><td>Jobs manage, candidates, applications, messaging</td></tr><tr><td>Phase I</td><td>Membership / payment to post jobs</td><td><span class="status status-provided">Provided</span></td><td>Sample Stripe; 402 membership_required on hiring APIs</td></tr><tr><td>Phase I</td><td>Roles: platform, utility admin/manager, student…</td><td><span class="status status-provided">Provided</span></td><td>WW360-aligned catalog; locked national/state</td></tr><tr><td>Phase I</td><td>Platform admin: memberships, expiring, communications</td><td><span class="status status-provided">Provided</span></td><td>/admin + memberships + communications portal</td></tr><tr><td>Phase I</td><td>Admin CMS / programs / analytics / certs / locations</td><td><span class="status status-provided">Provided</span></td><td>Full Administration nav group</td></tr><tr><td>Matching</td><td>17 shared categories + 4 match types</td><td><span class="status status-provided">Provided</span></td><td>YAML taxonomy + scorer</td></tr><tr><td>Phase II</td><td>Regional pages, favorites, messaging, interviews</td><td><span class="status status-provided">Provided</span></td><td>Routes + APIs + pathway deep-links</td></tr><tr><td>Phase II</td><td>Educator courses/events + featured social</td><td><span class="status status-partial">Partial</span></td><td>CRUD + featured queue; social adapters stubbed</td></tr><tr><td>SaaS std</td><td>View as role (preview / act-as)</td><td><span class="status status-provided">Provided</span></td><td>Persona switcher + read-only preview + audit</td></tr><tr><td>SaaS std</td><td>Page-aware in-app tours</td><td><span class="status status-provided">Provided</span></td><td>tourForPath + data-tour highlights per route</td></tr><tr><td>Public OWW</td><td>Training Center (B&amp;L) messaging</td><td><span class="status status-provided">Provided</span></td><td>Landing + educate/career cite Gold Standard</td></tr><tr><td>Public OWW</td><td>Official logo + From GED to PhD lockup</td><td><span class="status status-provided">Provided</span></td><td>Nav/footer/landing/login; #002050 / #005df8</td></tr><tr><td>Public OWW</td><td>Partner contact Jenny Ingrao-Aman</td><td><span class="status status-provided">Provided</span></td><td>Landing + ambassador</td></tr><tr><td>Later</td><td>WW360 SSO federation</td><td><span class="status status-later">Later</span></td><td>Role vocabulary + sso_* columns reserved</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Gaps to prioritize</h2>
+  <ul>
+    <li>Licensed photography / authentic OWW microvideo</li>
+    <li>Live CRM + production email/SMS</li>
+    <li>CEU tracking depth + training map UX</li>
+    <li>Formal WCAG audit</li>
+    <li>Additional state microsites beyond NY</li>
+    <li>WW360 SSO federation (Later)</li>
+  </ul>
+
+  <h2>5. Playbook — next NY RFP</h2>
+  <ol>
+    <li>Inventory RFP + Phase quotes + appendices.</li>
+    <li>Draft coverage (Provided / Partial / Gap / Later).</li>
+    <li>Stage branded build; seed demo personas.</li>
+    <li>Capture screenshots into <code>*-rfp-evidence/</code>.</li>
+    <li>Write visitor vs operator synopsis.</li>
+    <li>Regenerate HTML + PDF; attach PDF to the response package.</li>
+    <li>Ship via git/PR into develop.</li>
+  </ol>
+
+  <footer>
+    PDF deliverable: docs/oww-rfp-coverage.pdf · Generator: scripts/generate_rfp_coverage_pdf.py ·
+    Evidence: docs/oww-rfp-evidence/ · Practice: rfp-response-evidence.mdc
+  </footer>
+</main>
+</body>
+</html>

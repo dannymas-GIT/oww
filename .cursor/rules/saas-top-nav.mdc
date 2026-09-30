@@ -1,0 +1,40 @@
+---
+description: SaaS top navigation — logical top-level groups, no horizontal scrollbars
+alwaysApply: true
+---
+
+# SaaS top navigation
+
+Primary header navigation must be **clear, grouped, and scrollbar-free**.
+
+## Required pattern
+
+1. **Few top-level items** — Each top-level control is a logical domain. Prefer **4–6** desktop top-level items.
+   - Platform admin example: Operations · People · Content · Catalog
+   - Employer example: Workspace · Hiring · Collaborate · Billing
+   - Candidate example: Overview · Profile · Matches
+2. **Children live in native dropdowns** — Related destinations are links *under* that top-level item when there are 2+ items. Single-destination sections are a direct top-level link using the **section** label.
+3. **Same pattern for every role** — Do not give platform admin a different IA than employer/candidate/educator. Only the section inventory changes by role.
+3. **No horizontal scrollbars** — Never use `overflow-x-auto` / scroll tracks on the primary header nav to paper over crowding. If it does not fit: shorten labels, tighten padding, icon-collapse account actions, or **regroup** — do not scroll the bar.
+4. **No lonely mega-menu** — Do not collapse an entire admin surface into one “Administration” dropdown that leaves the header empty.
+5. **No flat mega-strip** — Do not dump every leaf page as equal top-level links.
+6. **Mobile** — Hamburger with the **same section grouping**; ≥44px targets; no iframe shells.
+7. **Account cluster** — View as role / Profile / Sign out stay on the right, outside the primary nav groups.
+
+## Label guidance
+
+- Top-level: short nouns (**Operations**, **People**, **Content**, **Catalog**).
+- Dropdown items: full names + optional one-line description.
+- Keep body/UI type floors (`text-base` controls, captions `text-sm`).
+
+## Do not
+
+- Add horizontal scroll to “fix” overflow in the top nav
+- Use iframes / Simple Browser embeds for nav or primary chrome (`saas-no-iframe-shells.mdc`)
+- Rely on a second dense horizontal strip of every admin page under the header as the default pattern
+
+## Reference
+
+- OWW: `AppShell` + `NavDropdown` + `config/nav.ts` sections
+- Agent: `/opt/projects/agents/saas-top-nav.json`
+- Related: `saas-no-iframe-shells.mdc`, `saas-contextual-navigation.mdc`

@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:15
+    container_name: oww_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oww}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oww}
+      POSTGRES_DB: ${POSTGRES_DB:-oww}
+    volumes:
+      - oww_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oww} -d ${POSTGRES_DB:-oww}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - oww_network
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: oww_backend
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-oww}
+      POSTGRES_USER: ${POSTGRES_USER:-oww}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oww}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-oww-dev-secret}
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      CRM_WEBHOOK_URL: ${CRM_WEBHOOK_URL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      OWW_SEED_ADMIN_PASSWORD: ${OWW_SEED_ADMIN_PASSWORD:-ChangeMe-OWW!}
+    ports:
+      - "127.0.0.1:8003:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - oww_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: oww_frontend
+    ports:
+      - "127.0.0.1:8083:80"
+    depends_on:
+      - backend
+    networks:
+      - oww_network
+    restart: unless-stopped
+
+volumes:
+  oww_postgres_data:
+
+networks:
+  oww_network:
+    driver: bridge

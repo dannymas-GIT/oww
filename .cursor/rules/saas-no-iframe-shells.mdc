@@ -1,0 +1,32 @@
+---
+description: Prefer native nav/dropdowns; avoid iframe shells except narrow allowlisted cases
+alwaysApply: true
+---
+
+# No iframe shells (except specific cases)
+
+Default UX is **in-page native UI** — React routes, native dropdown panels, dialogs, and full navigations. Do **not** wrap primary product surfaces in iframes, Simple Browser embeds, nested browsing contexts, or “app-in-an-app” shells.
+
+## Prefer
+
+- Native `<nav>` dropdowns with **logical section groups** (labeled clusters), click/hover + Escape + outside-click
+- Direct React Router links and in-app pages
+- Modals/dialogs for focused tasks (e.g. View as role)
+- Opening external documents with the **system viewer** or a real download — not an embedded PDF/HTML iframe chrome inside the IDE or product
+
+## Allowed iframe exceptions (only these)
+
+- **Payment / identity vendors** that require hosted fields (e.g. Stripe Elements card iframe)
+- **Explicit third-party embeds** the product must show (maps, approved video players) when a native alternative is unavailable
+- Document the exception in code comments when added
+
+## Do not
+
+- Use iframes for primary navigation, admin menus, dashboards, or document galleries
+- Open product previews inside Cursor Simple Browser / iframe panels as the default agent workflow — open files in the editor or system apps instead
+- Ship mega-menus as one undifferentiated flat list when domains differ (group Operations / People / Content / Catalog, etc.)
+
+## Reference
+
+- OWW: `NavDropdown`, `PathwaysMenu` (For people / For organizations), Administration sections in `config/nav.ts`
+- Memory tag: `no-iframe-shells`

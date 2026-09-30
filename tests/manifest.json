@@ -1,0 +1,38 @@
+
+{
+  "version": 1,
+  "suites": [
+    {
+      "id": "oww-public-landing",
+      "specFile": "frontend/e2e/public_landing.spec.ts",
+      "pathPatterns": ["frontend/src/pages/public/**", "frontend/src/components/oww/**"],
+      "defaultRunOn": ["pr", "staging"],
+      "flakeBudget": 2,
+      "tags": ["oww", "public"]
+    },
+    {
+      "id": "oww-auth-otp",
+      "specFile": "frontend/e2e/auth_otp.spec.ts",
+      "pathPatterns": ["frontend/src/pages/auth/**", "backend/app/api/v1/endpoints/auth.py"],
+      "defaultRunOn": ["pr", "staging"],
+      "flakeBudget": 2,
+      "tags": ["oww", "auth"]
+    },
+    {
+      "id": "oww-admin-analytics",
+      "specFile": "frontend/e2e/admin_analytics.spec.ts",
+      "pathPatterns": ["frontend/src/pages/admin/**", "backend/app/api/v1/endpoints/admin.py"],
+      "defaultRunOn": ["pr", "staging"],
+      "flakeBudget": 2,
+      "tags": ["oww", "admin"]
+    },
+    {
+      "id": "oww-matching-unit",
+      "specFile": "backend/tests/test_matching.py",
+      "pathPatterns": ["backend/app/services/matching_service.py"],
+      "defaultRunOn": ["pr", "staging"],
+      "flakeBudget": 0,
+      "tags": ["oww", "matching"]
+    }
+  ]
+}
