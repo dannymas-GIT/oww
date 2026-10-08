@@ -191,7 +191,7 @@ export const roleNavGroups: NavGroup[] = [
             path: '/employer/team',
             icon: UsersRound,
             roles: ORG_ADMIN_ROLES,
-            description: 'Invite and manage users',
+            description: 'View organization accounts (invite staff in WW360)',
           },
         ],
       },

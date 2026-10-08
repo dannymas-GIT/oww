@@ -253,8 +253,8 @@ export const owwTours: OwwTourConfig[] = [
     slides: [
       {
         id: 'add',
-        title: 'Add local accounts',
-        body: 'Create users with a temporary password stored in the local database. They sign in with email/username + password — not email OTP.',
+        title: 'Add local accounts (platform admin)',
+        body: 'Only platform administrators (e.g. Jenny) can create OWW accounts here. Utility managers and team members are invited from Water Workforce 360 after handoff.',
         highlight: '[data-tour="users-add"]',
       },
       {
@@ -334,7 +334,8 @@ export function tourForPath(pathname: string): OwwTourConfig | null {
   if (p.startsWith('/login')) return owwTours.find(t => t.id === 'oww-login') ?? null;
   if (p.startsWith('/admin/registrations')) return owwTours.find(t => t.id === 'oww-registrations') ?? null;
   if (p.startsWith('/admin/settings')) return owwTours.find(t => t.id === 'oww-settings') ?? null;
-  if (p.startsWith('/admin/users') || p.startsWith('/employer/team')) return owwTours.find(t => t.id === 'oww-users') ?? null;
+  // Add-user tour is platform-admin only; utility Team is view-oriented (WW360 invites).
+  if (p.startsWith('/admin/users')) return owwTours.find(t => t.id === 'oww-users') ?? null;
   if (p.startsWith('/admin/cms')) return owwTours.find(t => t.id === 'oww-cms') ?? null;
   if (p === '/admin' || p.startsWith('/admin/memberships') || p.startsWith('/admin/communications')) {
     return owwTours.find(t => t.id === 'oww-admin') ?? null;
