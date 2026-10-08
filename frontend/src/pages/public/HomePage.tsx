@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
+import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { OwwLogo } from '@/components/oww/OwwLogo';
@@ -8,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { publicPathways } from '@/config/nav';
 import { DEFAULT_STATE } from '@/lib/constants';
-import { listTestimonials } from '@/services/publicService';
-import type { Testimonial } from '@/types';
+import { getPublishedPage, listTestimonials } from '@/services/publicService';
+import type { ContentPage, Testimonial } from '@/types';
 import {
   owwImpactStats,
   owwMission,
@@ -24,18 +25,9 @@ const icons = {
   ambassador: HeartHandshake,
 } as const;
 
-export default function HomePage() {
-  const params = useParams();
-  const state = (params.state || DEFAULT_STATE).toLowerCase();
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-
-  useEffect(() => {
-    void listTestimonials({ state }).then(setTestimonials).catch(() => setTestimonials([]));
-  }, [state]);
-
+function FallbackHome({ state, testimonials }: { state: string; testimonials: Testimonial[] }) {
   return (
     <div className="space-y-10">
-      {/* Brand-first landing plane — logo is the hero signal */}
       <section
         data-tour="brand"
         className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white"
@@ -52,9 +44,7 @@ export default function HomePage() {
           <div className="space-y-5">
             <OwwLogo to={`/${state}`} size="hero" onDark={false} />
             <p className="max-w-xl text-lg leading-relaxed text-slate-700">{owwMission.summary}</p>
-            <p className="text-base font-semibold text-oww-navy">
-              {owwMission.supportLine}
-            </p>
+            <p className="text-base font-semibold text-oww-navy">{owwMission.supportLine}</p>
             <div className="flex flex-wrap gap-2">
               <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" data-tour="interest-cta" asChild>
                 <Link to={`/${state}/interest`}>Express interest</Link>
@@ -80,9 +70,7 @@ export default function HomePage() {
               }}
             />
             <div className="relative flex h-full flex-col justify-end gap-3 p-6 text-white">
-              <p className="font-display text-2xl font-semibold leading-snug">
-                {owwMission.tagline}
-              </p>
+              <p className="font-display text-2xl font-semibold leading-snug">{owwMission.tagline}</p>
               <p className="text-base text-slate-200">
                 Career awareness, Gold Standard training, hiring infrastructure, and measurable workforce outcomes—in one place.
               </p>
@@ -91,11 +79,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <OwwSection
-        id="mission"
-        title="Why One Water Workforce"
-        description={owwMission.whyItMatters}
-      >
+      <OwwSection id="mission" title="Why One Water Workforce" description={owwMission.whyItMatters}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="mission">
           {owwImpactStats.map(stat => (
             <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-5">
@@ -107,10 +91,7 @@ export default function HomePage() {
         </div>
       </OwwSection>
 
-      <OwwSection
-        title="Choose your pathway"
-        description="Four doors into water careers—each opens into tools, checklists, and next steps."
-      >
+      <OwwSection title="Choose your pathway" description="Four doors into water careers—each opens into tools, checklists, and next steps.">
         <div className="grid gap-4 sm:grid-cols-2" data-tour="pathways">
           {publicPathways.map(p => {
             const Icon = icons[p.slug];
@@ -162,21 +143,6 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" asChild>
-              <Link to={`/${state}/educate`}>Educate pathway</Link>
-            </Button>
-            <Button variant="outline" className="min-h-[44px] text-base" asChild>
-              <Link to={`/${state}/programs/submit`}>Submit a workforce program</Link>
-            </Button>
-            {owwTrainingCenter.externalLinks.slice(0, 2).map(link => (
-              <Button key={link.href} variant="outline" className="min-h-[44px] text-base" asChild>
-                <a href={link.href} target="_blank" rel="noreferrer">
-                  {link.label}
-                </a>
-              </Button>
-            ))}
-          </div>
         </div>
       </OwwSection>
 
@@ -209,34 +175,6 @@ export default function HomePage() {
         </div>
       </OwwSection>
 
-      <OwwSection title="Partner with NYSAWWA" description="Looking to deepen Training Center, outreach, or multi-state collaboration?">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-lg leading-relaxed text-slate-700">
-          <p>
-            Interested in partnering with One Water Workforce? Contact {owwMission.contact.partnerLabel} at{' '}
-            <a className="font-medium text-oww-cyan underline" href={`mailto:${owwMission.contact.partnerEmail}`}>
-              {owwMission.contact.partnerEmail}
-            </a>
-            .
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button variant="outline" className="min-h-[44px] text-base" asChild>
-              <a href={owwMission.contact.publicSite} target="_blank" rel="noreferrer">
-                onewaterworkforce.org
-              </a>
-            </Button>
-            <Button variant="outline" className="min-h-[44px] text-base" asChild>
-              <a href={owwMission.contact.nysawwa} target="_blank" rel="noreferrer">
-                nysawwa.org
-              </a>
-            </Button>
-            <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" asChild>
-              <Link to={`/${state}/ambassador`}>Become an ambassador</Link>
-            </Button>
-          </div>
-        </div>
-      </OwwSection>
-
-      {/* compact secondary hero for interior consistency */}
       <OwwPageHero
         eyebrow="Ready when you are"
         title={owwMission.tagline}
@@ -249,4 +187,28 @@ export default function HomePage() {
       />
     </div>
   );
+}
+
+export default function HomePage() {
+  const params = useParams();
+  const state = (params.state || DEFAULT_STATE).toLowerCase();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
+
+  useEffect(() => {
+    void listTestimonials({ state }).then(setTestimonials).catch(() => setTestimonials([]));
+    void getPublishedPage(state, 'home')
+      .then(page => setCmsPage(page?.sections?.length ? page : null))
+      .catch(() => setCmsPage(null));
+  }, [state]);
+
+  if (cmsPage === undefined) {
+    return <p className="text-base text-slate-600">Loading…</p>;
+  }
+
+  if (cmsPage) {
+    return <CmsPageRenderer page={cmsPage} state={state} />;
+  }
+
+  return <FallbackHome state={state} testimonials={testimonials} />;
 }

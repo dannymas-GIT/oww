@@ -193,6 +193,57 @@ export const owwTours: OwwTourConfig[] = [
     ],
   },
   {
+    id: 'oww-cms',
+    label: 'Pages & blog',
+    dismissedKey: 'oww-tour-cms-dismissed',
+    stepKey: 'oww-tour-cms-step',
+    eventName: 'oww:tour:cms',
+    fabLabel: 'Template tour',
+    slides: [
+      {
+        id: 'tabs',
+        title: 'Landing pages vs Blog',
+        body: 'Landing pages are fixed public routes (home, pathways, stories). Blog is for running topics that stack on /ny/blog with date, author, and tags.',
+        highlight: '[data-tour="cms-kind-tabs"]',
+        tip: 'Switch to the Blog tab when you want an ongoing series instead of a one-off page.',
+      },
+      {
+        id: 'new',
+        title: 'Create from a template',
+        body: 'New page opens a guide to each template. Pick the layout that matches where the content should live on the public site, then edit the live canvas.',
+        highlight: '[data-tour="cms-new"]',
+      },
+      {
+        id: 'home',
+        title: 'Home landing',
+        body: 'One per state — the front door at /ny. Hero, mission stats, pathway cards, media, and CTAs.',
+        tip: 'Slug is usually “home”.',
+      },
+      {
+        id: 'pathway',
+        title: 'Pathway landing',
+        body: 'Career, Hire, Educate, or Ambassador doorway pages. Use the matching slug so nav and home cards open the right page.',
+        tip: 'Example: /ny/career',
+      },
+      {
+        id: 'story',
+        title: 'Story / feature',
+        body: 'A one-off spotlight or campaign narrative — not a pathway and not a dated blog series.',
+      },
+      {
+        id: 'simple',
+        title: 'Simple page',
+        body: 'Short static content such as About or FAQ when you do not need pathway grids or the blog index.',
+      },
+      {
+        id: 'blog',
+        title: 'Blog post',
+        body: 'Ongoing topics and updates. Create these from the Blog tab so they appear on /ny/blog with publish date and tags.',
+        tip: 'Use Blog when you will keep adding related posts over time.',
+      },
+    ],
+  },
+  {
     id: 'oww-users',
     label: 'Users & access',
     dismissedKey: 'oww-tour-users-dismissed',
@@ -244,6 +295,7 @@ export function tourForPath(pathname: string): OwwTourConfig | null {
   const p = pathname.toLowerCase();
   if (p.startsWith('/login')) return owwTours.find(t => t.id === 'oww-login') ?? null;
   if (p.startsWith('/admin/users') || p.startsWith('/employer/team')) return owwTours.find(t => t.id === 'oww-users') ?? null;
+  if (p.startsWith('/admin/cms')) return owwTours.find(t => t.id === 'oww-cms') ?? null;
   if (p === '/admin' || p.startsWith('/admin/memberships') || p.startsWith('/admin/communications')) {
     return owwTours.find(t => t.id === 'oww-admin') ?? null;
   }

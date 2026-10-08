@@ -137,16 +137,51 @@ export async function resetUserPassword(id: number, new_password: string) {
   return data;
 }
 
-export async function listCmsPages() {
-  const { data } = await api.get('/admin/cms');
+export async function listCmsPages(kind?: 'page' | 'blog' | 'all') {
+  const params = kind && kind !== 'all' ? { kind } : undefined;
+  const { data } = await api.get('/admin/cms', { params });
   return data as ContentPage[];
 }
 
-export async function saveCmsPage(body: Partial<ContentPage>) {
-  const { data } = body.id
-    ? await api.patch(`/admin/cms/${body.id}`, body)
-    : await api.post('/admin/cms', body);
+export async function getCmsPage(id: number) {
+  const { data } = await api.get(`/admin/cms/${id}`);
   return data as ContentPage;
+}
+
+export async function fetchCmsCatalog() {
+  const { data } = await api.get('/admin/cms/catalog');
+  return data as { templates: import('@/types').CmsTemplateMeta[]; section_types: import('@/types').CmsSectionTypeMeta[] };
+}
+
+export async function saveCmsPage(body: Partial<ContentPage> & { sections?: import('@/types').CmsSection[] }) {
+  const payload = {
+    ...body,
+    published: body.published,
+  };
+  const { data } = body.id
+    ? await api.patch(`/admin/cms/${body.id}`, payload)
+    : await api.post('/admin/cms', payload);
+  return data as ContentPage;
+}
+
+export async function deleteCmsPage(id: number) {
+  const { data } = await api.delete(`/admin/cms/${id}`);
+  return data as { ok: boolean };
+}
+
+export async function listCmsMedia() {
+  const { data } = await api.get('/admin/cms/media');
+  return data as import('@/types').MediaAsset[];
+}
+
+export async function uploadCmsMedia(file: File, stateCode?: string) {
+  const form = new FormData();
+  form.append('file', file);
+  if (stateCode) form.append('state_code', stateCode);
+  const { data } = await api.post('/admin/cms/media', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data as import('@/types').MediaAsset;
 }
 
 export async function listProgramSubmissions() {

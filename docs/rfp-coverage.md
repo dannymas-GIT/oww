@@ -85,7 +85,7 @@ One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: publi
 | View as role | `/api/v1/impersonation/*`, header `PersonaSwitcher` | Preview (read-only) + act-as (audited); exit banner; blocks password/billing while impersonating |
 | Audit | `billing_events` table; engagement events `user_created`, `user_roles_changed`, `communication_sent` | Who/when/what for grants, extensions, checkouts, webhooks |
 
-Demo accounts (password from `OWW_SEED_ADMIN_PASSWORD`): `oww-admin`, `dmas` / `dmas@lsit-inc.com` (platform_admin), `ny-state-admin`, `utility-admin1..3`, `utility-manager1..3`, `employer1..12` (mixed active / expiring / expired / past-due / canceled / none), `student1..3`, `educator1`.
+Demo accounts (password from `OWW_SEED_ADMIN_PASSWORD`): `oww-admin`, `jenny` / `jenny@nysawwa.org` (platform_admin), `dmas` / `dmas@lsit-inc.com` (platform_admin), `utility-admin1..3`, `utility-manager1..3`, `employer1..12` (mixed active / expiring / expired / past-due / canceled / none), `student1..3`, `educator1`. Utility self-reg: `/register/utility`.
 
 ## Gaps to prioritize
 

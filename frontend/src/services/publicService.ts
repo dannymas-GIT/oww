@@ -1,5 +1,7 @@
 import { api } from '@/lib/api';
 import type {
+  BlogPostCard,
+  ContentPage,
   InterestSubmission,
   Job,
   Microvideo,
@@ -51,4 +53,19 @@ export async function listMicrovideos(params?: { state?: string }) {
 export async function listResources(params?: { state?: string; category?: string }) {
   const { data } = await api.get('/public/resources', { params });
   return data as Array<{ id: number; title: string; url?: string; category?: string }>;
+}
+
+export async function getPublishedPage(state: string, slug: string) {
+  const { data } = await api.get(`/public/pages/${state}/${slug}`);
+  return data as ContentPage;
+}
+
+export async function listBlogPosts(state: string, params?: { tag?: string; limit?: number; offset?: number }) {
+  const { data } = await api.get(`/public/blog/${state}`, { params });
+  return data as { total: number; items: BlogPostCard[]; state_code: string; tag?: string | null };
+}
+
+export async function getBlogPost(state: string, slug: string) {
+  const { data } = await api.get(`/public/blog/${state}/${slug}`);
+  return data as ContentPage;
 }
