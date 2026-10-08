@@ -191,25 +191,33 @@ export default function AdminUsersPage() {
       <OwwPageHero
         eyebrow="Administration"
         title="Users & access"
-        description={isGlobalAdmin ? 'Platform, state, utility and community accounts. Soft-deactivate preferred over delete.' : 'Manage your organization’s managers and team members.'}
+        description={
+          isPlatformAdmin
+            ? 'Platform, state, utility and community accounts. Soft-deactivate preferred over delete. Only platform administrators can create OWW accounts.'
+            : isGlobalAdmin
+              ? 'View accounts in your state. Creating users on OWW is limited to platform administrators; utility staff are invited from Water Workforce 360.'
+              : 'View your organization’s OWW accounts. Invite managers and team members from Water Workforce 360 after you open it from the hiring workspace.'
+        }
         badges={
           <span className="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/30">
             National → State → Utility hierarchy · mirrors WW360
           </span>
         }
         actions={
-          <Button
-            className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
-            data-tour="users-add"
-            onClick={() => {
-              setForm({ username: '', email: '', full_name: '', phone: '', org_id: me?.org_id ? String(me.org_id) : '', roles: [], temporary_password: '' });
-              setCreated(null);
-              setAddOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-5 w-5" aria-hidden />
-            Add user
-          </Button>
+          isPlatformAdmin ? (
+            <Button
+              className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
+              data-tour="users-add"
+              onClick={() => {
+                setForm({ username: '', email: '', full_name: '', phone: '', org_id: me?.org_id ? String(me.org_id) : '', roles: [], temporary_password: '' });
+                setCreated(null);
+                setAddOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-5 w-5" aria-hidden />
+              Add user
+            </Button>
+          ) : null
         }
       />
 

@@ -267,15 +267,17 @@ def role_catalog(user: User = Depends(get_current_user)):
 
 
 @router.post("/users", status_code=201)
-def create_user(body: UserCreate, db: Session = Depends(get_db), admin: User = Depends(require_roles(*ORG_ADMIN_ROLES))):
+def create_user(body: UserCreate, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin"))):
+    """Create local OWW accounts — platform admins only (Jenny).
+
+    Utility managers and team members are invited from Water Workforce 360 after handoff.
+    """
     rejected = roles.validate_assignment(admin.roles or [], body.roles)
     if rejected:
         raise HTTPException(403, f"You cannot assign: {', '.join(rejected)}")
     if db.query(User).filter((User.username == body.username) | (User.email == body.email.lower())).first():
         raise HTTPException(409, "Username or email already exists")
     org_id = body.org_id
-    if admin.has_role("utility_admin") and not admin.has_any_role(*ADMIN_ROLES):
-        org_id = admin.org_id  # IDOR-safe: utility admins only create within their own org
     temp = body.temporary_password or secrets.token_urlsafe(10)
     u = User(username=body.username, email=body.email.lower(), full_name=body.full_name, roles=body.roles, org_id=org_id, phone=body.phone, state_code=(body.state_code or admin.state_code or "NY").upper(), is_active=True, contact_prefs={"must_change_password": True})
     u.hashed_password = get_password_hash(temp)
