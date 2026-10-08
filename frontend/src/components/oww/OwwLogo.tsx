@@ -11,10 +11,22 @@ type OwwLogoProps = {
   showTagline?: boolean;
 };
 
+/**
+ * Logo sizes aligned with AquaSafe / WW360 `WW360_LOGO_SIZE` in brandHost.ts:
+ * navMinPx 120 · navPx 148 · heroPx 260 · loginPx 320.
+ * Brand must predominate the chrome row — never favicon-scale.
+ */
+export const OWW_LOGO_SIZE = {
+  navMinPx: 120,
+  navPx: 148,
+  heroPx: 260,
+  loginPx: 320,
+} as const;
+
 const sizeClass = {
-  nav: 'h-10 w-auto max-w-[180px] xl:h-12 xl:max-w-[220px]',
-  hero: 'h-16 w-auto max-w-[320px] sm:h-20 sm:max-w-[400px] md:h-24 md:max-w-[480px]',
-  footer: 'h-12 w-auto max-w-[240px]',
+  nav: 'h-[7.5rem] w-auto max-w-[min(100%,28rem)] md:h-[9.25rem] md:max-w-[36rem]',
+  hero: 'h-[12rem] w-auto max-w-[min(100%,40rem)] sm:h-[14rem] sm:max-w-[48rem] md:h-[16.25rem] md:max-w-[56rem]',
+  footer: 'h-[7.5rem] w-auto max-w-[28rem]',
 } as const;
 
 /**

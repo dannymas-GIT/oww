@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
-import { LogOut, Menu, UserRound, X } from 'lucide-react';
+import {
+  Briefcase,
+  Building2,
+  Compass,
+  FileText,
+  Home,
+  LogOut,
+  Menu,
+  UserRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { navForRoles, publicPathways, sectionNavEntries, sectionToDropdown } from '@/config/nav';
 import { Button } from '@/components/ui/button';
@@ -12,11 +23,31 @@ import { PageAwareTour } from '@/components/oww/PageAwareTour';
 import { DEFAULT_STATE } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
+/** AquaSafe-style top chrome: larger type + icon + label (min 48px touch). */
 const linkClass = (active: boolean) =>
   cn(
-    'inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-md px-2.5 text-base font-medium',
+    'inline-flex min-h-[48px] shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-lg font-semibold',
     active ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-100'
   );
+
+function NavIconLink({
+  to,
+  label,
+  icon: Icon,
+  end,
+}: {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
+}) {
+  return (
+    <NavLink to={to} end={end} className={({ isActive }) => linkClass(isActive)}>
+      <Icon className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
+      {label}
+    </NavLink>
+  );
+}
 
 /**
  * Same pattern for every role: short top-level labels; dropdowns when a section
@@ -28,8 +59,10 @@ function RoleNav() {
     <>
       {entries.map(entry => {
         if (entry.kind === 'link') {
+          const Icon = entry.item.icon;
           return (
             <NavLink key={entry.key} to={entry.item.path} className={({ isActive }) => linkClass(isActive)}>
+              {Icon ? <Icon className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden /> : null}
               {entry.item.label}
             </NavLink>
           );
@@ -38,6 +71,7 @@ function RoleNav() {
           <NavDropdown
             key={entry.key}
             label={entry.label}
+            icon={entry.section.icon}
             sections={[sectionToDropdown(entry.section)]}
             showSectionLabels={false}
             activeMatch={pathname =>
@@ -70,11 +104,11 @@ export function AppShell() {
     && !location.pathname.startsWith('/login')
     && !location.pathname.startsWith('/register');
 
-  const quietLinks = [
-    { label: 'Home', to: `/${state}` },
-    { label: 'Jobs', to: `/${state}/jobs` },
-    { label: 'Blog', to: `/${state}/blog` },
-    { label: 'Companies', to: `/${state}/companies` },
+  const quietLinks: Array<{ label: string; to: string; icon: LucideIcon }> = [
+    { label: 'Home', to: `/${state}`, icon: Home },
+    { label: 'Jobs', to: `/${state}/jobs`, icon: Briefcase },
+    { label: 'Blog', to: `/${state}/blog`, icon: FileText },
+    { label: 'Companies', to: `/${state}/companies`, icon: Building2 },
   ];
 
   return (
@@ -88,59 +122,49 @@ export function AppShell() {
       <ImpersonationBanner />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 text-oww-navy backdrop-blur-md">
         <div className="h-1 bg-gradient-to-r from-oww-navy via-oww-cyan to-oww-navy" aria-hidden />
-        <div className="flex w-full items-center gap-2 px-4 py-2 sm:px-5 md:gap-3 md:px-6 lg:px-8 xl:px-10">
+        <div className="flex min-h-[8.5rem] w-full items-center gap-2 px-4 py-3 sm:px-5 md:gap-3 md:px-6 lg:min-h-[10.5rem] lg:px-8 xl:px-10">
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md text-oww-navy lg:hidden"
+              className="inline-flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-md text-oww-navy lg:hidden"
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(o => !o)}
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
             </button>
             <OwwLogo to={`/${state}`} size="nav" />
           </div>
 
           <nav
-            className="hidden flex-1 items-center justify-center gap-0.5 lg:flex"
+            className="hidden flex-1 items-center justify-center gap-1 lg:flex xl:gap-1.5"
             aria-label="Primary"
           >
             {showRoleNav ? (
               <>
-                <NavLink to={`/${state}`} end className={({ isActive }) => linkClass(isActive)}>
-                  Explore
-                </NavLink>
+                <NavIconLink to={`/${state}`} end label="Explore" icon={Compass} />
                 <RoleNav />
               </>
             ) : isPublic ? (
               <>
-                <NavLink to={`/${state}`} end className={({ isActive }) => linkClass(isActive)}>
-                  Home
-                </NavLink>
+                <NavIconLink to={`/${state}`} end label="Home" icon={Home} />
                 <PathwaysMenu state={state} />
-                <NavLink to={`/${state}/jobs`} className={({ isActive }) => linkClass(isActive)}>
-                  Jobs
-                </NavLink>
-                <NavLink to={`/${state}/blog`} className={({ isActive }) => linkClass(isActive)}>
-                  Blog
-                </NavLink>
-                <NavLink to={`/${state}/companies`} className={({ isActive }) => linkClass(isActive)}>
-                  Companies
-                </NavLink>
+                <NavIconLink to={`/${state}/jobs`} label="Jobs" icon={Briefcase} />
+                <NavIconLink to={`/${state}/blog`} label="Blog" icon={FileText} />
+                <NavIconLink to={`/${state}/companies`} label="Companies" icon={Building2} />
               </>
             ) : (
               <RoleNav />
             )}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1.5">
             {isAuthenticated ? (
               <>
                 <PersonaSwitcher />
                 <Button
                   variant="ghost"
-                  className="min-h-[44px] max-w-[14rem] gap-2 px-2 text-base text-oww-navy hover:bg-slate-100 sm:max-w-[18rem] xl:px-3"
+                  className="min-h-[48px] max-w-[14rem] gap-2 px-3 text-lg font-semibold text-oww-navy hover:bg-slate-100 sm:max-w-[18rem]"
                   asChild
                 >
                   <Link
@@ -151,7 +175,7 @@ export function AppShell() {
                         : 'Profile'
                     }
                   >
-                    <UserRound className="h-4 w-4 shrink-0" />
+                    <UserRound className="h-5 w-5 shrink-0 text-oww-cyan" />
                     <span className="hidden truncate sm:inline">
                       {user?.full_name?.trim() || user?.username || 'Profile'}
                     </span>
@@ -159,16 +183,16 @@ export function AppShell() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="min-h-[44px] min-w-[44px] px-2 text-base text-oww-navy hover:bg-slate-100 xl:px-3"
+                  className="min-h-[48px] min-w-[48px] gap-2 px-3 text-lg font-semibold text-oww-navy hover:bg-slate-100"
                   onClick={logout}
                   aria-label="Sign out"
                 >
-                  <LogOut className="h-4 w-4 xl:mr-2" />
+                  <LogOut className="h-5 w-5" />
                   <span className="hidden xl:inline">Sign out</span>
                 </Button>
               </>
             ) : (
-              <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
+              <Button className="min-h-[48px] bg-oww-cyan px-4 text-lg font-semibold text-white hover:bg-sky-700" asChild>
                 <Link to="/login">Sign in</Link>
               </Button>
             )}
@@ -185,17 +209,19 @@ export function AppShell() {
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
                     cn(
-                      'flex min-h-[44px] items-center rounded-md px-3 text-base font-medium',
+                      'flex min-h-[48px] items-center gap-2 rounded-md px-3 text-lg font-semibold',
                       isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
                     )
                   }
                 >
+                  <Compass className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
                   Explore
                 </NavLink>
                 {groups.map(g =>
                   g.sections.map(section => (
                     <div key={section.id} className="space-y-1">
-                      <p className="px-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="flex items-center gap-2 px-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        {section.icon ? <section.icon className="h-4 w-4 text-oww-cyan" aria-hidden /> : null}
                         {section.label}
                       </p>
                       {section.items.map(item => (
@@ -205,12 +231,12 @@ export function AppShell() {
                           onClick={() => setMobileOpen(false)}
                           className={({ isActive }) =>
                             cn(
-                              'flex min-h-[44px] items-center gap-2 rounded-md px-3 text-base font-medium',
+                              'flex min-h-[48px] items-center gap-3 rounded-md px-3 text-lg font-medium',
                               isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
                             )
                           }
                         >
-                          <item.icon className="h-4 w-4 shrink-0" />
+                          <item.icon className="h-5 w-5 shrink-0 text-oww-cyan" />
                           {item.label}
                         </NavLink>
                       ))}
@@ -229,11 +255,12 @@ export function AppShell() {
                         onClick={() => setMobileOpen(false)}
                         className={({ isActive }) =>
                           cn(
-                            'flex min-h-[44px] items-center rounded-md px-3 text-base font-medium',
+                            'flex min-h-[48px] items-center gap-3 rounded-md px-3 text-lg font-semibold',
                             isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
                           )
                         }
                       >
+                        <l.icon className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
                         {l.label}
                       </NavLink>
                     </li>
@@ -246,7 +273,8 @@ export function AppShell() {
                 {groups.map(g =>
                   g.sections.map(section => (
                     <div key={section.id} className="space-y-1">
-                      <p className="px-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="flex items-center gap-2 px-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        {section.icon ? <section.icon className="h-4 w-4 text-oww-cyan" aria-hidden /> : null}
                         {section.label}
                       </p>
                       {section.items.map(item => (
@@ -256,12 +284,12 @@ export function AppShell() {
                           onClick={() => setMobileOpen(false)}
                           className={({ isActive }) =>
                             cn(
-                              'flex min-h-[44px] items-center gap-2 rounded-md px-3 text-base font-medium',
+                              'flex min-h-[48px] items-center gap-3 rounded-md px-3 text-lg font-medium',
                               isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
                             )
                           }
                         >
-                          <item.icon className="h-4 w-4 shrink-0" />
+                          <item.icon className="h-5 w-5 shrink-0 text-oww-cyan" />
                           {item.label}
                         </NavLink>
                       ))}
@@ -278,11 +306,11 @@ export function AppShell() {
             {user ? (
               <div className="mt-3 space-y-1 px-3">
                 <p className="text-sm text-slate-500">Signed in as</p>
-                <p className="text-base font-semibold text-oww-navy">{user.full_name?.trim() || user.username}</p>
+                <p className="text-lg font-semibold text-oww-navy">{user.full_name?.trim() || user.username}</p>
                 <Link
                   to="/profile"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex min-h-[44px] items-center text-base font-medium text-oww-cyan"
+                  className="inline-flex min-h-[48px] items-center text-lg font-medium text-oww-cyan"
                 >
                   Profile
                 </Link>

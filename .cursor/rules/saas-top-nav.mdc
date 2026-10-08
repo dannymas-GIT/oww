@@ -25,7 +25,14 @@ Primary header navigation must be **clear, grouped, and scrollbar-free**.
 
 - Top-level: short nouns (**Operations**, **People**, **Content**, **Catalog**).
 - Dropdown items: full names + optional one-line description.
-- Keep body/UI type floors (`text-base` controls, captions `text-sm`).
+- Keep body/UI type floors (`text-base` controls, captions `text-sm`). Prefer **`text-lg` + icons** on primary chrome for AquaSafe-style legibility.
+
+## Brand + icons (AquaSafe / WW360 learnings)
+
+- **Logo in sticky chrome:** height floor **120px**, preferred **148px** (`WW360_LOGO_SIZE.navMinPx` / `navPx` in AquaSafe / WW360 `brandHost.ts`; OWW: `OWW_LOGO_SIZE`). Brand must predominate the row — never favicon-scale marks.
+- **Hero / login:** ~**260px** / **320px** (`heroPx` / `loginPx`).
+- **Top-level areas:** icon + label (section `icon` in `config/nav.ts`; same pattern as AquaSafe `Layout.tsx` group icons).
+- Header row tall enough for the lockup (~`min-h-[8.5rem]`–`10.5rem`); touch ≥48px on primary nav controls.
 
 ## Do not
 
