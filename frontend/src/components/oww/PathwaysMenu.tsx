@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ChevronDown, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
+import { ChevronDown, Compass, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
 import { pathwaySections, publicPathways } from '@/config/nav';
 import { cn } from '@/lib/utils';
 
@@ -106,7 +106,7 @@ export function PathwaysMenu({
       <button
         type="button"
         className={cn(
-          'inline-flex min-h-[44px] items-center gap-1 rounded-md px-2.5 text-base font-medium text-oww-navy',
+          'inline-flex min-h-[48px] items-center gap-2 rounded-md px-3 text-lg font-semibold text-oww-navy',
           open || pathwayActive ? 'bg-[#e8f0ff] text-oww-navy' : 'hover:bg-slate-100'
         )}
         aria-expanded={open}
@@ -114,8 +114,9 @@ export function PathwaysMenu({
         aria-haspopup="true"
         onClick={() => setOpen(o => !o)}
       >
+        <Compass className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
         Pathways
-        <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
+        <ChevronDown className={cn('h-5 w-5 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
       </button>
       {open ? (
         <div className="absolute left-0 top-full z-50 pt-2" onMouseEnter={openMenu}>
@@ -142,13 +143,13 @@ export function PathwaysMenu({
                         setOpen(false);
                         onNavigate?.();
                       }}
-                      className="flex min-h-[44px] items-start gap-3 rounded-lg px-3 py-3 text-oww-navy hover:bg-[#f4f7fb] focus-visible:bg-[#e8f0ff] focus-visible:outline-none"
+                      className="flex min-h-[48px] items-start gap-3 rounded-lg px-3 py-3 text-oww-navy hover:bg-[#f4f7fb] focus-visible:bg-[#e8f0ff] focus-visible:outline-none"
                     >
                       <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#e8f0ff] text-oww-cyan">
                         <Icon className="h-5 w-5" aria-hidden />
                       </span>
                       <span>
-                        <span className="block text-base font-semibold">{p.label}</span>
+                        <span className="block text-lg font-semibold">{p.label}</span>
                         <span className="block text-sm leading-snug text-slate-600">{p.description}</span>
                       </span>
                     </Link>

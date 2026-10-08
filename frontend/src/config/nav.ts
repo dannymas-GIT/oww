@@ -36,6 +36,8 @@ export interface NavItem {
 export interface NavSection {
   id: string;
   label: string;
+  /** Top-level chrome icon (AquaSafe pattern: icon + label per area). */
+  icon?: LucideIcon;
   items: NavItem[];
 }
 
@@ -104,6 +106,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'candidate-overview',
         label: 'Overview',
+        icon: LayoutDashboard,
         items: [
           {
             label: 'Dashboard',
@@ -117,6 +120,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'candidate-profile',
         label: 'Profile',
+        icon: Users,
         items: [
           {
             label: 'My profile',
@@ -130,6 +134,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'candidate-matches',
         label: 'Matches',
+        icon: Sparkles,
         items: [
           {
             label: 'Matches',
@@ -149,6 +154,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'hiring-workspace',
         label: 'Workspace',
+        icon: LayoutDashboard,
         items: [
           {
             label: 'Dashboard',
@@ -176,6 +182,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'hiring-talent',
         label: 'Hiring',
+        icon: Briefcase,
         items: [
           {
             label: 'Jobs',
@@ -203,6 +210,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'hiring-collaborate',
         label: 'Collaborate',
+        icon: MessageSquare,
         items: [
           { label: 'Messages', path: '/employer/messages', icon: MessageSquare, roles: HIRING_ROLES },
           { label: 'Interviews', path: '/employer/interviews', icon: Calendar, roles: HIRING_ROLES },
@@ -218,6 +226,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'hiring-billing',
         label: 'Billing',
+        icon: CreditCard,
         items: [
           {
             label: 'Billing',
@@ -237,6 +246,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'educator-overview',
         label: 'Overview',
+        icon: GraduationCap,
         items: [
           {
             label: 'Dashboard',
@@ -256,6 +266,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'admin-ops',
         label: 'Operations',
+        icon: LayoutDashboard,
         items: [
           {
             label: 'Dashboard',
@@ -304,6 +315,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'admin-people',
         label: 'People',
+        icon: Users,
         items: [
           {
             label: 'Users & access',
@@ -352,6 +364,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'admin-content',
         label: 'Content',
+        icon: FileText,
         items: [
           {
             label: 'Pages & blog',
@@ -367,6 +380,7 @@ export const roleNavGroups: NavGroup[] = [
       {
         id: 'admin-catalog',
         label: 'Catalog',
+        icon: Award,
         items: [
           {
             label: 'Certifications',

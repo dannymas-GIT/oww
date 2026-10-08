@@ -23,6 +23,7 @@ export type DropdownSection = {
  */
 export function NavDropdown({
   label,
+  icon: Icon,
   sections,
   activeMatch,
   align = 'left',
@@ -30,6 +31,8 @@ export function NavDropdown({
   showSectionLabels,
 }: {
   label: string;
+  /** Top-level area icon (AquaSafe: icon + label). */
+  icon?: LucideIcon;
   sections: DropdownSection[];
   /** Path prefix or predicate — highlights the trigger when a child route is active */
   activeMatch?: string | ((pathname: string) => boolean);
@@ -89,7 +92,7 @@ export function NavDropdown({
       <button
         type="button"
         className={cn(
-          'inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2.5 text-base font-medium text-oww-navy',
+          'inline-flex min-h-[48px] shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-lg font-semibold text-oww-navy',
           open || active ? 'bg-[#e8f0ff] text-oww-navy' : 'hover:bg-slate-100'
         )}
         aria-expanded={open}
@@ -97,8 +100,9 @@ export function NavDropdown({
         aria-haspopup="true"
         onClick={() => setOpen(o => !o)}
       >
+        {Icon ? <Icon className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden /> : null}
         {label}
-        <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
+        <ChevronDown className={cn('h-5 w-5 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
       </button>
       {open ? (
         <div
@@ -132,17 +136,17 @@ export function NavDropdown({
                             onNavigate?.();
                           }}
                           className={cn(
-                            'flex min-h-[44px] items-start gap-3 rounded-lg px-3 py-2.5 text-oww-navy hover:bg-[#f4f7fb] focus-visible:bg-[#e8f0ff] focus-visible:outline-none',
+                            'flex min-h-[48px] items-start gap-3 rounded-lg px-3 py-2.5 text-oww-navy hover:bg-[#f4f7fb] focus-visible:bg-[#e8f0ff] focus-visible:outline-none',
                             isItemActive && 'bg-[#e8f0ff]'
                           )}
                         >
                           {Icon ? (
-                            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f0ff] text-oww-cyan">
-                              <Icon className="h-4 w-4" aria-hidden />
+                            <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#e8f0ff] text-oww-cyan">
+                              <Icon className="h-5 w-5" aria-hidden />
                             </span>
                           ) : null}
                           <span className="min-w-0">
-                            <span className="block text-base font-semibold">{item.label}</span>
+                            <span className="block text-lg font-semibold">{item.label}</span>
                             {item.description ? (
                               <span className="block text-sm leading-snug text-slate-600">{item.description}</span>
                             ) : null}
