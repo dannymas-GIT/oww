@@ -13,7 +13,7 @@ Default jurisdiction: **NY** (`/` → `/ny`).
 | `/:state/ambassador` | I Want to Be an Ambassador |
 | `/:state/interest` | Pathways Interest & Access form |
 | `/:state/programs/submit` | Workforce program submission |
-| `/:state/jobs` | Job board (search + map) |
+| `/:state/jobs` | Job board (search + map; togglable NYSAWWA 10-region overlay) |
 | `/:state/jobs/:id` | Job detail |
 | `/:state/companies` | Company search |
 | `/:state/companies/:id` | Company profile |
@@ -32,4 +32,8 @@ Default jurisdiction: **NY** (`/` → `/ny`).
 
 ## Admin
 
-Users, Jurisdictions, CMS, Programs, Featured posts, Analytics (+ CSV), Certifications, Locations, National map.
+Users, Jurisdictions, CMS, Programs, Featured posts, Analytics (+ CSV), Certifications, Locations, National map (togglable NYSAWWA regions).
+
+## Geography reference
+
+- [NYSAWWA NY 10 regions](./ny-regions/README.md) — artwork, county mapping, GeoJSON overlay used by Leaflet maps.

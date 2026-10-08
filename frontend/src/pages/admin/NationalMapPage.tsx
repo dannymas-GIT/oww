@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { OwwLeafletMap } from '@/components/oww/OwwLeafletMap';
 import { nationalMapData } from '@/services/adminService';
 
 const markerIcon = new L.Icon({
@@ -33,14 +33,10 @@ export default function NationalMapPage() {
       <OwwPageHero
         eyebrow="Administration"
         title="National map"
-        description="Jurisdiction footprint across One Water Workforce deployments."
+        description="Jurisdiction footprint across One Water Workforce deployments. Toggle the NYSAWWA 10-region overlay for New York detail."
       />
       <div className="h-[28rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <MapContainer center={[39.8, -98.5]} zoom={4} className="h-full w-full">
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+        <OwwLeafletMap center={[39.8, -98.5]} zoom={4} defaultRegionsVisible={false} scrollWheelZoom>
           {rows.map(j => {
             const pos = CENTROIDS[j.code.toUpperCase()] || [39.8, -98.5];
             return (
@@ -54,7 +50,7 @@ export default function NationalMapPage() {
               </Marker>
             );
           })}
-        </MapContainer>
+        </OwwLeafletMap>
       </div>
     </div>
   );
