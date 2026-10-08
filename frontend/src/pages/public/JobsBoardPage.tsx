@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { OwwLeafletMap } from '@/components/oww/OwwLeafletMap';
 import { SortableTableHead } from '@/components/oww/SortableTableHead';
 import { TableSearchFilter } from '@/components/oww/TableSearchFilter';
 import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
@@ -37,10 +37,7 @@ export default function JobsBoardPage() {
       .finally(() => setLoading(false));
   }, [state]);
 
-  const getValue = useMemo(
-    () => (row: Job, key: string) => rowValue(row, key),
-    []
-  );
+  const getValue = useMemo(() => (row: Job, key: string) => rowValue(row, key), []);
   const getSearchText = useMemo(
     () => (row: Job) =>
       [row.title, row.organization_name, row.city, row.career_area, row.opportunity_type]
@@ -56,21 +53,23 @@ export default function JobsBoardPage() {
   });
 
   const mapped = table.rows.filter(j => j.latitude != null && j.longitude != null);
+  const isNy = state === 'ny';
 
   return (
     <div className="space-y-6">
       <OwwPageHero
         eyebrow={`${state.toUpperCase()} jobs`}
         title="Jobs board"
-        description="Explore openings across the water sector. Sort and filter the table; markers show geocoded roles."
+        description="Explore openings across the water sector. Sort and filter the table; markers show geocoded roles. Toggle NYSAWWA regions on the map when viewing New York."
       />
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="h-72 md:h-96">
-          <MapContainer center={[42.9, -75.5]} zoom={6} scrollWheelZoom={false} className="h-full w-full">
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+          <OwwLeafletMap
+            center={isNy ? [42.9, -75.5] : [39.8, -98.5]}
+            zoom={isNy ? 6 : 4}
+            defaultRegionsVisible={isNy}
+            fitNyOnMount={isNy}
+          >
             {mapped.map(j => (
               <Marker key={j.id} position={[j.latitude!, j.longitude!]} icon={markerIcon}>
                 <Popup>
@@ -81,7 +80,7 @@ export default function JobsBoardPage() {
                 </Popup>
               </Marker>
             ))}
-          </MapContainer>
+          </OwwLeafletMap>
         </div>
       </div>
 
