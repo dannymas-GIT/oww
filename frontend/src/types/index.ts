@@ -8,7 +8,10 @@ export type OwwRole =
   | 'educator'
   | 'ambassador'
   | 'state_admin'
-  | 'platform_admin';
+  | 'platform_admin'
+  | 'platform_editor'
+  | 'platform_ops'
+  | 'platform_manager';
 
 export interface OwwUser {
   id: number;
@@ -20,6 +23,9 @@ export interface OwwUser {
   jurisdiction_code?: string | null;
   is_active?: boolean;
   org_id?: number | null;
+  org_name?: string | null;
+  is_sample?: boolean;
+  showing_sample?: boolean;
   impersonation?: ImpersonationState | null;
 }
 
@@ -268,6 +274,8 @@ export interface Job {
   career_area?: string;
   description?: string;
   is_featured?: boolean;
+  is_sample?: boolean;
+  showing_sample?: boolean;
   status?: string;
   latitude?: number | null;
   longitude?: number | null;
@@ -322,6 +330,8 @@ export interface Application {
   job_title?: string;
   individual_name?: string;
   status: string;
+  is_sample?: boolean;
+  showing_sample?: boolean;
   created_at?: string;
 }
 
@@ -331,12 +341,16 @@ export interface MessageThread {
   participants?: string[];
   last_message_at?: string;
   unread?: number;
+  is_sample?: boolean;
+  showing_sample?: boolean;
 }
 
 export interface Interview {
   id: number;
   job_title?: string;
   candidate_name?: string;
+  is_sample?: boolean;
+  showing_sample?: boolean;
   scheduled_at: string;
   status: string;
   location?: string;

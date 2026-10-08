@@ -8,8 +8,17 @@ import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
 import { searchCandidates } from '@/services/orgService';
 import { MembershipGate } from '@/components/oww/MembershipGate';
+import { SampleBadge, SampleDataBanner } from '@/components/oww/SampleDataBanner';
+import { useSamplePack } from '@/hooks/useSamplePack';
 
-type Row = { id: number; display_name: string; career_area?: string; match_score?: number };
+type Row = {
+  id: number;
+  display_name: string;
+  career_area?: string;
+  match_score?: number;
+  is_sample?: boolean;
+  showing_sample?: boolean;
+};
 
 export default function CandidateSearchPage() {
   return (
@@ -24,8 +33,18 @@ export default function CandidateSearchPage() {
 
 function CandidateSearchBody() {
   const [rows, setRows] = useState<Row[]>([]);
+  const sample = useSamplePack('jobs');
+  async function load() {
+    try {
+      setRows(await searchCandidates());
+      await sample.refresh();
+    } catch {
+      setRows([]);
+    }
+  }
   useEffect(() => {
-    void searchCandidates().then(setRows).catch(() => setRows([]));
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const table = useTableControls({
     rows,
@@ -34,8 +53,19 @@ function CandidateSearchBody() {
     initialSortKey: 'match_score',
     initialSortDir: 'desc',
   });
+  const showingSample = rows.some(r => r.is_sample || r.showing_sample) || sample.showingSample;
   return (
     <div className="space-y-6">
+      {showingSample ? (
+        <SampleDataBanner
+          section="candidate"
+          clearing={sample.clearing}
+          onClear={async () => {
+            await sample.clear();
+            await load();
+          }}
+        />
+      ) : null}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TableSearchFilter value={table.filter} onChange={table.setFilter} resultCount={table.resultCount} totalCount={table.totalCount} />
@@ -58,7 +88,12 @@ function CandidateSearchBody() {
               <TableBody>
                 {table.rows.map(r => (
                   <TableRow key={r.id}>
-                    <TableCell className="text-base">{r.display_name}</TableCell>
+                    <TableCell className="text-base">
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {r.display_name}
+                        {r.is_sample ? <SampleBadge /> : null}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-base">{r.career_area || '—'}</TableCell>
                     <TableCell className="text-right text-base">{r.match_score ?? '—'}</TableCell>
                   </TableRow>

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.base_class import Base
@@ -20,5 +20,6 @@ class Match(Base):
     score = Column(Float, nullable=False, default=0.0)
     category_scores = Column(JSONB, nullable=False, default=dict)
     explanation = Column(JSONB, nullable=False, default=dict)
+    is_sample = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -13,4 +13,5 @@ class Message(Base):
     subject = Column(String(255), nullable=True)
     body = Column(Text, nullable=False)
     read = Column(Boolean, default=False)
+    is_sample = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)

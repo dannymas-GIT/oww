@@ -48,8 +48,21 @@ export interface NavGroup {
 
 /** Roles that use the hiring workspace (mirrors backend HIRING_ROLES). */
 export const HIRING_ROLES = ['employer', 'employer_admin', 'employer_member', 'utility_admin', 'utility_manager'];
-/** Roles that may manage their organization's team. */
-export const ORG_ADMIN_ROLES = ['employer', 'employer_admin', 'utility_admin'];
+/** Roles that may manage their organization's team on OWW (employers only — utilities invite staff in WW360). */
+export const ORG_ADMIN_ROLES = ['employer', 'employer_admin'];
+/** Utility-facing hiring roles (no OWW Users & access / Team surface). */
+export const UTILITY_HIRING_ROLES = ['utility_admin', 'utility_manager'];
+
+/** Platform staff with full control. */
+export const PLATFORM_ADMIN_ROLES = ['platform_admin'];
+/** Ops: memberships, registrations, communications, analytics, logins. */
+export const PLATFORM_OPS_ROLES = ['platform_admin', 'platform_ops', 'platform_manager', 'state_admin'];
+/** Content: CMS, programs, featured, certs, locations. */
+export const PLATFORM_EDITOR_ROLES = ['platform_admin', 'platform_editor', 'state_admin'];
+/** People directories (candidates, hirers, ambassadors, educators). */
+export const PLATFORM_PEOPLE_ROLES = ['platform_admin', 'platform_manager', 'state_admin'];
+/** Users & access (platform staff accounts). */
+export const PLATFORM_USERS_ROLES = ['platform_admin', 'state_admin'];
 
 export const publicPathways = [
   {
@@ -148,8 +161,15 @@ export const roleNavGroups: NavGroup[] = [
             label: 'Organization',
             path: '/employer/org',
             icon: Building2,
-            roles: HIRING_ROLES,
+            roles: ['employer', 'employer_admin', 'employer_member'],
             description: 'Org profile and settings',
+          },
+          {
+            label: 'Utility profile',
+            path: '/employer/org',
+            icon: Building2,
+            roles: UTILITY_HIRING_ROLES,
+            description: 'Utility details and your OWW roles',
           },
         ],
       },
@@ -191,7 +211,7 @@ export const roleNavGroups: NavGroup[] = [
             path: '/employer/team',
             icon: UsersRound,
             roles: ORG_ADMIN_ROLES,
-            description: 'View organization accounts (invite staff in WW360)',
+            description: 'Invite and manage employer team members',
           },
         ],
       },
@@ -241,42 +261,42 @@ export const roleNavGroups: NavGroup[] = [
             label: 'Dashboard',
             path: '/admin',
             icon: LayoutDashboard,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Memberships, ARR, outreach',
           },
           {
             label: 'Memberships',
             path: '/admin/memberships',
             icon: CreditCard,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Active, expiring, expired',
           },
           {
             label: 'Communications',
             path: '/admin/communications',
             icon: Mail,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Email and SMS by audience',
           },
           {
             label: 'Login activity',
             path: '/admin/logins',
             icon: LogIn,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Sign-in stats and audit trail',
           },
           {
             label: 'Analytics',
             path: '/admin/analytics',
             icon: BarChart3,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Pipeline and engagement',
           },
           {
             label: 'Platform settings',
             path: '/admin/settings',
             icon: Settings,
-            roles: ['platform_admin'],
+            roles: PLATFORM_ADMIN_ROLES,
             description: 'Registration review and notifications',
           },
         ],
@@ -289,15 +309,43 @@ export const roleNavGroups: NavGroup[] = [
             label: 'Users & access',
             path: '/admin/users',
             icon: Users,
-            roles: ['platform_admin', 'state_admin'],
-            description: 'Accounts, roles, password reset',
+            roles: PLATFORM_USERS_ROLES,
+            description: 'Platform staff accounts and roles',
           },
           {
             label: 'Utility registrations',
             path: '/admin/registrations',
             icon: ClipboardList,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_OPS_ROLES,
             description: 'Review, verify, or suspend self-signups',
+          },
+          {
+            label: 'Candidates',
+            path: '/admin/people/candidates',
+            icon: Search,
+            roles: PLATFORM_PEOPLE_ROLES,
+            description: 'Job seekers and students',
+          },
+          {
+            label: 'Hirers',
+            path: '/admin/people/hirers',
+            icon: Briefcase,
+            roles: PLATFORM_PEOPLE_ROLES,
+            description: 'Employers and utilities',
+          },
+          {
+            label: 'Ambassadors',
+            path: '/admin/people/ambassadors',
+            icon: Star,
+            roles: PLATFORM_PEOPLE_ROLES,
+            description: 'Career champions',
+          },
+          {
+            label: 'Educators',
+            path: '/admin/people/educators',
+            icon: GraduationCap,
+            roles: PLATFORM_PEOPLE_ROLES,
+            description: 'Trainers and program partners',
           },
         ],
       },
@@ -309,11 +357,11 @@ export const roleNavGroups: NavGroup[] = [
             label: 'Pages & blog',
             path: '/admin/cms',
             icon: FileText,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_EDITOR_ROLES,
             description: 'Landing templates, blog posts, media, and publish',
           },
-          { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: ['platform_admin', 'state_admin'] },
-          { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: ['platform_admin', 'state_admin'] },
+          { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: PLATFORM_EDITOR_ROLES },
+          { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: PLATFORM_EDITOR_ROLES },
         ],
       },
       {
@@ -324,11 +372,11 @@ export const roleNavGroups: NavGroup[] = [
             label: 'Certifications',
             path: '/admin/certifications',
             icon: Award,
-            roles: ['platform_admin', 'state_admin'],
+            roles: PLATFORM_EDITOR_ROLES,
           },
-          { label: 'Locations', path: '/admin/locations', icon: MapPin, roles: ['platform_admin', 'state_admin'] },
-          { label: 'Jurisdictions', path: '/admin/jurisdictions', icon: Map, roles: ['platform_admin'] },
-          { label: 'National map', path: '/admin/map', icon: Shield, roles: ['platform_admin'] },
+          { label: 'Locations', path: '/admin/locations', icon: MapPin, roles: PLATFORM_EDITOR_ROLES },
+          { label: 'Jurisdictions', path: '/admin/jurisdictions', icon: Map, roles: PLATFORM_ADMIN_ROLES },
+          { label: 'National map', path: '/admin/map', icon: Shield, roles: PLATFORM_ADMIN_ROLES },
         ],
       },
     ],

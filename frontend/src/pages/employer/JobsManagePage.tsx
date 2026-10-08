@@ -12,6 +12,8 @@ import { createJob, duplicateJob, featureJob, listMyJobs } from '@/services/jobS
 import type { Job } from '@/types';
 import { Copy, Star } from 'lucide-react';
 import { MembershipGate } from '@/components/oww/MembershipGate';
+import { SampleBadge, SampleDataBanner } from '@/components/oww/SampleDataBanner';
+import { useSamplePack } from '@/hooks/useSamplePack';
 
 export default function JobsManagePage() {
   return (
@@ -31,10 +33,12 @@ export default function JobsManagePage() {
 function JobsManageBody() {
   const [rows, setRows] = useState<Job[]>([]);
   const [title, setTitle] = useState('');
+  const sample = useSamplePack('jobs');
 
   async function load() {
     try {
       setRows(await listMyJobs());
+      await sample.refresh();
     } catch {
       setRows([]);
     }
@@ -42,6 +46,7 @@ function JobsManageBody() {
 
   useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const table = useTableControls({
@@ -51,8 +56,20 @@ function JobsManageBody() {
     initialSortKey: 'title',
   });
 
+  const showingSample = sample.showingSample || rows.some(r => r.is_sample || r.showing_sample);
+
   return (
     <div className="space-y-6">
+      {showingSample ? (
+        <SampleDataBanner
+          section="job"
+          clearing={sample.clearing}
+          onClear={async () => {
+            await sample.clear();
+            await load();
+          }}
+        />
+      ) : null}
       <form
         className="flex flex-wrap gap-3"
         onSubmit={async e => {
@@ -96,7 +113,12 @@ function JobsManageBody() {
               <TableBody>
                 {table.rows.map(j => (
                   <TableRow key={j.id}>
-                    <TableCell className="text-base">{j.title}</TableCell>
+                    <TableCell className="text-base">
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {j.title}
+                        {j.is_sample ? <SampleBadge /> : null}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-base">{j.status || '—'}</TableCell>
                     <TableCell className="text-base">{j.is_featured ? 'Yes' : 'No'}</TableCell>
                     <TableCell>

@@ -121,6 +121,19 @@ def activate(db: Session, membership: Membership, plan: MembershipPlan, *, provi
         o.canceled_at = now
     db.commit()
     log_event(db, membership=membership, user_id=membership.user_id, event_type="membership.activated", provider=provider, amount_cents=plan.price_cents)
+    # New utility memberships get a labeled hiring sample pack until they clear it / post real jobs.
+    if membership.org_id and (membership.plan_code or "").startswith("utility"):
+        try:
+            from app.models.organization import Organization
+            from app.services import sample_data_service
+
+            org = db.query(Organization).filter(Organization.id == membership.org_id).first()
+            if org and "public_utility" in (org.org_type or []):
+                sample_data_service.ensure_utility_sample_pack(
+                    db, membership.org_id, actor_user_id=membership.user_id
+                )
+        except Exception:  # pragma: no cover
+            logger.exception("utility sample pack ensure failed org_id=%s", membership.org_id)
     return membership
 
 

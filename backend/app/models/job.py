@@ -29,6 +29,7 @@ class Job(Base):
     criteria = Column(JSONB, nullable=False, default=dict)
     status = Column(String(50), nullable=False, default="open", index=True)
     is_featured = Column(Boolean, default=False, nullable=False)
+    is_sample = Column(Boolean, default=False, nullable=False, index=True)
     views = Column(Integer, default=0, nullable=False)
     referral_stats = Column(JSONB, nullable=False, default=dict)
     published_at = Column(DateTime, nullable=True)

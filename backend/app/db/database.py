@@ -37,4 +37,8 @@ def init_db() -> None:
         conn.execute(text("ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS published_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_content_pages_published_at ON content_pages (published_at)"))
+        # Sample-data flags for utility hiring packs
+        for table in ("jobs", "messages", "interviews", "matches"):
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false"))
+            conn.execute(text(f"CREATE INDEX IF NOT EXISTS ix_{table}_is_sample ON {table} (is_sample)"))
 

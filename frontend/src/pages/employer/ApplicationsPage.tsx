@@ -6,14 +6,26 @@ import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
+import { SampleBadge, SampleDataBanner } from '@/components/oww/SampleDataBanner';
+import { useSamplePack } from '@/hooks/useSamplePack';
 import { listApplications } from '@/services/jobService';
 import type { Application } from '@/types';
 import { formatDate } from '@/lib/format';
 
 export default function ApplicationsPage() {
   const [rows, setRows] = useState<Application[]>([]);
+  const sample = useSamplePack('applications');
+  async function load() {
+    try {
+      setRows(await listApplications());
+      await sample.refresh();
+    } catch {
+      setRows([]);
+    }
+  }
   useEffect(() => {
-    void listApplications().then(setRows).catch(() => setRows([]));
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const table = useTableControls({
     rows,
@@ -25,9 +37,20 @@ export default function ApplicationsPage() {
     initialSortKey: 'created_at',
     initialSortDir: 'desc',
   });
+  const showingSample = sample.showingSample || rows.some(r => r.is_sample || r.showing_sample);
   return (
     <div className="space-y-6">
       <OwwPageHero eyebrow="Employer" title="Applications" description="Track candidates who applied to your openings." />
+      {showingSample ? (
+        <SampleDataBanner
+          section="application"
+          clearing={sample.clearing}
+          onClear={async () => {
+            await sample.clear();
+            await load();
+          }}
+        />
+      ) : null}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TableSearchFilter value={table.filter} onChange={table.setFilter} resultCount={table.resultCount} totalCount={table.totalCount} />
@@ -51,7 +74,12 @@ export default function ApplicationsPage() {
               <TableBody>
                 {table.rows.map(a => (
                   <TableRow key={a.id}>
-                    <TableCell className="text-base">{a.job_title || a.job_id}</TableCell>
+                    <TableCell className="text-base">
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {a.job_title || a.job_id}
+                        {a.is_sample ? <SampleBadge /> : null}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-base">{a.individual_name || '—'}</TableCell>
                     <TableCell className="text-base">{a.status}</TableCell>
                     <TableCell className="text-base">{formatDate(a.created_at)}</TableCell>

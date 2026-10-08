@@ -29,12 +29,67 @@ from app.services.membership_service import effective_status, ensure_default_pla
 
 router = APIRouter(prefix="/admin", tags=["admin-platform"])
 
-ADMIN_ROLES = ("platform_admin", "state_admin")
+ADMIN_ROLES = roles.PLATFORM_OPS_ROLES  # dashboard, memberships, regs, comms
+PEOPLE_ROLES = roles.PLATFORM_PEOPLE_ROLES
 ORG_ADMIN_ROLES = ("platform_admin", "state_admin", "utility_admin")
+PLATFORM_STAFF_CODES = roles.PLATFORM_STAFF_ROLES
 
 
 def _scope_state(user: User) -> Optional[str]:
-    return None if user.has_role("platform_admin") else user.state_code
+    # National platform staff see all states; state_admin stays in-state.
+    if user.has_any_role(*tuple(PLATFORM_STAFF_CODES)):
+        return None
+    return user.state_code
+
+
+def _user_dict_with_sample(u: User, org_name: str | None = None) -> dict[str, Any]:
+    from app.services.sample_data_service import user_is_sample
+
+    d = user_to_dict(u)
+    d["is_sample"] = user_is_sample(u)
+    if org_name is not None:
+        d["org_name"] = org_name
+    return d
+
+
+def _list_audience(
+    db: Session,
+    *,
+    role_codes: set[str],
+    audience_key: str,
+    state: Optional[str],
+) -> list[dict[str, Any]]:
+    from app.services.sample_data_service import ensure_admin_directory_samples, user_is_sample
+
+    rows = db.query(User).order_by(User.id).all()
+    real = [
+        u
+        for u in rows
+        if set(u.roles or []) & role_codes and not user_is_sample(u) and (not state or u.state_code == state)
+    ]
+    showing_sample = False
+    if not real:
+        ensure_admin_directory_samples(db, audience_key)
+        rows = db.query(User).order_by(User.id).all()
+        real = [
+            u
+            for u in rows
+            if set(u.roles or []) & role_codes and user_is_sample(u)
+        ]
+        showing_sample = bool(real)
+
+    org_ids = {u.org_id for u in real if u.org_id}
+    org_names = {}
+    if org_ids:
+        for o in db.query(Organization).filter(Organization.id.in_(org_ids)).all():
+            org_names[o.id] = o.name
+
+    out = []
+    for u in real:
+        d = _user_dict_with_sample(u, org_names.get(u.org_id) if u.org_id else None)
+        d["showing_sample"] = showing_sample
+        out.append(d)
+    return out
 
 
 class UserCreate(BaseModel):
@@ -323,10 +378,37 @@ def organizations(db: Session = Depends(get_db), user: User = Depends(require_ro
     return [{"id": o.id, "name": o.name, "state_code": o.state_code, "region": o.region} for o in q.order_by(Organization.name).all()]
 
 
+# ---------- People directories (audience) ----------
+
+@router.get("/people/candidates")
+def people_candidates(db: Session = Depends(get_db), user: User = Depends(require_roles(*PEOPLE_ROLES))):
+    return _list_audience(db, role_codes={"individual", "student"}, audience_key="candidates", state=_scope_state(user))
+
+
+@router.get("/people/hirers")
+def people_hirers(db: Session = Depends(get_db), user: User = Depends(require_roles(*PEOPLE_ROLES))):
+    return _list_audience(
+        db,
+        role_codes={"employer", "employer_admin", "employer_member", "utility_admin", "utility_manager"},
+        audience_key="hirers",
+        state=_scope_state(user),
+    )
+
+
+@router.get("/people/ambassadors")
+def people_ambassadors(db: Session = Depends(get_db), user: User = Depends(require_roles(*PEOPLE_ROLES))):
+    return _list_audience(db, role_codes={"ambassador"}, audience_key="ambassadors", state=_scope_state(user))
+
+
+@router.get("/people/educators")
+def people_educators(db: Session = Depends(get_db), user: User = Depends(require_roles(*PEOPLE_ROLES))):
+    return _list_audience(db, role_codes={"educator"}, audience_key="educators", state=_scope_state(user))
+
+
 # ---------- Platform settings ----------
 
 @router.get("/settings")
-def get_platform_settings(db: Session = Depends(get_db), user: User = Depends(require_roles(*ADMIN_ROLES))):
+def get_platform_settings(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
     return registration_service.get_settings(db)
 
 

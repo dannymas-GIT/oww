@@ -88,7 +88,7 @@ export function AppShell() {
       <ImpersonationBanner />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 text-oww-navy backdrop-blur-md">
         <div className="h-1 bg-gradient-to-r from-oww-navy via-oww-cyan to-oww-navy" aria-hidden />
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-2 md:gap-3 md:px-6">
+        <div className="flex w-full items-center gap-2 px-4 py-2 sm:px-5 md:gap-3 md:px-6 lg:px-8 xl:px-10">
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -140,12 +140,21 @@ export function AppShell() {
                 <PersonaSwitcher />
                 <Button
                   variant="ghost"
-                  className="min-h-[44px] min-w-[44px] px-2 text-base text-oww-navy hover:bg-slate-100 xl:px-3"
+                  className="min-h-[44px] max-w-[14rem] gap-2 px-2 text-base text-oww-navy hover:bg-slate-100 sm:max-w-[18rem] xl:px-3"
                   asChild
                 >
-                  <Link to="/profile" aria-label="Profile">
-                    <UserRound className="h-4 w-4 xl:mr-2" />
-                    <span className="hidden xl:inline">Profile</span>
+                  <Link
+                    to="/profile"
+                    aria-label={
+                      user?.full_name || user?.username
+                        ? `Profile for ${user.full_name || user.username}`
+                        : 'Profile'
+                    }
+                  >
+                    <UserRound className="h-4 w-4 shrink-0" />
+                    <span className="hidden truncate sm:inline">
+                      {user?.full_name?.trim() || user?.username || 'Profile'}
+                    </span>
                   </Link>
                 </Button>
                 <Button
@@ -266,19 +275,31 @@ export function AppShell() {
                 <PersonaSwitcher variant="mobile" />
               </div>
             ) : null}
-            {user ? <p className="mt-3 px-3 text-sm text-slate-500">{user.full_name || user.username}</p> : null}
+            {user ? (
+              <div className="mt-3 space-y-1 px-3">
+                <p className="text-sm text-slate-500">Signed in as</p>
+                <p className="text-base font-semibold text-oww-navy">{user.full_name?.trim() || user.username}</p>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex min-h-[44px] items-center text-base font-medium text-oww-cyan"
+                >
+                  Profile
+                </Link>
+              </div>
+            ) : null}
           </nav>
         ) : null}
       </header>
 
-      <main id="main-content" className="oww-rise mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+      <main id="main-content" className="oww-rise w-full px-4 py-6 sm:px-5 md:px-6 md:py-8 lg:px-8 xl:px-10">
         <Outlet />
       </main>
       <PageAwareTour />
 
       <footer className="border-t border-slate-200 bg-white">
         <div className="h-1 bg-gradient-to-r from-oww-navy via-oww-cyan to-oww-navy" aria-hidden />
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 md:flex-row md:items-center md:justify-between md:px-6">
+        <div className="flex w-full flex-col gap-4 px-4 py-6 sm:px-5 md:flex-row md:items-center md:justify-between md:px-6 lg:px-8 xl:px-10">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <OwwLogo to={`/${state}`} size="footer" />
             <p className="text-sm text-slate-600">

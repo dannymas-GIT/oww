@@ -6,14 +6,26 @@ import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
+import { SampleBadge, SampleDataBanner } from '@/components/oww/SampleDataBanner';
+import { useSamplePack } from '@/hooks/useSamplePack';
 import { listInterviews } from '@/services/messagingService';
 import type { Interview } from '@/types';
 import { formatDate } from '@/lib/format';
 
 export default function InterviewSchedulePage() {
   const [rows, setRows] = useState<Interview[]>([]);
+  const sample = useSamplePack('interviews');
+  async function load() {
+    try {
+      setRows(await listInterviews());
+      await sample.refresh();
+    } catch {
+      setRows([]);
+    }
+  }
   useEffect(() => {
-    void listInterviews().then(setRows).catch(() => setRows([]));
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const table = useTableControls({
     rows,
@@ -24,9 +36,20 @@ export default function InterviewSchedulePage() {
     ),
     initialSortKey: 'scheduled_at',
   });
+  const showingSample = sample.showingSample || rows.some(r => r.is_sample || r.showing_sample);
   return (
     <div className="space-y-6">
       <OwwPageHero eyebrow="Employer" title="Interview schedule" description="Upcoming and past interview slots." />
+      {showingSample ? (
+        <SampleDataBanner
+          section="interview"
+          clearing={sample.clearing}
+          onClear={async () => {
+            await sample.clear();
+            await load();
+          }}
+        />
+      ) : null}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TableSearchFilter value={table.filter} onChange={table.setFilter} resultCount={table.resultCount} totalCount={table.totalCount} />
@@ -50,7 +73,12 @@ export default function InterviewSchedulePage() {
               <TableBody>
                 {table.rows.map(i => (
                   <TableRow key={i.id}>
-                    <TableCell className="text-base">{formatDate(i.scheduled_at)}</TableCell>
+                    <TableCell className="text-base">
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {formatDate(i.scheduled_at)}
+                        {i.is_sample ? <SampleBadge /> : null}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-base">{i.candidate_name || '—'}</TableCell>
                     <TableCell className="text-base">{i.job_title || '—'}</TableCell>
                     <TableCell className="text-base">{i.status}</TableCell>

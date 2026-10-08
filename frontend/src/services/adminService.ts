@@ -24,6 +24,11 @@ export async function listUsers(params?: { q?: string }) {
   return data as OwwUser[];
 }
 
+export async function listPeopleDirectory(audience: 'candidates' | 'hirers' | 'ambassadors' | 'educators') {
+  const { data } = await api.get(`/admin/people/${audience}`);
+  return data as OwwUser[];
+}
+
 export async function listOrgUsers() {
   const { data } = await api.get('/admin/org-users');
   return data as OwwUser[];
