@@ -48,9 +48,27 @@ def _org_for(db, user):
 
 @router.get("")
 def list_my_jobs(db: Session = Depends(get_db), user: User = Depends(require_roles(*HIRING_ROLES, "platform_admin"))):
+    from app.services.sample_data_service import filter_sample_section
+
     org_id = _org_for(db, user)
     jobs = db.query(Job).filter(Job.org_id == org_id).order_by(Job.id.desc()).all()
-    return [{"id": j.id, "title": j.title, "status": j.status, "is_featured": j.is_featured, "city": j.city, "state_code": j.state_code, "opportunity_type": j.opportunity_type, "career_area": j.primary_career_area, "description": j.description} for j in jobs]
+    jobs, showing_sample = filter_sample_section(jobs, is_sample_fn=lambda j: bool(j.is_sample))
+    return [
+        {
+            "id": j.id,
+            "title": j.title,
+            "status": j.status,
+            "is_featured": j.is_featured,
+            "is_sample": bool(j.is_sample),
+            "city": j.city,
+            "state_code": j.state_code,
+            "opportunity_type": j.opportunity_type,
+            "career_area": j.primary_career_area,
+            "description": j.description,
+            "showing_sample": showing_sample,
+        }
+        for j in jobs
+    ]
 
 @router.post("")
 def create_job(body: JobIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*POSTERS)), _paid: User = Depends(require_membership("employer", "utility"))):
@@ -67,6 +85,7 @@ def create_job(body: JobIn, db: Session = Depends(get_db), user: User = Depends(
         state_code=(body.state_code or user.state_code or "NY").upper(),
         criteria=body.criteria or {},
         status=body.status or "open",
+        is_sample=False,
         latitude=body.latitude,
         longitude=body.longitude,
         published_at=datetime.utcnow(),
@@ -138,15 +157,21 @@ def templates(db: Session = Depends(get_db), user: User = Depends(require_roles(
 
 @router.get("/applications")
 def list_apps(job_id: int | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.services.sample_data_service import filter_sample_section
+
     q = db.query(Application)
-    if user.has_any_role("employer", "employer_admin", "employer_member") and user.org_id:
+    if user.has_any_role(*HIRING_ROLES) and user.org_id:
         q = q.filter(Application.org_id == user.org_id)
     elif user.has_role("individual"):
         q = q.filter(Application.user_id == user.id)
     if job_id:
         q = q.filter(Application.job_id == job_id)
+    rows = q.order_by(Application.id.desc()).limit(200).all()
+    rows, showing_sample = filter_sample_section(
+        rows, is_sample_fn=lambda a: bool((a.meta or {}).get("is_sample"))
+    )
     out = []
-    for a in q.order_by(Application.id.desc()).limit(200).all():
+    for a in rows:
         job = db.query(Job).filter(Job.id == a.job_id).first()
         profile = db.query(IndividualProfile).filter(IndividualProfile.id == a.individual_profile_id).first()
         out.append({
@@ -155,6 +180,8 @@ def list_apps(job_id: int | None = None, db: Session = Depends(get_db), user: Us
             "job_title": job.title if job else None,
             "individual_name": profile.display_name if profile else None,
             "status": a.status,
+            "is_sample": bool((a.meta or {}).get("is_sample")),
+            "showing_sample": showing_sample,
             "created_at": a.created_at.isoformat() if a.created_at else None,
         })
     return out

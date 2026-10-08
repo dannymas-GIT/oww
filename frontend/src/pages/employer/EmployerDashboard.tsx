@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwKpiTile } from '@/components/oww/OwwKpiTile';
 import { MembershipStatusPill } from '@/components/oww/MembershipStatusPill';
+import { SampleDataBanner } from '@/components/oww/SampleDataBanner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useSamplePack } from '@/hooks/useSamplePack';
 import { myMembership } from '@/services/billingService';
 import { listMyJobs } from '@/services/jobService';
 import { openWaterWorkforce360 } from '@/services/ww360Service';
@@ -12,7 +14,9 @@ import { formatDate } from '@/lib/format';
 import type { Membership } from '@/types';
 
 export default function EmployerDashboard() {
-  const { isUtilityAdmin, isUtilityManager, canManageUsers } = useAuth();
+  const { user, isUtilityAdmin, isUtilityManager, canManageUsers, isEmployer } = useAuth();
+  const sample = useSamplePack();
+  const displayName = user?.full_name?.trim() || user?.username;
   const [membership, setMembership] = useState<Membership | null | undefined>(undefined);
   const [orgSuspended, setOrgSuspended] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -73,7 +77,7 @@ export default function EmployerDashboard() {
     <div className="space-y-6">
       <OwwPageHero
         eyebrow={eyebrow}
-        title="Hiring workspace"
+        title={displayName ? `Welcome, ${displayName}` : 'Hiring workspace'}
         description="Manage your organization profile, jobs, applications, and candidate conversations."
         badges={membership ? <MembershipStatusPill status={membership.status} className="bg-white/10 text-white ring-white/30" /> : null}
         actions={
@@ -82,6 +86,20 @@ export default function EmployerDashboard() {
           </Button>
         }
       />
+
+      {sample.status?.sample_pack_active ? (
+        <SampleDataBanner
+          clearing={sample.clearing}
+          onClear={async () => {
+            await sample.clear();
+            try {
+              setJobCount((await listMyJobs()).length);
+            } catch {
+              /* ignore */
+            }
+          }}
+        />
+      ) : null}
 
       {orgSuspended ? (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 p-5">
@@ -156,9 +174,14 @@ export default function EmployerDashboard() {
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
           <Link to="/employer/interviews">Interviews</Link>
         </Button>
-        {canManageUsers ? (
+        {isEmployer ? (
           <Button variant="outline" className="min-h-[44px] text-base" asChild>
             <Link to="/employer/team">Manage team</Link>
+          </Button>
+        ) : null}
+        {isUtilityAdmin || isUtilityManager ? (
+          <Button variant="outline" className="min-h-[44px] text-base" asChild>
+            <Link to="/employer/org">Utility profile</Link>
           </Button>
         ) : null}
         <Button variant="ghost" className="min-h-[44px] text-base" asChild>

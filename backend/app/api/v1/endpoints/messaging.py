@@ -36,7 +36,16 @@ class InterviewIn(BaseModel):
 
 @router.get("/threads")
 def threads(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.services.sample_data_service import filter_sample_section
+
     msgs = db.query(Message).filter((Message.from_user_id == user.id) | (Message.to_user_id == user.id)).order_by(Message.id.desc()).limit(200).all()
+    if user.org_id:
+        org_msgs = db.query(Message).filter(Message.org_id == user.org_id).order_by(Message.id.desc()).limit(200).all()
+        by_id = {m.id: m for m in msgs}
+        for m in org_msgs:
+            by_id[m.id] = m
+        msgs = sorted(by_id.values(), key=lambda m: m.id, reverse=True)
+    msgs, showing_sample = filter_sample_section(msgs, is_sample_fn=lambda m: bool(m.is_sample))
     # collapse by subject+peer
     seen = {}
     for m in msgs:
@@ -49,6 +58,8 @@ def threads(db: Session = Depends(get_db), user: User = Depends(get_current_user
                 "participants": [str(peer)],
                 "last_message_at": m.created_at.isoformat() if m.created_at else None,
                 "unread": 0 if m.read or m.from_user_id == user.id else 1,
+                "is_sample": bool(m.is_sample),
+                "showing_sample": showing_sample,
             }
     return list(seen.values())
 
@@ -89,13 +100,17 @@ def create_note(body: NoteIn, db: Session = Depends(get_db), user: User = Depend
 
 @router.get("/interviews")
 def list_interviews(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.services.sample_data_service import filter_sample_section
+
     q = db.query(Interview)
     if user.org_id:
         q = q.filter(Interview.org_id == user.org_id)
     else:
         q = q.filter((Interview.candidate_user_id == user.id) | (Interview.employer_user_id == user.id))
+    rows = q.order_by(Interview.scheduled_at.desc()).all()
+    rows, showing_sample = filter_sample_section(rows, is_sample_fn=lambda i: bool(i.is_sample))
     out = []
-    for i in q.order_by(Interview.scheduled_at.desc()).all():
+    for i in rows:
         job = db.query(Job).filter(Job.id == i.job_id).first() if i.job_id else None
         cand = db.query(User).filter(User.id == i.candidate_user_id).first()
         out.append({
@@ -106,6 +121,8 @@ def list_interviews(db: Session = Depends(get_db), user: User = Depends(get_curr
             "status": i.status,
             "location": i.location,
             "notes": i.notes,
+            "is_sample": bool(i.is_sample),
+            "showing_sample": showing_sample,
         })
     return out
 

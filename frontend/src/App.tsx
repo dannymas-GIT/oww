@@ -2,7 +2,15 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/oww/AppShell';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { DEFAULT_STATE } from '@/lib/constants';
-import { HIRING_ROLES, ORG_ADMIN_ROLES } from '@/config/nav';
+import {
+  HIRING_ROLES,
+  ORG_ADMIN_ROLES,
+  PLATFORM_ADMIN_ROLES,
+  PLATFORM_EDITOR_ROLES,
+  PLATFORM_OPS_ROLES,
+  PLATFORM_PEOPLE_ROLES,
+  PLATFORM_USERS_ROLES,
+} from '@/config/nav';
 
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterUtilityPage from '@/pages/auth/RegisterUtilityPage';
@@ -53,6 +61,7 @@ import AdminMembershipsPage from '@/pages/admin/AdminMembershipsPage';
 import AdminCommunicationsPage from '@/pages/admin/AdminCommunicationsPage';
 import AdminRegistrationsPage from '@/pages/admin/AdminRegistrationsPage';
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
+import AdminPeopleDirectoryPage from '@/pages/admin/people/AdminPeopleDirectoryPage';
 
 import PricingPage from '@/pages/billing/PricingPage';
 import BillingPage from '@/pages/billing/BillingPage';
@@ -219,7 +228,7 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminDashboardPage />
             </ProtectedRoute>
           }
@@ -227,7 +236,7 @@ export default function App() {
         <Route
           path="/admin/logins"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminLoginsPage />
             </ProtectedRoute>
           }
@@ -235,7 +244,7 @@ export default function App() {
         <Route
           path="/admin/memberships"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminMembershipsPage />
             </ProtectedRoute>
           }
@@ -243,7 +252,7 @@ export default function App() {
         <Route
           path="/admin/communications"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminCommunicationsPage />
             </ProtectedRoute>
           }
@@ -251,7 +260,7 @@ export default function App() {
         <Route
           path="/admin/users"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_USERS_ROLES}>
               <AdminUsersPage />
             </ProtectedRoute>
           }
@@ -259,15 +268,47 @@ export default function App() {
         <Route
           path="/admin/registrations"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminRegistrationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/people/candidates"
+          element={
+            <ProtectedRoute roles={PLATFORM_PEOPLE_ROLES}>
+              <AdminPeopleDirectoryPage audience="candidates" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/people/hirers"
+          element={
+            <ProtectedRoute roles={PLATFORM_PEOPLE_ROLES}>
+              <AdminPeopleDirectoryPage audience="hirers" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/people/ambassadors"
+          element={
+            <ProtectedRoute roles={PLATFORM_PEOPLE_ROLES}>
+              <AdminPeopleDirectoryPage audience="ambassadors" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/people/educators"
+          element={
+            <ProtectedRoute roles={PLATFORM_PEOPLE_ROLES}>
+              <AdminPeopleDirectoryPage audience="educators" />
             </ProtectedRoute>
           }
         />
         <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute roles={['platform_admin']}>
+            <ProtectedRoute roles={PLATFORM_ADMIN_ROLES}>
               <AdminSettingsPage />
             </ProtectedRoute>
           }
@@ -275,7 +316,7 @@ export default function App() {
         <Route
           path="/admin/jurisdictions"
           element={
-            <ProtectedRoute roles={['platform_admin']}>
+            <ProtectedRoute roles={PLATFORM_ADMIN_ROLES}>
               <AdminJurisdictionsPage />
             </ProtectedRoute>
           }
@@ -283,7 +324,7 @@ export default function App() {
         <Route
           path="/admin/cms"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminCmsPage />
             </ProtectedRoute>
           }
@@ -291,7 +332,7 @@ export default function App() {
         <Route
           path="/admin/cms/:id"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminCmsEditorPage />
             </ProtectedRoute>
           }
@@ -299,7 +340,7 @@ export default function App() {
         <Route
           path="/admin/programs"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminProgramsPage />
             </ProtectedRoute>
           }
@@ -307,7 +348,7 @@ export default function App() {
         <Route
           path="/admin/featured"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminFeaturedPostsPage />
             </ProtectedRoute>
           }
@@ -315,7 +356,7 @@ export default function App() {
         <Route
           path="/admin/analytics"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminAnalyticsPage />
             </ProtectedRoute>
           }
@@ -323,7 +364,7 @@ export default function App() {
         <Route
           path="/admin/certifications"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminCertificationsPage />
             </ProtectedRoute>
           }
@@ -331,7 +372,7 @@ export default function App() {
         <Route
           path="/admin/locations"
           element={
-            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminLocationsPage />
             </ProtectedRoute>
           }
@@ -339,7 +380,7 @@ export default function App() {
         <Route
           path="/admin/map"
           element={
-            <ProtectedRoute roles={['platform_admin']}>
+            <ProtectedRoute roles={PLATFORM_ADMIN_ROLES}>
               <NationalMapPage />
             </ProtectedRoute>
           }

@@ -155,7 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isUtilityAdmin: hasAnyRole('utility_admin'),
       isUtilityManager: hasAnyRole('utility_manager'),
       isHiring: hasAnyRole('employer', 'employer_admin', 'employer_member', 'utility_admin', 'utility_manager'),
-      canManageUsers: isPlatformAdmin || isStateAdmin || hasAnyRole('utility_admin', 'employer', 'employer_admin'),
+      // Platform/state admins manage OWW users; employers manage employer team on OWW.
+      // Utility admins invite staff in WW360 — not via OWW Users & access.
+      canManageUsers: isPlatformAdmin || isStateAdmin || hasAnyRole('employer', 'employer_admin'),
       isIndividual: hasAnyRole('individual', 'student'),
       isEducator: hasAnyRole('educator'),
       activeStateCode: (user?.jurisdiction_code || DEFAULT_STATE).toLowerCase(),

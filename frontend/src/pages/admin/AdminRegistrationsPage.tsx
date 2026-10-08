@@ -61,6 +61,42 @@ function paymentLabel(r: UtilityRegistration) {
   return membershipStatusLabel(r.payment_status);
 }
 
+function ActionButtons({
+  r,
+  busy,
+  onVerify,
+  onSuspend,
+  onReinstate,
+}: {
+  r: UtilityRegistration;
+  busy: boolean;
+  onVerify: () => void;
+  onSuspend: () => void;
+  onReinstate: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {r.status === 'pending_review' || r.status === 'not_required' ? (
+        <Button type="button" variant="outline" className="min-h-[44px] text-base" disabled={busy} onClick={onVerify}>
+          <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden />
+          Verify
+        </Button>
+      ) : null}
+      {r.status !== 'suspended' ? (
+        <Button type="button" variant="outline" className="min-h-[44px] text-base text-rose-700" disabled={busy} onClick={onSuspend}>
+          <Ban className="mr-2 h-4 w-4" aria-hidden />
+          Suspend
+        </Button>
+      ) : (
+        <Button type="button" variant="outline" className="min-h-[44px] text-base" disabled={busy} onClick={onReinstate}>
+          <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
+          Reinstate
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export default function AdminRegistrationsPage() {
   const [params, setParams] = useSearchParams();
   const initialTab = params.get('status') || 'pending_review';
@@ -161,7 +197,11 @@ export default function AdminRegistrationsPage() {
       {msg ? <p className="rounded-lg bg-emerald-50 p-3 text-base text-emerald-900">{msg}</p> : null}
       {error ? <p className="rounded-lg bg-rose-50 p-3 text-base text-rose-800">{error}</p> : null}
 
-      <div role="tablist" aria-label="Registration status" className="flex flex-wrap gap-1 border-b border-slate-200">
+      <div
+        role="tablist"
+        aria-label="Registration status"
+        className="-mx-1 flex gap-1 overflow-x-auto border-b border-slate-200 px-1 pb-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {STATUS_TABS.map(t => {
           const count = t.id === 'all' ? rows.length : rows.filter(r => r.status === t.id).length;
           return (
@@ -172,7 +212,7 @@ export default function AdminRegistrationsPage() {
               aria-selected={tab === t.id}
               onClick={() => selectTab(t.id)}
               className={cn(
-                'min-h-[44px] border-b-2 px-3 text-base font-medium transition',
+                'min-h-[44px] shrink-0 border-b-2 px-3 text-base font-medium transition',
                 tab === t.id ? 'border-oww-cyan text-oww-navy' : 'border-transparent text-slate-600 hover:text-oww-navy'
               )}
             >
@@ -182,9 +222,15 @@ export default function AdminRegistrationsPage() {
         })}
       </div>
 
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-tour="registrations-table">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TableSearchFilter value={table.filter} onChange={table.setFilter} resultCount={table.resultCount} totalCount={table.totalCount} />
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" data-tour="registrations-table">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <TableSearchFilter
+            value={table.filter}
+            onChange={table.setFilter}
+            resultCount={table.resultCount}
+            totalCount={table.totalCount}
+            className="w-full sm:max-w-md"
+          />
           <p className="text-sm text-slate-600">
             Filtered ({table.resultCount}) · All ({table.totalCount})
           </p>
@@ -196,95 +242,169 @@ export default function AdminRegistrationsPage() {
         ) : table.resultCount === 0 ? (
           <OwwEmptyState title="No registrations match your filter" />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableTableHead column="utility_name" label="Utility" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <SortableTableHead column="admin" label="Admin" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <SortableTableHead column="state_code" label="State" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <SortableTableHead column="payment" label="Payment" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <SortableTableHead column="created_at" label="Submitted" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <SortableTableHead column="status" label="Review" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
-                  <TableHead className="font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.rows.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <p className="text-base font-medium">{r.utility_name}</p>
-                      <p className="text-sm text-slate-500">
-                        {[r.website, r.phone].filter(Boolean).join(' · ') || '—'}
+          <>
+            {/* Mobile / tablet card stack — no horizontal scroll */}
+            <ul className="grid gap-3 min-[900px]:hidden">
+              {table.rows.map(r => (
+                <li key={r.id} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-lg font-semibold text-oww-navy">{r.utility_name}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {[r.state_code, r.website, r.phone].filter(Boolean).join(' · ') || '—'}
                       </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-base font-medium">{r.contact_name}</p>
-                      <p className="text-sm text-slate-500">{r.contact_email}</p>
-                      {r.job_title ? <p className="text-sm text-slate-500">{r.job_title}</p> : null}
-                    </TableCell>
-                    <TableCell className="text-base">{r.state_code}</TableCell>
-                    <TableCell>
-                      {r.payment_status ? <MembershipStatusPill status={r.payment_status} /> : <span className="text-base text-slate-600">Unpaid</span>}
-                      <span className="mt-1 block text-sm text-slate-500">{paymentLabel(r)}</span>
-                    </TableCell>
-                    <TableCell className="text-base">{formatDateTime(r.created_at) || formatDate(r.created_at)}</TableCell>
-                    <TableCell>
-                      <ReviewPill status={r.status} />
-                      {r.reviewed_at ? (
-                        <span className="mt-1 block text-sm text-slate-500">
-                          {r.reviewed_by_name ? `${r.reviewed_by_name} · ` : ''}
-                          {formatDate(r.reviewed_at)}
-                        </span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {r.status === 'pending_review' || r.status === 'not_required' ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="min-h-[44px] text-base"
-                            disabled={busy}
-                            onClick={() => void act(r, 'verify')}
-                          >
-                            <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden />
-                            Verify
-                          </Button>
-                        ) : null}
-                        {r.status !== 'suspended' ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="min-h-[44px] text-base text-rose-700"
-                            disabled={busy}
-                            onClick={() => {
-                              setSuspendTarget(r);
-                              setNote('');
-                            }}
-                          >
-                            <Ban className="mr-2 h-4 w-4" aria-hidden />
-                            Suspend
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="min-h-[44px] text-base"
-                            disabled={busy}
-                            onClick={() => void act(r, 'reinstate')}
-                          >
-                            <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
-                            Reinstate
-                          </Button>
-                        )}
+                    </div>
+                    <ReviewPill status={r.status} />
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-base">
+                    <div>
+                      <dt className="text-sm font-semibold text-slate-500">Admin</dt>
+                      <dd>
+                        <span className="font-medium">{r.contact_name}</span>
+                        <span className="block text-sm text-slate-600">{r.contact_email}</span>
+                        {r.job_title ? <span className="block text-sm text-slate-600">{r.job_title}</span> : null}
+                      </dd>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      <div>
+                        <dt className="text-sm font-semibold text-slate-500">Payment</dt>
+                        <dd className="mt-1">
+                          {r.payment_status ? (
+                            <MembershipStatusPill status={r.payment_status} />
+                          ) : (
+                            <span className="text-slate-600">Unpaid</span>
+                          )}
+                          <span className="mt-1 block text-sm text-slate-500">{paymentLabel(r)}</span>
+                        </dd>
                       </div>
-                    </TableCell>
+                      <div>
+                        <dt className="text-sm font-semibold text-slate-500">Submitted</dt>
+                        <dd className="mt-1">{formatDateTime(r.created_at) || formatDate(r.created_at)}</dd>
+                      </div>
+                    </div>
+                  </dl>
+                  <div className="mt-4 border-t border-slate-200 pt-3">
+                    <ActionButtons
+                      r={r}
+                      busy={busy}
+                      onVerify={() => void act(r, 'verify')}
+                      onSuspend={() => {
+                        setSuspendTarget(r);
+                        setNote('');
+                      }}
+                      onReinstate={() => void act(r, 'reinstate')}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop table — wrapping cells, full width, no overflow scroll */}
+            <div className="hidden min-[900px]:block">
+              <Table className="table-fixed" scrollable={false}>
+                <TableHeader>
+                  <TableRow>
+                    <SortableTableHead
+                      column="utility_name"
+                      label="Utility"
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onSort={table.toggleSort}
+                      className="w-[28%]"
+                    />
+                    <SortableTableHead
+                      column="admin"
+                      label="Admin"
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onSort={table.toggleSort}
+                      className="w-[22%]"
+                    />
+                    <SortableTableHead
+                      column="payment"
+                      label="Payment"
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onSort={table.toggleSort}
+                      className="w-[14%]"
+                    />
+                    <SortableTableHead
+                      column="created_at"
+                      label="Submitted"
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onSort={table.toggleSort}
+                      className="w-[12%]"
+                    />
+                    <SortableTableHead
+                      column="status"
+                      label="Review"
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onSort={table.toggleSort}
+                      className="w-[12%]"
+                    />
+                    <TableHead className="w-[12%] whitespace-normal font-semibold">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {table.rows.map(r => (
+                    <TableRow key={r.id}>
+                      <TableCell className="align-top whitespace-normal">
+                        <p className="text-base font-medium leading-snug">{r.utility_name}</p>
+                        <p className="mt-0.5 text-sm text-slate-500">
+                          <span className="font-medium text-slate-700">{r.state_code}</span>
+                          {r.website || r.phone ? (
+                            <>
+                              {' · '}
+                              <span className="break-all">{[r.website, r.phone].filter(Boolean).join(' · ')}</span>
+                            </>
+                          ) : null}
+                        </p>
+                      </TableCell>
+                      <TableCell className="align-top whitespace-normal">
+                        <p className="text-base font-medium leading-snug">{r.contact_name}</p>
+                        <p className="break-all text-sm text-slate-500">{r.contact_email}</p>
+                        {r.job_title ? <p className="text-sm text-slate-500">{r.job_title}</p> : null}
+                      </TableCell>
+                      <TableCell className="align-top whitespace-normal">
+                        {r.payment_status ? (
+                          <MembershipStatusPill status={r.payment_status} />
+                        ) : (
+                          <span className="text-base text-slate-600">Unpaid</span>
+                        )}
+                        <span className="mt-1 block text-sm text-slate-500">{paymentLabel(r)}</span>
+                      </TableCell>
+                      <TableCell className="align-top whitespace-normal text-base">
+                        {formatDateTime(r.created_at) || formatDate(r.created_at)}
+                      </TableCell>
+                      <TableCell className="align-top whitespace-normal">
+                        <ReviewPill status={r.status} />
+                        {r.reviewed_at ? (
+                          <span className="mt-1 block text-sm text-slate-500">
+                            {r.reviewed_by_name ? `${r.reviewed_by_name} · ` : ''}
+                            {formatDate(r.reviewed_at)}
+                          </span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="align-top whitespace-normal">
+                        <ActionButtons
+                          r={r}
+                          busy={busy}
+                          onVerify={() => void act(r, 'verify')}
+                          onSuspend={() => {
+                            setSuspendTarget(r);
+                            setNote('');
+                          }}
+                          onReinstate={() => void act(r, 'reinstate')}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
 

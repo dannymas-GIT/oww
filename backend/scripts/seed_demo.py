@@ -161,6 +161,11 @@ def main():
         # Keep state_admin alias username pointing at same mailbox only if still present
         _ = jenny
 
+        # Delegate-able platform staff (jenny/platform_admin can assign these)
+        upsert_user(db, "oww-editor", "editor@onewaterworkforce.org", ["platform_editor"], "OWW Platform Editor", PASSWORD)
+        upsert_user(db, "oww-ops", "ops@onewaterworkforce.org", ["platform_ops"], "OWW Platform Ops", PASSWORD)
+        upsert_user(db, "oww-manager", "manager@onewaterworkforce.org", ["platform_manager"], "OWW Platform Manager", PASSWORD)
+
         org_ids = []
         for i, (name, otype, region, lat, lng) in enumerate(ORGS):
             org = db.query(Organization).filter(Organization.name == name).first()
@@ -408,8 +413,21 @@ def main():
 
         ensure_default_personas(db)
         n = refresh_all_matches(db)
+
+        from app.services import sample_data_service
+
+        # Utility hiring packs: sample apps / messages / interviews (and jobs when empty).
+        for i, org_id in enumerate(org_ids):
+            if ORGS[i][1] == "public_utility" and i < 6:
+                ua = db.query(User).filter(User.username == f"utility-admin{i+1}").first()
+                sample_data_service.ensure_utility_sample_pack(
+                    db, org_id, actor_user_id=ua.id if ua else None
+                )
+        for audience in ("candidates", "hirers", "ambassadors", "educators"):
+            sample_data_service.ensure_admin_directory_samples(db, audience)
+
         print(f"Seed complete. Admin={admin.username} Jenny={jenny.username} matches_refreshed={n}")
-        print(f"Password for admin accounts (oww-admin, jenny, dmas, smosquea, jnolan, tmcknight): {PASSWORD}")
+        print(f"Password for admin accounts (oww-admin, jenny, dmas, smosquea, jnolan, tmcknight, oww-editor, oww-ops, oww-manager): {PASSWORD}")
         print("Pending review demos: utility-pending1 (paid), utility-pending2 (unpaid)")
     finally:
         db.close()

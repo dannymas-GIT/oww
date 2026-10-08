@@ -186,7 +186,7 @@ export default function AdminCmsPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
-              className="min-h-[44px] text-base"
+              className="min-h-[44px] border-white/40 bg-white/10 text-base text-white hover:bg-white/20 hover:text-white"
               onClick={() => requestOpenTour('oww:tour:cms')}
             >
               <CircleHelp className="mr-2 h-4 w-4" />

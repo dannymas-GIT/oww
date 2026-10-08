@@ -45,12 +45,14 @@ export default function ProfilePage() {
     }
   }
 
+  const displayName = user?.full_name?.trim() || user?.username || 'there';
+
   return (
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Account"
-        title="Your profile"
-        description="Review your account details and update your password."
+        title={`Welcome, ${displayName}`}
+        description="Your account details and password. The name below is how you appear across One Water Workforce."
       />
       <Card>
         <CardHeader>
@@ -58,7 +60,8 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-3 text-lg">
           <p>
-            <span className="text-slate-500">Name:</span> {user?.full_name || '—'}
+            <span className="text-slate-500">Display name:</span>{' '}
+            <span className="font-semibold text-oww-navy">{user?.full_name?.trim() || '—'}</span>
           </p>
           <p>
             <span className="text-slate-500">Username:</span> {user?.username}
@@ -69,7 +72,7 @@ export default function ProfilePage() {
           <p>
             <span className="text-slate-500">Jurisdiction:</span> {user?.jurisdiction_code || 'NY'}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" aria-label="Roles">
             {(user?.roles || []).map(r => (
               <Badge key={r} variant="secondary" className="text-sm">
                 {r}

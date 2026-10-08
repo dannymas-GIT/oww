@@ -38,6 +38,9 @@ const TIER_ORDER: RoleCatalogEntry['tier'][] = ['national', 'state', 'utility', 
 
 const ROLE_CHIP: Record<string, string> = {
   platform_admin: 'bg-oww-navy text-white',
+  platform_editor: 'bg-sky-100 text-sky-900',
+  platform_ops: 'bg-cyan-100 text-cyan-900',
+  platform_manager: 'bg-indigo-100 text-indigo-900',
   state_admin: 'bg-indigo-100 text-indigo-900',
   utility_admin: 'bg-sky-100 text-sky-900',
   utility_manager: 'bg-cyan-100 text-cyan-900',
@@ -193,9 +196,9 @@ export default function AdminUsersPage() {
         title="Users & access"
         description={
           isPlatformAdmin
-            ? 'Platform, state, utility and community accounts. Soft-deactivate preferred over delete. Only platform administrators can create OWW accounts.'
+            ? 'Platform staff with permissions on OWW (admin, editor, ops, manager). Soft-deactivate preferred over delete. Only platform administrators can create accounts and delegate roles. Candidates, hirers, ambassadors, and educators live under People directories.'
             : isGlobalAdmin
-              ? 'View accounts in your state. Creating users on OWW is limited to platform administrators; utility staff are invited from Water Workforce 360.'
+              ? 'Platform staff accounts. Creating users on OWW is limited to platform administrators. Audience directories are under People.'
               : 'View your organization’s OWW accounts. Invite managers and team members from Water Workforce 360 after you open it from the hiring workspace.'
         }
         badges={

@@ -14,7 +14,8 @@ import { formatDate, formatDateTime, formatNumber, titleCase } from '@/lib/forma
 import type { AdminDashboard } from '@/types';
 
 export default function AdminDashboardPage() {
-  const { isPlatformAdmin } = useAuth();
+  const { user, isPlatformAdmin } = useAuth();
+  const displayName = user?.full_name?.trim() || user?.username;
   const [data, setData] = useState<AdminDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +31,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Administration"
-        title={isPlatformAdmin ? 'Platform dashboard' : 'State dashboard'}
+        title={displayName ? `Welcome, ${displayName}` : isPlatformAdmin ? 'Platform dashboard' : 'State dashboard'}
         description="Memberships, renewals, accounts and outreach at a glance."
         badges={data?.sample_mode ? <span className="rounded-full bg-amber-400/20 px-3 py-1 text-amber-100 ring-1 ring-amber-300/40">Stripe sample mode</span> : null}
         actions={

@@ -3,11 +3,14 @@ import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwKpiTile } from '@/components/oww/OwwKpiTile';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
 import { listCourses, listEvents } from '@/services/educatorService';
 import type { Course, EducatorEvent } from '@/types';
 import { formatDate } from '@/lib/format';
 
 export default function EducatorDashboard() {
+  const { user } = useAuth();
+  const displayName = user?.full_name?.trim() || user?.username;
   const [courses, setCourses] = useState<Course[]>([]);
   const [events, setEvents] = useState<EducatorEvent[]>([]);
   useEffect(() => {
@@ -18,7 +21,7 @@ export default function EducatorDashboard() {
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Educator"
-        title="Training & events"
+        title={displayName ? `Welcome, ${displayName}` : 'Training & events'}
         description="Publish courses and events that feed the statewide talent pipeline."
       />
       <div className="grid gap-4 sm:grid-cols-2">

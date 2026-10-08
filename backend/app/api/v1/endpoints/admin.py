@@ -31,7 +31,14 @@ from app.services import cms_service, media_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-CMS_ROLES = ("platform_admin", "state_admin")
+from app.services.role_catalog_service import (
+    PLATFORM_EDITOR_ROLES,
+    PLATFORM_OPS_ROLES,
+    is_platform_staff,
+)
+
+CMS_ROLES = PLATFORM_EDITOR_ROLES
+OPS_ROLES = PLATFORM_OPS_ROLES
 
 class UserPatch(BaseModel):
     full_name: str | None = None
@@ -95,15 +102,30 @@ class LocIn(BaseModel):
 
 @router.get("/users")
 def list_users(q: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+    """Platform staff only — people with platform_* permissions."""
+    from app.services.sample_data_service import user_is_sample
+
     rows = db.query(User).order_by(User.id).all()
-    out = [user_to_dict(u) for u in rows]
+    out = []
+    for u in rows:
+        if not is_platform_staff(u.roles or []):
+            continue
+        d = user_to_dict(u)
+        d["is_sample"] = user_is_sample(u)
+        out.append(d)
     if q:
         ql = q.lower()
-        out = [u for u in out if ql in (u.get("username") or "").lower() or ql in (u.get("email") or "").lower() or ql in (u.get("full_name") or "").lower()]
+        out = [
+            u
+            for u in out
+            if ql in (u.get("username") or "").lower()
+            or ql in (u.get("email") or "").lower()
+            or ql in (u.get("full_name") or "").lower()
+        ]
     return out
 
 @router.patch("/users/{user_id}")
-def patch_user(user_id: int, body: UserPatch, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin", "state_admin"))):
+def patch_user(user_id: int, body: UserPatch, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin"))):
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(404)
@@ -126,7 +148,7 @@ def patch_user(user_id: int, body: UserPatch, db: Session = Depends(get_db), adm
     return user_to_dict(u)
 
 @router.post("/users/{user_id}/reset-password")
-def reset_password(user_id: int, body: PasswordReset, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin", "state_admin"))):
+def reset_password(user_id: int, body: PasswordReset, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin"))):
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(404)
@@ -300,14 +322,14 @@ def delete_cms(page_id: int, db: Session = Depends(get_db), user: User = Depends
     return {"ok": True}
 
 @router.get("/programs")
-def list_programs(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def list_programs(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     return [
         {"id": p.id, "program_name": p.program_name, "organization_name": p.organization_name, "status": p.status, "program_type": p.program_type, "contact_email": p.contact_email, "state_code": p.state_code}
         for p in db.query(ProgramSubmission).order_by(ProgramSubmission.id.desc()).all()
     ]
 
 @router.get("/featured")
-def list_featured(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def list_featured(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     out = []
     for f in db.query(FeaturedPost).order_by(FeaturedPost.id.desc()).all():
         out.append({
@@ -322,12 +344,12 @@ def list_featured(db: Session = Depends(get_db), user: User = Depends(require_ro
     return out
 
 @router.post("/featured")
-def create_featured(body: FeaturedIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def create_featured(body: FeaturedIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     post = featured_post_service.queue_post(db, job_id=body.job_id, channel=body.channel or "linkedin")
     return {"id": post.id, "title": f"Job {post.job_id}", "is_active": True}
 
 @router.patch("/featured/{post_id}")
-def patch_featured(post_id: int, body: FeaturedIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def patch_featured(post_id: int, body: FeaturedIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     if body.is_active:
         post = featured_post_service.mark_posted(db, post_id)
     else:
@@ -339,12 +361,12 @@ def patch_featured(post_id: int, body: FeaturedIn, db: Session = Depends(get_db)
     return {"id": post.id, "title": f"Job {post.job_id}", "is_active": post.status == "posted"}
 
 @router.get("/analytics")
-def analytics(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def analytics(db: Session = Depends(get_db), user: User = Depends(require_roles(*OPS_ROLES))):
     state = None if user.has_role("platform_admin") else user.state_code
     return summary(db, state)
 
 @router.get("/analytics/export.csv")
-def analytics_csv(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def analytics_csv(db: Session = Depends(get_db), user: User = Depends(require_roles(*OPS_ROLES))):
     rows = export_rows(db)
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=["id", "event_type", "stage", "region", "career_stage", "state_code", "created_at"])
@@ -354,17 +376,17 @@ def analytics_csv(db: Session = Depends(get_db), user: User = Depends(require_ro
     return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=oww-analytics.csv"})
 
 @router.post("/crm/export")
-def crm_export(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def crm_export(db: Session = Depends(get_db), user: User = Depends(require_roles(*OPS_ROLES))):
     contacts = [{"email": u.email, "name": u.full_name, "roles": u.roles} for u in db.query(User).filter(User.email.isnot(None)).all()]
     post_webhook({"type": "oww_contacts", "contacts": contacts, "exported_at": datetime.utcnow().isoformat()})
     return {"ok": True, "count": len(contacts)}
 
 @router.get("/certifications")
-def list_certs(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def list_certs(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     return [{"id": c.id, "name": c.name, "issuer": c.issuer, "category": c.level, "state_code": c.state_code} for c in db.query(CertificationCatalog).all()]
 
 @router.post("/certifications")
-def create_cert(body: CertIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def create_cert(body: CertIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     c = CertificationCatalog(name=body.name or "Certification", issuer=body.issuer, level=body.level or body.category, state_code=(body.state_code or "NY").upper())
     db.add(c)
     db.commit()
@@ -372,7 +394,7 @@ def create_cert(body: CertIn, db: Session = Depends(get_db), user: User = Depend
     return {"id": c.id, "name": c.name, "issuer": c.issuer, "category": c.level, "state_code": c.state_code}
 
 @router.patch("/certifications/{cid}")
-def patch_cert(cid: int, body: CertIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def patch_cert(cid: int, body: CertIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     c = db.query(CertificationCatalog).filter(CertificationCatalog.id == cid).first()
     if not c:
         raise HTTPException(404)
@@ -383,11 +405,11 @@ def patch_cert(cid: int, body: CertIn, db: Session = Depends(get_db), user: User
     return {"id": c.id, "name": c.name, "issuer": c.issuer, "category": c.level, "state_code": c.state_code}
 
 @router.get("/locations")
-def list_locations(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def list_locations(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     return [{"id": l.id, "name": l.city or l.region or l.zip_code or f"Loc {l.id}", "location_type": "place", "city": l.city, "state_code": l.state_code, "latitude": l.lat, "longitude": l.lng} for l in db.query(Location).all()]
 
 @router.post("/locations")
-def create_location(body: LocIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def create_location(body: LocIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     l = Location(state_code=(body.state_code or "NY").upper(), city=body.city or body.name, region=body.region, zip_code=body.zip_code, lat=body.latitude, lng=body.longitude)
     db.add(l)
     db.commit()
@@ -395,7 +417,7 @@ def create_location(body: LocIn, db: Session = Depends(get_db), user: User = Dep
     return {"id": l.id, "name": l.city, "city": l.city, "state_code": l.state_code, "latitude": l.lat, "longitude": l.lng}
 
 @router.patch("/locations/{lid}")
-def patch_location(lid: int, body: LocIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def patch_location(lid: int, body: LocIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     l = db.query(Location).filter(Location.id == lid).first()
     if not l:
         raise HTTPException(404)
