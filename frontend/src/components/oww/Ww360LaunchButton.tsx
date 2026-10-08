@@ -5,16 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { openWaterWorkforce360 } from '@/services/ww360Service';
 import { cn } from '@/lib/utils';
 
-/** Roles allowed to call POST /integrations/ww360/access (must also have org_id). */
+/** Roles allowed to call POST /integrations/ww360/access. */
 export function canLaunchWw360(roles: string[] | undefined, orgId: number | null | undefined): boolean {
-  if (!orgId) return false;
   const set = new Set(roles || []);
-  return (
-    set.has('utility_admin') ||
-    set.has('employer') ||
-    set.has('employer_admin') ||
-    set.has('platform_admin')
-  );
+  // Jenny / platform staff — no org required
+  if (set.has('platform_admin')) return true;
+  if (!orgId) return false;
+  return set.has('utility_admin') || set.has('employer') || set.has('employer_admin');
 }
 
 type Ww360LaunchButtonProps = {
@@ -22,16 +19,21 @@ type Ww360LaunchButtonProps = {
   variant?: 'header' | 'inline' | 'mobile';
   className?: string;
   onLaunched?: () => void;
+  /** Deep-link path inside WW360 after redeem (e.g. /admin/users?invite=1) */
+  next?: string;
+  label?: string;
 };
 
 /**
- * Always-on handoff into Water Workforce 360 for org billing admins.
- * Uses the same server-side SSO handoff as the hiring dashboard.
+ * Always-on handoff into Water Workforce 360.
+ * Platform admins open as platform_admin; utility/employer admins open their org workspace.
  */
 export function Ww360LaunchButton({
   variant = 'header',
   className,
   onLaunched,
+  next,
+  label: labelOverride,
 }: Ww360LaunchButtonProps) {
   const { user, userRoles } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -45,7 +47,7 @@ export function Ww360LaunchButton({
     setBusy(true);
     setError(null);
     try {
-      const result = await openWaterWorkforce360();
+      const result = await openWaterWorkforce360(next ? { next } : undefined);
       onLaunched?.();
       window.location.assign(result.redirect_url);
     } catch (err: unknown) {
@@ -69,7 +71,7 @@ export function Ww360LaunchButton({
     }
   };
 
-  const label = busy ? 'Opening WW360…' : 'Water Workforce 360';
+  const label = busy ? 'Opening WW360…' : labelOverride || 'Water Workforce 360';
 
   if (variant === 'mobile') {
     return (

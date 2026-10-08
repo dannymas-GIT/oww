@@ -76,30 +76,13 @@ def _subscription_status_for_org(db: Session, org_id: int | None) -> tuple[str, 
     return effective_status(m), m.stripe_customer_id
 
 
-@router.post("/access", response_model=AccessOut)
-def access_water_workforce_360(
-    db: Session = Depends(get_db),
-    user: User = Depends(require_roles(*BILLING_ADMIN_ROLES)),
-):
-    """Server-side handoff: OWW Super Admin opens Water Workforce 360."""
-    if not user.org_id:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="User has no organization")
+class AccessIn(BaseModel):
+    """Optional deep-link after WW360 redeem (e.g. /admin/users?invite=1)."""
 
-    org = db.query(Organization).filter(Organization.id == user.org_id).first()
-    if not org:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    next: str | None = Field(default=None, max_length=255)
 
-    if not org.is_active:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail={"code": "account_suspended", "message": "This utility account has been suspended. Contact NYSAWWA."},
-        )
 
-    sub_status, stripe_cus = _subscription_status_for_org(db, org.id)
-    # complimentary counts as active for WW360
-    if sub_status == "complimentary":
-        sub_status = "active"
-
+def _ww360_configured() -> tuple[str, str]:
     base = (settings.WW360_BASE_URL or "").rstrip("/")
     token = settings.WW360_SERVICE_TOKEN
     if not base or not token:
@@ -107,19 +90,11 @@ def access_water_workforce_360(
             status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Water Workforce 360 integration is not configured",
         )
+    return base, token
 
-    payload = {
-        "oww_org_id": str(org.id),
-        "oww_user_id": str(user.id),
-        "email": user.email or f"{user.username}@example.invalid",
-        "full_name": user.full_name or user.username,
-        "utility_name": org.name,
-        "is_billing_admin": True,
-        "subscription_status": sub_status,
-        "stripe_customer_id": stripe_cus,
-        "state_code": (user.state_code or org.state_code or "NY")[:2].upper(),
-    }
 
+def _post_ww360_handoff(payload: dict[str, Any]) -> dict[str, Any]:
+    base, token = _ww360_configured()
     url = f"{base}/api/v1/integrations/oww/handoff"
     try:
         with httpx.Client(timeout=30.0) as client:
@@ -143,8 +118,80 @@ def access_water_workforce_360(
     if resp.status_code >= 400:
         logger.warning("WW360 handoff rejected: %s %s", resp.status_code, resp.text[:300])
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail="Water Workforce 360 rejected handoff")
+    return resp.json()
 
-    data = resp.json()
+
+@router.post("/access", response_model=AccessOut)
+def access_water_workforce_360(
+    body: AccessIn | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*BILLING_ADMIN_ROLES)),
+):
+    """Server-side handoff into Water Workforce 360.
+
+    - platform_admin (Jenny): opens WW360 as platform_admin — no utility org required
+    - utility_admin / employer: opens WW360 as utility org administrator
+    """
+    next_path = (body.next if body else None) or None
+
+    # Jenny / OWW platform staff — always open WW360 as platform_admin
+    if user.has_role("platform_admin"):
+        data = _post_ww360_handoff(
+            {
+                "handoff_kind": "platform_admin",
+                "oww_user_id": str(user.id),
+                "email": user.email or f"{user.username}@example.invalid",
+                "full_name": user.full_name or user.username,
+                "is_billing_admin": True,
+                "subscription_status": "active",
+                "state_code": (user.state_code or "NY")[:2].upper(),
+                "next": next_path or "/admin/users",
+            }
+        )
+        user.ww360_user_id = str(data.get("ww360_user_id") or "")
+        user.sso_provider = "ww360"
+        user.sso_subject = user.ww360_user_id
+        db.commit()
+        return AccessOut(
+            redirect_url=data["redirect_url"],
+            ww360_org_id=str(data.get("ww360_org_id") or "PLATFORM"),
+            ww360_user_id=str(data["ww360_user_id"]),
+            expires_in=int(data.get("expires_in") or 90),
+        )
+
+    if not user.org_id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="User has no organization")
+
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    if not org:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if not org.is_active:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail={"code": "account_suspended", "message": "This utility account has been suspended. Contact NYSAWWA."},
+        )
+
+    sub_status, stripe_cus = _subscription_status_for_org(db, org.id)
+    # complimentary counts as active for WW360
+    if sub_status == "complimentary":
+        sub_status = "active"
+
+    payload = {
+        "handoff_kind": "utility",
+        "oww_org_id": str(org.id),
+        "oww_user_id": str(user.id),
+        "email": user.email or f"{user.username}@example.invalid",
+        "full_name": user.full_name or user.username,
+        "utility_name": org.name,
+        "is_billing_admin": True,
+        "subscription_status": sub_status,
+        "stripe_customer_id": stripe_cus,
+        "state_code": (user.state_code or org.state_code or "NY")[:2].upper(),
+        "next": next_path or "/dashboard",
+    }
+
+    data = _post_ww360_handoff(payload)
     org.ww360_org_id = str(data.get("ww360_org_id") or "")
     user.ww360_user_id = str(data.get("ww360_user_id") or "")
     user.sso_provider = "ww360"

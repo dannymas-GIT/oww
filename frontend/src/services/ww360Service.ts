@@ -7,7 +7,9 @@ export type Ww360AccessResult = {
   expires_in: number;
 };
 
-export async function openWaterWorkforce360(): Promise<Ww360AccessResult> {
-  const { data } = await api.post('/integrations/ww360/access');
+export async function openWaterWorkforce360(opts?: {
+  next?: string;
+}): Promise<Ww360AccessResult> {
+  const { data } = await api.post('/integrations/ww360/access', opts?.next ? { next: opts.next } : {});
   return data;
 }

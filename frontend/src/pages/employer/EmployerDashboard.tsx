@@ -128,6 +128,13 @@ export default function EmployerDashboard() {
 
       <div className="flex flex-wrap gap-3" data-tour="employer-actions">
         {!orgSuspended ? <Ww360LaunchButton variant="inline" /> : null}
+        {isUtilityAdmin && !orgSuspended ? (
+          <Ww360LaunchButton
+            variant="inline"
+            next="/admin/users?invite=1"
+            label="Invite staff in WW360"
+          />
+        ) : null}
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
           <Link to="/employer/candidates">Search candidates</Link>
         </Button>
