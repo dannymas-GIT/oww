@@ -339,6 +339,8 @@ export interface MessageThread {
   id: number;
   subject: string;
   participants?: string[];
+  peer_name?: string;
+  preview?: string;
   last_message_at?: string;
   unread?: number;
   is_sample?: boolean;

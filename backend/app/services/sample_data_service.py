@@ -59,6 +59,93 @@ SAMPLE_CANDIDATES = [
     {"username": "sample-cand-morgan", "full_name": "Morgan Patel (Sample)", "headline": "Student — water resources", "region": "Central NY"},
 ]
 
+# Illustrative threads — utility managers should open Messaging and see what outreach looks like.
+SAMPLE_MESSAGE_THREADS = [
+    {
+        "candidate_idx": 0,
+        "subject": "Interview interest — Water Treatment Operator",
+        "outbound": (
+            "Hi Alex,\n\n"
+            "Thanks for applying to our Water Treatment Operator opening. Your operators-in-training "
+            "background looks like a strong fit for our Albany plant.\n\n"
+            "Would you be available for a 30-minute video screen next week? We can also do a brief "
+            "plant walk-through if you prefer in person.\n\n"
+            "— Hiring team (sample message)"
+        ),
+        "inbound": (
+            "Hi — thank you for reaching out! Tuesday or Thursday after 2pm works for a video screen. "
+            "Happy to visit the plant as a next step if that helps.\n\n"
+            "(Sample reply — not a real candidate.)"
+        ),
+    },
+    {
+        "candidate_idx": 1,
+        "subject": "Distribution Technician — next steps",
+        "outbound": (
+            "Hi Jordan,\n\n"
+            "We reviewed your application for Distribution System Technician. Your CDL and mechanical "
+            "experience stand out for valve/hydrant work.\n\n"
+            "Could you send a short note on overnight / weekend on-call comfort, and confirm you can "
+            "start within 30 days if offered?\n\n"
+            "— Hiring team (sample message)"
+        ),
+        "inbound": (
+            "Yes on on-call (I’ve done rotating weekends before). I can start within two weeks of an offer. "
+            "Happy to talk through the route coverage model on a call.\n\n"
+            "(Sample reply — not a real candidate.)"
+        ),
+    },
+    {
+        "candidate_idx": 2,
+        "subject": "Lab Analyst Intern — availability",
+        "outbound": (
+            "Hi Sam,\n\n"
+            "We’re scheduling intro chats for the Laboratory Analyst Intern role. This sample thread "
+            "shows how internship outreach looks in Messaging — subject, unread badge, and a short "
+            "back-and-forth before an interview is booked.\n\n"
+            "Are you available for a 20-minute phone intro this week?\n\n"
+            "— Hiring team (sample message)"
+        ),
+        "inbound": (
+            "Yes — Wednesday morning or Friday afternoon. I can also share my course schedule and "
+            "lab methods coursework if helpful.\n\n"
+            "(Sample reply — not a real candidate.)"
+        ),
+    },
+]
+
+# Varied interview rows so the schedule page shows status / modality / notes clearly.
+SAMPLE_INTERVIEWS = [
+    {
+        "candidate_idx": 0,
+        "days_ahead": 3,
+        "status": "scheduled",
+        "location": "Video — Teams (sample)",
+        "notes": "30-min screen: shift preferences, Grade 2A interest, safety culture. Sample only.",
+    },
+    {
+        "candidate_idx": 1,
+        "days_ahead": 7,
+        "status": "scheduled",
+        "location": "Plant lobby + distribution shop tour (sample)",
+        "notes": "On-site: CDL check, tool familiarity, hydrant exercise overview. Sample only.",
+    },
+    {
+        "candidate_idx": 2,
+        "days_ahead": -5,
+        "status": "completed",
+        "location": "Phone screen (sample)",
+        "notes": "Completed sample phone intro — strong lab methods talk track. Illustrative only.",
+    },
+    {
+        "candidate_idx": 0,
+        "days_ahead": -12,
+        "status": "canceled",
+        "location": "Video — canceled (sample)",
+        "notes": "Candidate reschedule request (sample). Shows canceled status on the schedule.",
+    },
+]
+
 # Inactive illustrative users for admin People directories when none exist.
 ADMIN_SAMPLE_PEOPLE: dict[str, list[dict[str, Any]]] = {
     "candidates": [
@@ -150,16 +237,40 @@ def _ensure_sample_profile(db: Session, user: User, *, headline: str, region: st
     return p
 
 
-def ensure_utility_sample_pack(db: Session, org_id: int, *, actor_user_id: int | None = None) -> dict[str, Any]:
+def _has_any_sample_engagement(db: Session, org_id: int) -> bool:
+    if db.query(Message).filter(Message.org_id == org_id, Message.is_sample.is_(True)).count():
+        return True
+    if db.query(Interview).filter(Interview.org_id == org_id, Interview.is_sample.is_(True)).count():
+        return True
+    apps = db.query(Application).filter(Application.org_id == org_id).all()
+    return any((a.meta or {}).get("is_sample") for a in apps)
+
+
+def ensure_utility_sample_pack(
+    db: Session,
+    org_id: int,
+    *,
+    actor_user_id: int | None = None,
+    force_refresh_engagement: bool = False,
+) -> dict[str, Any]:
     """Create labeled sample jobs/apps/messages/interviews for a utility org if none yet."""
     org = db.query(Organization).filter(Organization.id == org_id).first()
     if not org:
         return {"ok": False, "reason": "org_missing"}
 
     existing_sample_jobs = db.query(Job).filter(Job.org_id == org_id, Job.is_sample.is_(True)).count()
-    if existing_sample_jobs and sample_pack_active(org):
-        # Still fill engagement sections if empty (apps / messages / interviews).
-        return _ensure_engagement_samples(db, org, actor_user_id=actor_user_id)
+    if (
+        existing_sample_jobs
+        or sample_pack_active(org)
+        or _has_any_sample_engagement(db, org_id)
+    ):
+        # Still fill / refresh engagement sections (apps / messages / interviews).
+        return _ensure_engagement_samples(
+            db,
+            org,
+            actor_user_id=actor_user_id,
+            force_refresh=force_refresh_engagement,
+        )
 
     real_jobs = (
         db.query(Job).filter(Job.org_id == org_id, Job.is_sample.is_(False)).order_by(Job.id).all()
@@ -265,68 +376,142 @@ def ensure_utility_sample_pack(db: Session, org_id: int, *, actor_user_id: int |
         )
         db.add(app)
 
-    cand_users = [db.query(User).filter(User.id == p.user_id).first() for p in profiles[:2]]
-    for i, cu in enumerate(cand_users):
-        if not cu:
-            continue
-        job = jobs[i % len(jobs)]
-        db.add(
-            Message(
-                from_user_id=employer.id,
-                to_user_id=cu.id,
-                org_id=org_id,
-                job_id=job.id,
-                subject="Sample outreach — interview interest",
-                body=(
-                    f"Hi {cu.full_name},\n\nThis is sample message data for {org.name}. "
-                    "Clear sample data when you start real outreach.\n\n— Hiring team (sample)"
-                ),
-                read=False,
-                is_sample=True,
-            )
-        )
-        db.add(
-            Message(
-                from_user_id=cu.id,
-                to_user_id=employer.id,
-                org_id=org_id,
-                job_id=job.id,
-                subject="Re: Sample outreach — interview interest",
-                body="Thanks for reaching out! (Sample reply — not a real candidate.)",
-                read=True,
-                is_sample=True,
-            )
-        )
-        db.add(
-            Interview(
-                org_id=org_id,
-                job_id=job.id,
-                employer_user_id=employer.id,
-                candidate_user_id=cu.id,
-                scheduled_at=datetime.utcnow() + timedelta(days=3 + i),
-                location="Virtual (sample)",
-                notes="Sample interview — illustrative only.",
-                status="scheduled",
-                is_sample=True,
-            )
-        )
+    _add_sample_messages_and_interviews(db, org=org, employer=employer, jobs=jobs, profiles=profiles)
 
     db.commit()
     return {"ok": True, "org_id": org_id, "jobs": len(jobs), "candidates": len(profiles)}
 
 
+def _sample_candidate_profiles(
+    db: Session, *, org_id: int, state: str, limit: int | None = None
+) -> list[IndividualProfile]:
+    specs = SAMPLE_CANDIDATES if limit is None else SAMPLE_CANDIDATES[:limit]
+    profiles: list[IndividualProfile] = []
+    for c in specs:
+        u = _ensure_sample_user(
+            db,
+            username=f"{c['username']}-o{org_id}",
+            email=f"{c['username']}-o{org_id}@example.invalid",
+            full_name=c["full_name"],
+            roles=["individual"],
+            state_code=state,
+        )
+        profiles.append(_ensure_sample_profile(db, u, headline=c["headline"], region=c["region"]))
+    return profiles
+
+
+def _add_sample_messages_and_interviews(
+    db: Session,
+    *,
+    org: Organization,
+    employer: User,
+    jobs: list[Job],
+    profiles: list[IndividualProfile],
+    force_refresh: bool = False,
+) -> None:
+    """Create labeled message threads + interview rows when the org has none yet."""
+    org_id = org.id
+    has_sample_msgs = (
+        db.query(Message).filter(Message.org_id == org_id, Message.is_sample.is_(True)).count() > 0
+    )
+    has_sample_iv = (
+        db.query(Interview).filter(Interview.org_id == org_id, Interview.is_sample.is_(True)).count() > 0
+    )
+    if force_refresh:
+        if has_sample_msgs:
+            db.query(Message).filter(Message.org_id == org_id, Message.is_sample.is_(True)).delete(
+                synchronize_session=False
+            )
+            has_sample_msgs = False
+        if has_sample_iv:
+            db.query(Interview).filter(Interview.org_id == org_id, Interview.is_sample.is_(True)).delete(
+                synchronize_session=False
+            )
+            has_sample_iv = False
+
+    if has_sample_msgs and has_sample_iv:
+        return
+
+    if not has_sample_msgs:
+        for spec in SAMPLE_MESSAGE_THREADS:
+            idx = spec["candidate_idx"]
+            if idx >= len(profiles):
+                continue
+            p = profiles[idx]
+            cu = db.query(User).filter(User.id == p.user_id).first()
+            if not cu:
+                continue
+            job = jobs[idx % len(jobs)]
+            db.add(
+                Message(
+                    from_user_id=employer.id,
+                    to_user_id=cu.id,
+                    org_id=org_id,
+                    job_id=job.id,
+                    subject=spec["subject"],
+                    body=spec["outbound"],
+                    read=False,
+                    is_sample=True,
+                )
+            )
+            db.add(
+                Message(
+                    from_user_id=cu.id,
+                    to_user_id=employer.id,
+                    org_id=org_id,
+                    job_id=job.id,
+                    subject=spec["subject"],
+                    body=spec["inbound"],
+                    read=True,
+                    is_sample=True,
+                )
+            )
+
+    if not has_sample_iv:
+        for spec in SAMPLE_INTERVIEWS:
+            idx = spec["candidate_idx"]
+            if idx >= len(profiles):
+                continue
+            p = profiles[idx]
+            cu = db.query(User).filter(User.id == p.user_id).first()
+            if not cu:
+                continue
+            job = jobs[idx % len(jobs)]
+            db.add(
+                Interview(
+                    org_id=org_id,
+                    job_id=job.id,
+                    employer_user_id=employer.id,
+                    candidate_user_id=cu.id,
+                    scheduled_at=datetime.utcnow() + timedelta(days=spec["days_ahead"]),
+                    location=spec["location"],
+                    notes=spec["notes"],
+                    status=spec["status"],
+                    is_sample=True,
+                )
+            )
+
+
 def _ensure_engagement_samples(
-    db: Session, org: Organization, *, actor_user_id: int | None = None
+    db: Session, org: Organization, *, actor_user_id: int | None = None, force_refresh: bool = False
 ) -> dict[str, Any]:
     """Fill empty apps/messages/interviews for an org that already has a sample pack."""
     org_id = org.id
-    has_apps = db.query(Application).filter(Application.org_id == org_id).count() > 0
-    has_msgs = db.query(Message).filter(Message.org_id == org_id).count() > 0
-    has_iv = db.query(Interview).filter(Interview.org_id == org_id).count() > 0
-    if has_apps and has_msgs and has_iv:
+    has_sample_apps = (
+        db.query(Application)
+        .filter(Application.org_id == org_id)
+        .all()
+    )
+    has_sample_apps = any((a.meta or {}).get("is_sample") for a in has_sample_apps)
+    has_sample_msgs = (
+        db.query(Message).filter(Message.org_id == org_id, Message.is_sample.is_(True)).count() > 0
+    )
+    has_sample_iv = (
+        db.query(Interview).filter(Interview.org_id == org_id, Interview.is_sample.is_(True)).count() > 0
+    )
+    if has_sample_apps and has_sample_msgs and has_sample_iv and not force_refresh:
         return {"ok": True, "already": True, "org_id": org_id}
-    # Re-run full ensure path by temporarily clearing the early-return condition:
-    # create missing pieces via a light pass using existing jobs.
+
     jobs = db.query(Job).filter(Job.org_id == org_id).order_by(Job.id).all()
     if not jobs:
         return {"ok": False, "reason": "no_jobs"}
@@ -344,19 +529,9 @@ def _ensure_engagement_samples(
         return {"ok": False, "reason": "no_org_user"}
 
     state = (org.state_code or "NY").upper()
-    profiles: list[IndividualProfile] = []
-    for i, c in enumerate(SAMPLE_CANDIDATES[:3]):
-        u = _ensure_sample_user(
-            db,
-            username=f"{c['username']}-o{org_id}",
-            email=f"{c['username']}-o{org_id}@example.invalid",
-            full_name=c["full_name"],
-            roles=["individual"],
-            state_code=state,
-        )
-        profiles.append(_ensure_sample_profile(db, u, headline=c["headline"], region=c["region"]))
+    profiles = _sample_candidate_profiles(db, org_id=org_id, state=state, limit=3)
 
-    if not has_apps:
+    if not has_sample_apps:
         for i, p in enumerate(profiles):
             job = jobs[i % len(jobs)]
             db.add(
@@ -366,43 +541,22 @@ def _ensure_engagement_samples(
                     user_id=p.user_id,
                     org_id=org_id,
                     status="submitted",
-                    cover_note="Sample application — illustrative only.",
+                    cover_note=(
+                        "Sample application — illustrative cover note. Clear sample data when you "
+                        "start reviewing real applicants."
+                    ),
                     meta=dict(SAMPLE_META),
                 )
             )
-    if not has_msgs or not has_iv:
-        for i, p in enumerate(profiles[:2]):
-            cu = db.query(User).filter(User.id == p.user_id).first()
-            if not cu:
-                continue
-            job = jobs[i % len(jobs)]
-            if not has_msgs:
-                db.add(
-                    Message(
-                        from_user_id=employer.id,
-                        to_user_id=cu.id,
-                        org_id=org_id,
-                        job_id=job.id,
-                        subject="Sample outreach — interview interest",
-                        body="Sample message data — illustrative only.",
-                        read=False,
-                        is_sample=True,
-                    )
-                )
-            if not has_iv:
-                db.add(
-                    Interview(
-                        org_id=org_id,
-                        job_id=job.id,
-                        employer_user_id=employer.id,
-                        candidate_user_id=cu.id,
-                        scheduled_at=datetime.utcnow() + timedelta(days=3 + i),
-                        location="Virtual (sample)",
-                        notes="Sample interview — illustrative only.",
-                        status="scheduled",
-                        is_sample=True,
-                    )
-                )
+
+    _add_sample_messages_and_interviews(
+        db,
+        org=org,
+        employer=employer,
+        jobs=jobs,
+        profiles=profiles,
+        force_refresh=force_refresh,
+    )
     set_sample_pack_active(db, org, True)
     db.commit()
     return {"ok": True, "org_id": org_id, "engagement": True}

@@ -67,7 +67,9 @@ export default function InterviewSchedulePage() {
                   <SortableTableHead column="scheduled_at" label="When" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
                   <SortableTableHead column="candidate_name" label="Candidate" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
                   <SortableTableHead column="job_title" label="Job" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
+                  <SortableTableHead column="location" label="Where" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
                   <SortableTableHead column="status" label="Status" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
+                  <SortableTableHead column="notes" label="Notes" sortKey={table.sortKey} sortDir={table.sortDir} onSort={table.toggleSort} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,7 +83,9 @@ export default function InterviewSchedulePage() {
                     </TableCell>
                     <TableCell className="text-base">{i.candidate_name || '—'}</TableCell>
                     <TableCell className="text-base">{i.job_title || '—'}</TableCell>
-                    <TableCell className="text-base">{i.status}</TableCell>
+                    <TableCell className="text-base">{i.location || '—'}</TableCell>
+                    <TableCell className="text-base capitalize">{i.status}</TableCell>
+                    <TableCell className="max-w-xs text-base text-slate-600">{i.notes || '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -53,9 +53,13 @@ export default function MessagingPage() {
                   {t.is_sample ? <SampleBadge /> : null}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-slate-600">
-                Last activity {formatDate(t.last_message_at)}
-                {t.unread ? ` · ${t.unread} unread` : ''}
+              <CardContent className="space-y-2 text-base text-slate-700">
+                {t.peer_name ? <p className="font-medium text-oww-navy">With {t.peer_name}</p> : null}
+                {t.preview ? <p className="leading-relaxed text-slate-600">{t.preview}</p> : null}
+                <p className="text-sm text-slate-500">
+                  Last activity {formatDate(t.last_message_at)}
+                  {t.unread ? ` · ${t.unread} unread` : ''}
+                </p>
               </CardContent>
             </Card>
           ))}

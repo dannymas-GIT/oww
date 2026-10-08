@@ -179,7 +179,18 @@ def main():
             org.longitude = lng
             org.description = f"{name} partners with One Water Workforce."
             org.hiring_projections = {"next_12_months": 3 + (i % 5)}
-            org.profile = {"career_area": [CAREERS[i % len(CAREERS)]], "opportunity_type": ["entry_level", "experienced"], "location": region}
+            # Preserve sample-pack flags so re-seed does not wipe utility hiring illustrations.
+            prev = dict(org.profile or {})
+            org.profile = {
+                "career_area": [CAREERS[i % len(CAREERS)]],
+                "opportunity_type": ["entry_level", "experienced"],
+                "location": region,
+                **(
+                    {"sample_pack_active": prev["sample_pack_active"], "sample_pack": prev.get("sample_pack")}
+                    if prev.get("sample_pack_active")
+                    else {}
+                ),
+            }
             org.is_active = True
             db.commit()
             db.refresh(org)
@@ -417,11 +428,15 @@ def main():
         from app.services import sample_data_service
 
         # Utility hiring packs: sample apps / messages / interviews (and jobs when empty).
+        # force_refresh_engagement refreshes illustrative Messaging + Interview rows each seed.
         for i, org_id in enumerate(org_ids):
             if ORGS[i][1] == "public_utility" and i < 6:
                 ua = db.query(User).filter(User.username == f"utility-admin{i+1}").first()
                 sample_data_service.ensure_utility_sample_pack(
-                    db, org_id, actor_user_id=ua.id if ua else None
+                    db,
+                    org_id,
+                    actor_user_id=ua.id if ua else None,
+                    force_refresh_engagement=True,
                 )
         for audience in ("candidates", "hirers", "ambassadors", "educators"):
             sample_data_service.ensure_admin_directory_samples(db, audience)

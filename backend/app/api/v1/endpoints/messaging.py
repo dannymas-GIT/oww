@@ -52,10 +52,16 @@ def threads(db: Session = Depends(get_db), user: User = Depends(get_current_user
         peer = m.to_user_id if m.from_user_id == user.id else m.from_user_id
         key = (m.subject or "Message", peer)
         if key not in seen:
+            preview = (m.body or "").strip().replace("\n", " ")
+            if len(preview) > 180:
+                preview = preview[:177] + "…"
+            peer_user = db.query(User).filter(User.id == peer).first()
             seen[key] = {
                 "id": m.id,
                 "subject": m.subject or "Message",
                 "participants": [str(peer)],
+                "peer_name": (peer_user.full_name or peer_user.username) if peer_user else None,
+                "preview": preview,
                 "last_message_at": m.created_at.isoformat() if m.created_at else None,
                 "unread": 0 if m.read or m.from_user_id == user.id else 1,
                 "is_sample": bool(m.is_sample),
