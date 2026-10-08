@@ -10,17 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { owwMission } from '@/content/owwPublicContent';
 import { DEFAULT_STATE } from '@/lib/constants';
+import { homeForRoles } from '@/lib/roleHome';
 
 export default function LoginPage() {
   const { login, requestOtpCode, verifyOtpCode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from || '/';
+  const fromState = (location.state as { from?: string } | null)?.from;
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
+  const [otpDelivery, setOtpDelivery] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +33,20 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setOtpMessage(null);
     try {
       const res = await requestOtpCode({ email });
       setOtpSent(true);
       setDevCode(res.dev_code ?? null);
-    } catch {
-      setError('Could not send a one-time code. Check the email and try again.');
+      setOtpDelivery(res.delivery ?? null);
+      setOtpMessage(res.message ?? null);
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(
+        typeof detail === 'string'
+          ? detail
+          : 'Could not send a one-time code. Prefer Account password, or try again.'
+      );
     } finally {
       setBusy(false);
     }
@@ -46,8 +57,12 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await verifyOtpCode({ email, code: otp });
-      navigate(from, { replace: true });
+      const session = await verifyOtpCode({ email, code: otp });
+      const dest =
+        fromState && fromState !== '/' && !/^\/(ny)?\/?$/.test(fromState)
+          ? fromState
+          : homeForRoles(session.user.roles);
+      navigate(dest, { replace: true });
     } catch {
       setError('Invalid or expired code.');
     } finally {
@@ -60,8 +75,12 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await login(username, password);
-      navigate(from, { replace: true });
+      const session = await login(username, password);
+      const dest =
+        fromState && fromState !== '/' && !/^\/(ny)?\/?$/.test(fromState)
+          ? fromState
+          : homeForRoles(session.user.roles);
+      navigate(dest, { replace: true });
     } catch {
       setError('Invalid email/username or password.');
     } finally {
@@ -154,10 +173,19 @@ export default function LoginPage() {
                 </form>
               ) : (
                 <form onSubmit={onVerifyOtp} className="space-y-4">
-                  <p className="text-base text-slate-600">Enter the code sent to {email}.</p>
+                  <p className="text-base text-slate-600">
+                    {otpDelivery === 'stub'
+                      ? `No outbound email is configured on this environment for ${email}.`
+                      : `Enter the code sent to ${email}.`}
+                  </p>
+                  {otpMessage ? (
+                    <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                      {otpMessage}
+                    </p>
+                  ) : null}
                   {devCode ? (
-                    <p className="rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-900">
-                      Dev code: <strong>{devCode}</strong>
+                    <p className="rounded-md bg-sky-50 px-3 py-2 text-base text-sky-900">
+                      On-screen code: <strong className="tracking-widest">{devCode}</strong>
                     </p>
                   ) : null}
                   <div className="space-y-2">

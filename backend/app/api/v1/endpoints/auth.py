@@ -193,10 +193,25 @@ def register_utility_admin(
 
 @router.post("/otp/request")
 def otp_request(body: OtpRequest, db: Session = Depends(get_db)):
-    code = otp_service.request_otp(db, email=body.email, phone=body.phone)
-    resp = {"ok": True, "message": "Code sent"}
-    if code:
-        resp["dev_code"] = code
+    result = otp_service.request_otp(db, email=body.email, phone=body.phone)
+    delivery = result.get("delivery") or "stub"
+    if delivery == "failed":
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not deliver the one-time code. Try account password, or contact support.",
+        )
+    if delivery == "stub":
+        message = (
+            "Email/SMS delivery is not configured on this environment. "
+            "Use the on-screen code below (also written to server logs)."
+        )
+    elif delivery == "sms":
+        message = "Code sent by text message."
+    else:
+        message = "Code sent to your email."
+    resp: dict = {"ok": True, "message": message, "delivery": delivery, "channel": result.get("channel")}
+    if result.get("code"):
+        resp["dev_code"] = result["code"]
     return resp
 
 

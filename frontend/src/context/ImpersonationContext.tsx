@@ -7,7 +7,7 @@ import {
   type DemoPersona,
 } from '@/services/impersonationService';
 import { useAuth } from '@/context/AuthContext';
-import { DEFAULT_STATE } from '@/lib/constants';
+import { homeForRoles } from '@/lib/roleHome';
 import type { OwwUser } from '@/types';
 
 interface ImpersonationContextValue {
@@ -24,16 +24,6 @@ interface ImpersonationContextValue {
 }
 
 const ImpersonationContext = createContext<ImpersonationContextValue | undefined>(undefined);
-
-function homeForRoles(roles: string[]): string {
-  if (roles.includes('platform_admin') || roles.includes('state_admin')) return '/admin';
-  if (roles.some(r => ['employer', 'employer_admin', 'employer_member', 'utility_admin', 'utility_manager'].includes(r))) {
-    return '/employer';
-  }
-  if (roles.includes('educator')) return '/educator';
-  if (roles.includes('individual') || roles.includes('student')) return '/candidate';
-  return `/${DEFAULT_STATE}`;
-}
 
 export const ImpersonationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, applySessionUser, isPlatformAdmin, isStateAdmin } = useAuth();

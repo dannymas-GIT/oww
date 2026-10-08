@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
 import {
   Briefcase,
   Building2,
-  Compass,
   FileText,
   Home,
   LogOut,
@@ -22,6 +21,7 @@ import { PersonaSwitcher, ImpersonationBanner } from '@/components/oww/PersonaSw
 import { PageAwareTour } from '@/components/oww/PageAwareTour';
 import { Ww360LaunchButton } from '@/components/oww/Ww360LaunchButton';
 import { DEFAULT_STATE } from '@/lib/constants';
+import { homeForRoles } from '@/lib/roleHome';
 import { cn } from '@/lib/utils';
 
 /** AquaSafe-style top chrome: larger type + icon + label (min 48px touch). */
@@ -92,6 +92,7 @@ export function AppShell() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const groups = navForRoles(userRoles);
+  const roleHome = homeForRoles(userRoles);
   // When signed-in users have role workspaces (Hiring, Administration, …), prefer
   // that nav on every page — including public /ny/* — so Hiring is discoverable.
   const showRoleNav = isAuthenticated && groups.length > 0;
@@ -134,7 +135,7 @@ export function AppShell() {
             >
               {mobileOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
             </button>
-            <OwwLogo to={`/${state}`} size="nav" />
+            <OwwLogo to={isAuthenticated ? roleHome : `/${state}`} size="nav" />
           </div>
 
           <nav
@@ -143,7 +144,7 @@ export function AppShell() {
           >
             {showRoleNav ? (
               <>
-                <NavIconLink to={`/${state}`} end label="Explore" icon={Compass} />
+                <NavIconLink to={roleHome} end label="Home" icon={Home} />
                 <RoleNav />
               </>
             ) : isPublic ? (
@@ -206,7 +207,7 @@ export function AppShell() {
             {showRoleNav ? (
               <div className="space-y-4">
                 <NavLink
-                  to={`/${state}`}
+                  to={roleHome}
                   end
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
@@ -216,8 +217,8 @@ export function AppShell() {
                     )
                   }
                 >
-                  <Compass className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
-                  Explore
+                  <Home className="h-5 w-5 shrink-0 text-oww-cyan" aria-hidden />
+                  Home
                 </NavLink>
                 {groups.map(g =>
                   g.sections.map(section => (
@@ -335,7 +336,7 @@ export function AppShell() {
         <div className="h-1 bg-gradient-to-r from-oww-navy via-oww-cyan to-oww-navy" aria-hidden />
         <div className="flex w-full flex-col gap-4 px-4 py-6 sm:px-5 md:flex-row md:items-center md:justify-between md:px-6 lg:px-8 xl:px-10">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <OwwLogo to={`/${state}`} size="footer" />
+            <OwwLogo to={isAuthenticated ? roleHome : `/${state}`} size="footer" />
             <p className="text-sm text-slate-600">
               © {new Date().getFullYear()} One Water Workforce · NYSAWWA
               <span className="mt-1 block text-oww-cyan">From GED to PhD: A Job for Everyone</span>
@@ -345,20 +346,28 @@ export function AppShell() {
             <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/blog`}>
               Blog
             </Link>
-            <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/interest`}>
-              Express interest
-            </Link>
-            <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/programs/submit`}>
-              Submit a program
-            </Link>
-            <Link className="inline-flex min-h-[44px] items-center" to="/pricing">
-              Membership
-            </Link>
-            {publicPathways.slice(0, 2).map(p => (
-              <Link key={p.slug} className="inline-flex min-h-[44px] items-center lg:hidden" to={`/${state}/${p.slug}`}>
-                {p.label}
+            {!isAuthenticated ? (
+              <>
+                <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/interest`}>
+                  Express interest
+                </Link>
+                <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/programs/submit`}>
+                  Submit a program
+                </Link>
+                <Link className="inline-flex min-h-[44px] items-center" to="/pricing">
+                  Membership
+                </Link>
+                {publicPathways.slice(0, 2).map(p => (
+                  <Link key={p.slug} className="inline-flex min-h-[44px] items-center lg:hidden" to={`/${state}/${p.slug}`}>
+                    {p.label}
+                  </Link>
+                ))}
+              </>
+            ) : (
+              <Link className="inline-flex min-h-[44px] items-center" to={roleHome}>
+                Workspace
               </Link>
-            ))}
+            )}
           </div>
         </div>
       </footer>

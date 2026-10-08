@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
 import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { OwwLogo } from '@/components/oww/OwwLogo';
+import { Ww360LaunchButton } from '@/components/oww/Ww360LaunchButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { publicPathways } from '@/config/nav';
+import { useAuth } from '@/context/AuthContext';
 import { DEFAULT_STATE } from '@/lib/constants';
+import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
 import { getPublishedPage, listTestimonials } from '@/services/publicService';
 import type { ContentPage, Testimonial } from '@/types';
 import {
@@ -24,6 +27,163 @@ const icons = {
   educate: GraduationCap,
   ambassador: HeartHandshake,
 } as const;
+
+function SignedInHome({
+  state,
+  testimonials,
+}: {
+  state: string;
+  testimonials: Testimonial[];
+}) {
+  const { user, userRoles, isUtilityAdmin, isEducator, isIndividual } = useAuth();
+  const displayName = user?.full_name?.trim() || user?.username || 'there';
+  const hiring = isHiringRole(userRoles);
+  const platform = isPlatformStaff(userRoles);
+
+  const eyebrow = platform
+    ? 'Platform'
+    : hiring
+      ? isUtilityAdmin
+        ? 'Utility administrator'
+        : 'Hiring workspace'
+      : isEducator
+        ? 'Educator'
+        : isIndividual
+          ? 'Candidate'
+          : 'Signed in';
+
+  const primaryTo = homeForRoles(userRoles);
+
+  return (
+    <div className="space-y-10">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(70% 90% at 100% 0%, rgba(0,93,248,0.12), transparent 55%), radial-gradient(50% 70% at 0% 100%, rgba(0,32,80,0.08), transparent 50%)',
+          }}
+        />
+        <div className="relative space-y-5 px-6 py-8 md:px-10 md:py-12">
+          <OwwLogo to={primaryTo} size="hero" onDark={false} />
+          <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">{eyebrow}</p>
+          <h1 className="font-display text-3xl font-semibold text-oww-navy md:text-4xl">
+            Welcome back, {displayName}
+          </h1>
+          <p className="max-w-2xl text-lg leading-relaxed text-slate-700">
+            {hiring
+              ? 'Continue in your hiring workspace — jobs, applicants, messaging, and Water Workforce 360.'
+              : platform
+                ? 'Open Administration for users, registrations, and statewide operations.'
+                : isIndividual
+                  ? 'Continue your candidate profile, matches, and applications.'
+                  : isEducator
+                    ? 'Continue to your educator workspace.'
+                    : owwMission.summary}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
+              <Link to={primaryTo}>
+                {hiring
+                  ? 'Open hiring workspace'
+                  : platform
+                    ? 'Open administration'
+                    : isIndividual
+                      ? 'Open candidate dashboard'
+                      : isEducator
+                        ? 'Open educator workspace'
+                        : 'Continue'}
+              </Link>
+            </Button>
+            {hiring ? (
+              <>
+                <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                  <Link to="/employer/jobs">Manage jobs</Link>
+                </Button>
+                {isUtilityAdmin ? (
+                  <Ww360LaunchButton
+                    variant="inline"
+                    next="/admin/users?invite=1"
+                    label="Invite staff in WW360"
+                  />
+                ) : (
+                  <Ww360LaunchButton variant="inline" />
+                )}
+              </>
+            ) : null}
+            {!hiring && !platform ? (
+              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                <Link to={`/${state}/jobs`}>Browse jobs</Link>
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-sm text-slate-500">
+            {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
+          </p>
+        </div>
+      </section>
+
+      {hiring ? (
+        <OwwSection
+          title="Your hiring pathway"
+          description="You are signed in as an employer/utility — public career and ambassador pathways stay available for visitors, not as your primary actions."
+        >
+          <Card className="border-slate-200">
+            <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+              <div className="rounded-lg bg-[#e8f0ff] p-3 text-oww-cyan">
+                <Briefcase className="h-6 w-6" aria-hidden />
+              </div>
+              <div>
+                <CardTitle className="font-display text-xl text-oww-navy">
+                  {pathwayContent.hire.rfpLabel}
+                </CardTitle>
+                <p className="mt-2 text-base text-slate-600">{pathwayContent.hire.description}</p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                <Link to="/employer">
+                  Go to hiring tools <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </OwwSection>
+      ) : null}
+
+      {!hiring && !platform ? (
+        <OwwSection title="Voices from the field" description="Stories from operators, managers, and educators.">
+          <div className="grid gap-4 md:grid-cols-2">
+            {(testimonials.length
+              ? testimonials
+              : [
+                  {
+                    id: 0,
+                    quote:
+                      'Workforce development is no longer a future challenge—it is a current operational necessity.',
+                    author_name: 'Jenny Ingrao-Aman',
+                    author_role: 'Executive Director',
+                    organization: 'NYSAWWA / One Water Workforce',
+                  },
+                ]
+            )
+              .slice(0, 2)
+              .map(t => (
+                <blockquote key={t.id} className="rounded-xl border border-slate-200 bg-white p-5">
+                  <p className="text-lg leading-relaxed text-slate-800">“{t.quote}”</p>
+                  <footer className="mt-3 text-sm text-slate-600">
+                    — {t.author_name}
+                    {t.author_role ? `, ${t.author_role}` : ''}
+                  </footer>
+                </blockquote>
+              ))}
+          </div>
+        </OwwSection>
+      ) : null}
+    </div>
+  );
+}
 
 function FallbackHome({ state, testimonials }: { state: string; testimonials: Testimonial[] }) {
   return (
@@ -192,6 +352,7 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
 export default function HomePage() {
   const params = useParams();
   const state = (params.state || DEFAULT_STATE).toLowerCase();
+  const { isAuthenticated, userRoles, loading } = useAuth();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
 
@@ -202,8 +363,17 @@ export default function HomePage() {
       .catch(() => setCmsPage(null));
   }, [state]);
 
-  if (cmsPage === undefined) {
+  // Signed-in role users: skip CMS marketing home and go to their workspace.
+  if (!loading && isAuthenticated && (isHiringRole(userRoles) || isPlatformStaff(userRoles))) {
+    return <Navigate to={homeForRoles(userRoles)} replace />;
+  }
+
+  if (cmsPage === undefined || loading) {
     return <p className="text-base text-slate-600">Loading…</p>;
+  }
+
+  if (isAuthenticated) {
+    return <SignedInHome state={state} testimonials={testimonials} />;
   }
 
   if (cmsPage) {

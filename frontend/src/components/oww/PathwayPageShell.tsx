@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
@@ -6,6 +6,8 @@ import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
+import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
 import {
   pathwayContent,
   resolvePathwayPath,
@@ -13,6 +15,13 @@ import {
 } from '@/content/owwPublicContent';
 import { getPublishedPage } from '@/services/publicService';
 import type { ContentPage } from '@/types';
+
+const PUBLIC_AUTH_CTAS = [/\/login/i, /\/register/i, /create account/i, /express interest/i];
+
+function isPublicOnboardingStep(label: string, to: string): boolean {
+  const hay = `${label} ${to}`.toLowerCase();
+  return PUBLIC_AUTH_CTAS.some(re => re.test(hay));
+}
 
 export function PathwayPageShell({
   slug,
@@ -24,7 +33,57 @@ export function PathwayPageShell({
   extra?: ReactNode;
 }) {
   const content = pathwayContent[slug];
+  const { isAuthenticated, userRoles } = useAuth();
   const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
+  const roleHome = homeForRoles(userRoles);
+  const hiring = isHiringRole(userRoles);
+  const platform = isPlatformStaff(userRoles);
+
+  const nextSteps = useMemo(() => {
+    let steps = content.nextSteps;
+    if (isAuthenticated) {
+      steps = steps.filter(s => !isPublicOnboardingStep(s.label, s.to));
+    }
+    // Signed-in utility/employer: on hire pathway, prefer workspace over public browse CTAs
+    if (hiring && slug === 'hire') {
+      return [
+        {
+          label: 'Open hiring workspace',
+          description: 'Jobs, applicants, messaging, and interviews',
+          to: '/employer',
+          variant: 'primary' as const,
+        },
+        {
+          label: 'Manage jobs',
+          description: 'Post and edit openings',
+          to: '/employer/jobs',
+          variant: 'secondary' as const,
+        },
+        ...steps.filter(s => !/register|interest|sign-in|login/i.test(`${s.label} ${s.to}`)),
+      ];
+    }
+    if (hiring && slug !== 'hire') {
+      return [
+        {
+          label: 'Back to hiring workspace',
+          description: 'You are signed in as an employer/utility — this page is for visitors',
+          to: '/employer',
+          variant: 'primary' as const,
+        },
+      ];
+    }
+    if (platform) {
+      return [
+        {
+          label: 'Open administration',
+          description: 'Platform operations and users',
+          to: '/admin',
+          variant: 'primary' as const,
+        },
+      ];
+    }
+    return steps;
+  }, [content.nextSteps, hiring, isAuthenticated, platform, slug]);
 
   useEffect(() => {
     void getPublishedPage(state, slug)
@@ -36,13 +95,16 @@ export function PathwayPageShell({
     return <p className="text-base text-slate-600">Loading…</p>;
   }
 
+  const backTo = isAuthenticated ? roleHome : `/${state}`;
+  const backLabel = isAuthenticated ? 'Back to workspace' : `Back to ${state.toUpperCase()} home`;
+
   if (cmsPage) {
     return (
       <div className="space-y-6">
         <Button variant="ghost" className="min-h-[44px] px-0 text-base text-sky-800" asChild>
-          <Link to={`/${state}`}>
+          <Link to={backTo}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to {state.toUpperCase()} home
+            {backLabel}
           </Link>
         </Button>
         <CmsPageRenderer page={cmsPage} state={state} />
@@ -54,11 +116,18 @@ export function PathwayPageShell({
   return (
     <div className="space-y-8">
       <Button variant="ghost" className="min-h-[44px] px-0 text-base text-sky-800" asChild>
-        <Link to={`/${state}`}>
+        <Link to={backTo}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to {state.toUpperCase()} home
+          {backLabel}
         </Link>
       </Button>
+
+      {hiring && slug !== 'hire' ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-base text-amber-950">
+          You are signed in on the hiring pathway. Public career/educator/ambassador pages stay
+          available for visitors; use your hiring workspace for day-to-day work.
+        </div>
+      ) : null}
 
       <OwwPageHero
         eyebrow={content.eyebrow}
@@ -71,7 +140,7 @@ export function PathwayPageShell({
         }
         actions={
           <div className="flex flex-wrap gap-2">
-            {content.nextSteps.slice(0, 2).map(step => (
+            {nextSteps.slice(0, 2).map(step => (
               <Button
                 key={step.to}
                 className="min-h-[44px] text-base"
@@ -134,14 +203,23 @@ export function PathwayPageShell({
         </div>
       </OwwSection>
 
-      <OwwSection title="Suggested next steps" description="A practical checklist so you do not stall on a single CTA.">
-        <ol className="list-decimal space-y-2 pl-6 text-lg text-slate-700">
-          {content.checklist.map(item => (
-            <li key={item}>{item}</li>
-          ))}
-        </ol>
+      <OwwSection
+        title="Suggested next steps"
+        description={
+          isAuthenticated
+            ? 'Actions for your signed-in role on this pathway.'
+            : 'A practical checklist so you do not stall on a single CTA.'
+        }
+      >
+        {!isAuthenticated ? (
+          <ol className="list-decimal space-y-2 pl-6 text-lg text-slate-700">
+            {content.checklist.map(item => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        ) : null}
         <div className="mt-6 flex flex-wrap gap-3" data-tour="pathway-next">
-          {content.nextSteps.map(step => (
+          {nextSteps.map(step => (
             <Button
               key={`${step.label}-${step.to}`}
               className="min-h-[44px] text-base"

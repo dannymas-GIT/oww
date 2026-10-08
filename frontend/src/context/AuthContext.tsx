@@ -30,7 +30,10 @@ interface AuthContextValue {
   isIndividual: boolean;
   isEducator: boolean;
   activeStateCode: string;
-  login: (username: string, password: string) => Promise<void>;
+  login: (
+    username: string,
+    password: string
+  ) => Promise<{ access_token: string; user: OwwUser }>;
   registerUtilityAdmin: (payload: {
     utility_name: string;
     full_name: string;
@@ -41,8 +44,21 @@ interface AuthContextValue {
     website?: string;
     job_title?: string;
   }) => Promise<import('@/types').RegisterUtilityResult>;
-  requestOtpCode: (payload: { email?: string; phone?: string }) => Promise<{ ok: boolean; message?: string; dev_code?: string }>;
-  verifyOtpCode: (payload: { email?: string; phone?: string; code: string }) => Promise<void>;
+  requestOtpCode: (payload: {
+    email?: string;
+    phone?: string;
+  }) => Promise<{
+    ok: boolean;
+    message?: string;
+    dev_code?: string;
+    delivery?: string;
+    channel?: string;
+  }>;
+  verifyOtpCode: (payload: {
+    email?: string;
+    phone?: string;
+    code: string;
+  }) => Promise<{ access_token: string; user: OwwUser }>;
   changePassword: (body: {
     current_password: string;
     new_password: string;
@@ -86,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (username: string, password: string) => {
     const data = await loginPassword(username, password);
     setUser(data.user);
+    return data;
   }, []);
 
   const registerUtilityAdmin = useCallback(
@@ -113,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyOtpCode = useCallback(async (payload: { email?: string; phone?: string; code: string }) => {
     const data = await verifyOtp(payload);
     setUser(data.user);
+    return data;
   }, []);
 
   const changePassword = useCallback(

@@ -3,7 +3,13 @@ import type { OwwUser } from '@/types';
 
 export async function requestOtp(payload: { email?: string; phone?: string }) {
   const { data } = await api.post('/auth/otp/request', payload);
-  return data as { ok: boolean; message?: string; dev_code?: string };
+  return data as {
+    ok: boolean;
+    message?: string;
+    dev_code?: string;
+    delivery?: 'stub' | 'email' | 'sms' | 'failed';
+    channel?: string;
+  };
 }
 
 export async function verifyOtp(payload: { email?: string; phone?: string; code: string }) {
