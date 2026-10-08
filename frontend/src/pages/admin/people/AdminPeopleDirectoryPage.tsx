@@ -70,7 +70,9 @@ export default function AdminPeopleDirectoryPage({ audience }: { audience: Peopl
       if (key === 'is_active') return row.is_active === false ? 0 : 1;
       if (key === 'full_name') return row.full_name || row.username || '';
       if (key === 'org_name') return row.org_name || '';
-      return (row as Record<string, unknown>)[key];
+      if (key === 'username') return row.username || '';
+      if (key === 'email') return row.email || '';
+      return '';
     },
     []
   );
