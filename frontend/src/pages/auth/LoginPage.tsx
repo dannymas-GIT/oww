@@ -184,7 +184,13 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
           {error ? <p className="mt-4 text-base text-red-700">{error}</p> : null}
-          <p className="mt-6 text-center text-sm text-slate-600">
+          <p className="mt-6 text-center text-base text-slate-600">
+            Utility administrator?{' '}
+            <Link to="/register/utility" className="font-semibold text-sky-700 underline-offset-2 hover:underline">
+              Create an account
+            </Link>
+          </p>
+          <p className="mt-3 text-center text-sm text-slate-600">
             <Link to="/" className="text-sky-700 underline-offset-2 hover:underline">
               Back to home
             </Link>

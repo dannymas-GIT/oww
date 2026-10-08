@@ -38,8 +38,22 @@ cd frontend && npm install && npm run dev -- --port 5174
 | Username | Password | Role |
 |----------|----------|------|
 | `oww-admin` | `ChangeMe-OWW!` | `platform_admin` |
-| `ny-state-admin` | `ChangeMe-OWW!` | `state_admin` |
+| `jenny` | `ChangeMe-OWW!` | `platform_admin` (NYSAWWA; email `jenny@nysawwa.org`) |
+| `utility-admin1` | `ChangeMe-OWW!` | `utility_admin` (active membership — WW360 handoff) |
 | OTP login | Use any seeded email; code logged to backend console in dev | individual / employer / educator |
+
+### UI test — Water Workforce 360 handoff
+
+1. Sign in as `utility-admin1` (or self-register at `/register/utility`).
+2. Header shows **Workspace / Hiring / …** (role nav) plus **Explore** — not only public Jobs/Companies.
+3. Open **Workspace → Dashboard** (`/employer`) → **Water Workforce 360**.
+4. Or as Jenny (`jenny`): **Administration → Users & access** → Add user with role `utility_admin` + org, then grant complimentary membership under Memberships if needed.
+
+Self-registration creates org + `utility_admin` + complimentary `utility_annual` membership and lands on `/employer`.
+
+**Landing page + blog CMS (Jenny / platform_admin):** Administration → **Pages & blog** → Landing pages tab for home/pathway templates, or Blog tab for ongoing topics. Edit sections (hero, stats, cards, rich text, media gallery, quotes, CTAs), set author/tags/excerpt on posts, upload media, Publish. Home (`/ny`) and pathway slugs render published CMS pages; blog posts appear at `/ny/blog` and `/ny/blog/{slug}`.
+
+Staging deploy + seed: `bash /opt/projects/workspace/scripts/oww/deploy-staging.sh` (seeds demo data). Integration smoke: `bash /opt/projects/workspace/scripts/oww-ww360/verify-e2e-integration.sh`.
 
 ## Ports (avoid WW360 collisions)
 

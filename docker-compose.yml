@@ -22,6 +22,8 @@ services:
   backend:
     build: ./backend
     container_name: oww_backend
+    volumes:
+      - oww_media_data:/app/media
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
@@ -42,6 +44,11 @@ services:
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       OWW_SEED_ADMIN_PASSWORD: ${OWW_SEED_ADMIN_PASSWORD:-ChangeMe-OWW!}
+      # Co-hosted WW360: shared saas_integration DNS (host ports are 127.0.0.1-only)
+      WW360_BASE_URL: ${WW360_BASE_URL:-http://ww360_backend:8000}
+      WW360_SERVICE_TOKEN: ${WW360_SERVICE_TOKEN:-}
+      WW360_HMAC_SECRET: ${WW360_HMAC_SECRET:-}
+      OWW_WW360_API_KEY: ${OWW_WW360_API_KEY:-}
     ports:
       - "127.0.0.1:8003:8000"
     depends_on:
@@ -49,6 +56,7 @@ services:
         condition: service_healthy
     networks:
       - oww_network
+      - saas_integration
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
@@ -69,7 +77,12 @@ services:
 
 volumes:
   oww_postgres_data:
+  oww_media_data:
 
 networks:
   oww_network:
     driver: bridge
+  # Shared with WW360 on the same VM for entitlement/handoff
+  saas_integration:
+    external: true
+    name: saas_integration

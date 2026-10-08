@@ -60,6 +60,16 @@ class Settings(BaseSettings):
     MATCH_REFRESH_ENABLED: bool = True
     DIGEST_ENABLED: bool = True
 
+    # Water Workforce 360 integration
+    WW360_BASE_URL: str = "http://127.0.0.1:8002"
+    WW360_SERVICE_TOKEN: str = ""
+    WW360_HMAC_SECRET: str = ""
+    OWW_WW360_API_KEY: str = ""
+
+    # CMS media uploads (images, video, audio, PDF, etc.)
+    MEDIA_ROOT: str = "/app/media"
+    MEDIA_MAX_BYTES: int = 80 * 1024 * 1024  # 80 MB
+
     @property
     def cors_origins(self) -> List[str]:
         base = [

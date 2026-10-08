@@ -226,7 +226,7 @@ def ensure_default_personas(db: Session) -> None:
          ["Team at /employer/team", "Cannot assign national/state roles"], 60),
         ("utility-manager", "utility-manager1", "utility", "Utility manager", "Posts jobs under utility membership",
          ["Hiring workspace", "Covered by org membership"], 70),
-        ("state-admin", "ny-state-admin", "state", "State administrator", "NY microsite + CMS",
+        ("state-admin", "jenny", "state", "State administrator", "NY microsite + CMS",
          ["Admin dashboard scoped to NY", "Locked national roles"], 80),
     ]
     for key, username, tier, label, subtitle, bullets, order in specs:

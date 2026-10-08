@@ -341,13 +341,123 @@ export interface Microvideo {
   thumbnail_url?: string;
 }
 
+export type CmsSectionType =
+  | 'hero'
+  | 'stats'
+  | 'rich_text'
+  | 'cards'
+  | 'media_gallery'
+  | 'cta_band'
+  | 'quote';
+
+export type CmsTemplateId =
+  | 'home_landing'
+  | 'pathway_landing'
+  | 'story_feature'
+  | 'simple_page'
+  | 'blog_post';
+
+export interface CmsStatItem {
+  value: string;
+  label: string;
+  detail?: string;
+}
+
+export interface CmsCardItem {
+  title: string;
+  body: string;
+  href?: string;
+}
+
+export interface CmsMediaItem {
+  url: string;
+  caption?: string;
+  media_type?: 'image' | 'video' | 'audio' | 'document' | string;
+}
+
+export interface CmsSection {
+  type: CmsSectionType | string;
+  eyebrow?: string;
+  headline?: string;
+  subhead?: string;
+  title?: string;
+  description?: string;
+  body?: string;
+  html?: string;
+  cta_label?: string;
+  cta_href?: string;
+  cta2_label?: string;
+  cta2_href?: string;
+  media_url?: string;
+  media_type?: string;
+  quote?: string;
+  author?: string;
+  role?: string;
+  organization?: string;
+  items?: Array<CmsStatItem | CmsCardItem | CmsMediaItem | Record<string, string>>;
+}
+
 export interface ContentPage {
   id: number;
   slug: string;
   title: string;
   body: string;
+  template?: CmsTemplateId | string;
+  kind?: 'page' | 'blog' | string;
+  pathway?: string | null;
+  summary?: string | null;
+  excerpt?: string | null;
+  sections?: CmsSection[];
   state_code?: string;
   published?: boolean;
+  sort_order?: number;
+  author_name?: string | null;
+  published_at?: string | null;
+  tags?: string[];
+  cover_image_url?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface BlogPostCard {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  author_name?: string | null;
+  published_at?: string | null;
+  tags: string[];
+  cover_image_url?: string | null;
+  state_code?: string;
+}
+
+export interface CmsTemplateMeta {
+  id: string;
+  label: string;
+  description: string;
+  when_to_use?: string;
+  example_url?: string;
+  suggested_slug: string;
+  section_types: string[];
+  kind?: 'page' | 'blog' | string;
+}
+
+export interface CmsSectionTypeMeta {
+  type: string;
+  label: string;
+  description: string;
+  fields: string[];
+}
+
+export interface MediaAsset {
+  id: number;
+  filename: string;
+  original_name: string;
+  content_type: string;
+  kind: string;
+  size_bytes: number;
+  url: string;
+  created_at?: string | null;
 }
 
 export interface FeaturedPost {

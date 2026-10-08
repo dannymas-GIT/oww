@@ -3,8 +3,10 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime
+from typing import Any
+
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.db.database import get_db
@@ -12,6 +14,7 @@ from app.api.deps import require_roles
 from app.models.user import User
 from app.models.jurisdiction import Jurisdiction
 from app.models.content_page import ContentPage
+from app.models.media_asset import MediaAsset
 from app.models.program_submission import ProgramSubmission
 from app.models.featured_post import FeaturedPost
 from app.models.certification_catalog import CertificationCatalog
@@ -24,8 +27,11 @@ from app.services.analytics_service import summary, export_rows
 from app.services.outbound_service import post_webhook
 from app.services.auth_service import user_to_dict
 from app.services import featured_post_service
+from app.services import cms_service, media_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+CMS_ROLES = ("platform_admin", "state_admin")
 
 class UserPatch(BaseModel):
     full_name: str | None = None
@@ -51,6 +57,13 @@ class CmsIn(BaseModel):
     state_code: str | None = None
     published: bool | None = None
     pathway: str | None = None
+    template: str | None = None
+    summary: str | None = None
+    sections: list[dict[str, Any]] | None = None
+    sort_order: int | None = None
+    author_name: str | None = None
+    published_at: str | None = None  # ISO datetime
+    tags: list[str] | str | None = None
 
 class FeaturedIn(BaseModel):
     id: int | None = None
@@ -140,30 +153,151 @@ def upsert_jurisdiction(body: JurisdictionIn, db: Session = Depends(get_db), use
     db.refresh(j)
     return {"id": j.id, "code": j.state_code.lower(), "name": j.name, "is_active": j.is_active}
 
+@router.get("/cms/catalog")
+def cms_catalog(user: User = Depends(require_roles(*CMS_ROLES))):
+    return cms_service.catalog()
+
+
 @router.get("/cms")
-def list_cms(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
-    return [{"id": p.id, "slug": p.slug, "title": p.title, "body": p.body_html or "", "state_code": p.state_code, "published": p.is_published} for p in db.query(ContentPage).all()]
+def list_cms(
+    kind: str | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    cms_service.ensure_default_home_page(db)
+    q = db.query(ContentPage)
+    if kind == "blog":
+        q = q.filter(ContentPage.template == cms_service.BLOG_TEMPLATE)
+    elif kind == "page":
+        q = q.filter(ContentPage.template != cms_service.BLOG_TEMPLATE)
+    pages = q.order_by(ContentPage.published_at.desc().nullslast(), ContentPage.sort_order, ContentPage.id).all()
+    return [cms_service.page_to_dict(p) for p in pages]
+
+
+@router.post("/cms/media")
+async def upload_cms_media(
+    file: UploadFile = File(...),
+    state_code: str | None = Form(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    asset = await media_service.save_upload(
+        db,
+        upload=file,
+        uploaded_by=user.id,
+        state_code=state_code or user.state_code or "NY",
+    )
+    return media_service.asset_to_dict(asset)
+
+
+@router.get("/cms/media")
+def list_cms_media(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+    rows = db.query(MediaAsset).order_by(MediaAsset.id.desc()).limit(100).all()
+    return [media_service.asset_to_dict(a) for a in rows]
+
+
+@router.get("/cms/{page_id}")
+def get_cms(page_id: int, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+    p = db.query(ContentPage).filter(ContentPage.id == page_id).first()
+    if not p:
+        raise HTTPException(404, "Page not found")
+    return cms_service.page_to_dict(p)
+
 
 @router.post("/cms")
-def create_cms(body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
-    p = ContentPage(slug=body.slug or "page", title=body.title or "Untitled", body_html=body.body or "", state_code=(body.state_code or "NY").upper(), is_published=bool(body.published), pathway=body.pathway, created_by=user.id)
+def create_cms(body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+    template = body.template or "simple_page"
+    if template not in cms_service.TEMPLATES:
+        raise HTTPException(400, f"Unknown template: {template}")
+    slug = (body.slug or cms_service.TEMPLATES[template]["suggested_slug"] or "page").strip().lower()
+    state = (body.state_code or user.state_code or "NY").upper()[:2]
+    if db.query(ContentPage).filter(ContentPage.state_code == state, ContentPage.slug == slug).first():
+        raise HTTPException(409, "A page with this slug already exists for the state")
+    sections = body.sections if body.sections is not None else cms_service.default_sections_for_template(template)
+    published = bool(body.published) if body.published is not None else False
+    p = ContentPage(
+        slug=slug,
+        title=body.title or "Untitled",
+        template=template,
+        body_html=body.body or "",
+        body_json={"sections": cms_service.sanitize_sections(sections)},
+        state_code=state,
+        is_published=published,
+        pathway=body.pathway,
+        summary=body.summary,
+        sort_order=body.sort_order or 0,
+        author_name=body.author_name or (user.full_name if template == cms_service.BLOG_TEMPLATE else None),
+        tags=cms_service._normalize_tags(body.tags),
+        created_by=user.id,
+    )
+    if body.published_at:
+        try:
+            p.published_at = datetime.fromisoformat(body.published_at.replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            pass
+    cms_service.stamp_publish_dates(p, publishing=published)
     db.add(p)
     db.commit()
     db.refresh(p)
-    return {"id": p.id, "slug": p.slug, "title": p.title, "body": p.body_html or "", "published": p.is_published}
+    return cms_service.page_to_dict(p)
+
 
 @router.patch("/cms/{page_id}")
-def patch_cms(page_id: int, body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
+def patch_cms(page_id: int, body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     p = db.query(ContentPage).filter(ContentPage.id == page_id).first()
     if not p:
         raise HTTPException(404)
-    if body.slug is not None: p.slug = body.slug
-    if body.title is not None: p.title = body.title
-    if body.body is not None: p.body_html = body.body
-    if body.published is not None: p.is_published = body.published
-    if body.pathway is not None: p.pathway = body.pathway
+    was_published = bool(p.is_published)
+    if body.slug is not None:
+        p.slug = body.slug.strip().lower()
+    if body.title is not None:
+        p.title = body.title
+    if body.body is not None:
+        p.body_html = body.body
+    if body.pathway is not None:
+        p.pathway = body.pathway
+    if body.summary is not None:
+        p.summary = body.summary
+    if body.sort_order is not None:
+        p.sort_order = body.sort_order
+    if body.template is not None:
+        if body.template not in cms_service.TEMPLATES:
+            raise HTTPException(400, f"Unknown template: {body.template}")
+        p.template = body.template
+    if body.sections is not None:
+        p.body_json = {"sections": cms_service.sanitize_sections(body.sections)}
+    if body.state_code is not None:
+        p.state_code = body.state_code.upper()[:2]
+    if body.author_name is not None:
+        p.author_name = body.author_name
+    if body.tags is not None:
+        p.tags = cms_service._normalize_tags(body.tags)
+    if body.published_at is not None:
+        if body.published_at == "":
+            p.published_at = None
+        else:
+            try:
+                p.published_at = datetime.fromisoformat(body.published_at.replace("Z", "+00:00")).replace(tzinfo=None)
+            except ValueError:
+                raise HTTPException(400, "published_at must be ISO datetime")
+    if body.published is not None:
+        p.is_published = body.published
+    cms_service.stamp_publish_dates(p, publishing=bool(p.is_published) and not was_published)
     db.commit()
-    return {"id": p.id, "slug": p.slug, "title": p.title, "body": p.body_html or "", "published": p.is_published}
+    db.refresh(p)
+    return cms_service.page_to_dict(p)
+
+
+@router.delete("/cms/{page_id}")
+def delete_cms(page_id: int, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+    p = db.query(ContentPage).filter(ContentPage.id == page_id).first()
+    if not p:
+        raise HTTPException(404)
+    if p.slug == "home":
+        raise HTTPException(400, "The home landing page cannot be deleted; unpublish it instead.")
+    db.delete(p)
+    db.commit()
+    return {"ok": True}
 
 @router.get("/programs")
 def list_programs(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):

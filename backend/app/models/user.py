@@ -25,6 +25,7 @@ class User(Base):
     contact_prefs = Column(JSONB, nullable=False, default=dict)
     sso_provider = Column(String(50), nullable=True, index=True)
     sso_subject = Column(String(255), nullable=True, index=True)
+    ww360_user_id = Column(String(64), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.job import Job
@@ -12,7 +13,10 @@ from app.models.microvideo import Microvideo
 from app.models.resource_item import ResourceItem
 from app.models.interest_submission import InterestSubmission
 from app.models.program_submission import ProgramSubmission
+from app.models.content_page import ContentPage
+from app.models.media_asset import MediaAsset
 from app.services.engagement_service import track
+from app.services import cms_service, media_service
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -186,3 +190,74 @@ def resources(state: str | None = None, category: str | None = None, db: Session
     if category:
         q = q.filter(ResourceItem.category == category)
     return [{"id": r.id, "title": r.title, "url": r.url, "category": r.category, "pathway": r.pathway} for r in q.all()]
+
+
+@router.get("/pages/{state_code}/{slug}")
+def get_published_page(state_code: str, slug: str, db: Session = Depends(get_db)):
+    """Published CMS landing page for the public microsite."""
+    state = (state_code or "ny").upper()[:2]
+    page_slug = (slug or "home").strip().lower()
+    if page_slug == "home":
+        cms_service.ensure_default_home_page(db, state_code=state)
+    page = (
+        db.query(ContentPage)
+        .filter(
+            ContentPage.state_code == state,
+            ContentPage.slug == page_slug,
+            ContentPage.is_published.is_(True),
+        )
+        .first()
+    )
+    if not page:
+        raise HTTPException(404, "Page not found")
+    return cms_service.page_to_dict(page, include_draft=True)
+
+
+@router.get("/blog/{state_code}")
+def list_blog_posts(
+    state_code: str,
+    tag: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+):
+    """Published blog posts for ongoing topics / updates."""
+    pages, total = cms_service.list_published_blog_posts(
+        db,
+        state_code=state_code,
+        tag=tag,
+        limit=limit,
+        offset=offset,
+    )
+    return {
+        "total": total,
+        "items": [cms_service.blog_card_dict(p) for p in pages],
+        "state_code": (state_code or "ny").upper()[:2],
+        "tag": tag,
+    }
+
+
+@router.get("/blog/{state_code}/{slug}")
+def get_blog_post(state_code: str, slug: str, db: Session = Depends(get_db)):
+    state = (state_code or "ny").upper()[:2]
+    page = (
+        db.query(ContentPage)
+        .filter(
+            ContentPage.state_code == state,
+            ContentPage.slug == (slug or "").strip().lower(),
+            ContentPage.template == cms_service.BLOG_TEMPLATE,
+            ContentPage.is_published.is_(True),
+        )
+        .first()
+    )
+    if not page:
+        raise HTTPException(404, "Post not found")
+    return cms_service.page_to_dict(page, include_draft=True)
+
+
+@router.get("/media/{filename}")
+def get_media_file(filename: str, db: Session = Depends(get_db)):
+    path = media_service.resolve_stored_file(filename)
+    asset = db.query(MediaAsset).filter(MediaAsset.filename == path.name).first()
+    media_type = asset.content_type if asset else "application/octet-stream"
+    return FileResponse(path, media_type=media_type, filename=asset.original_name if asset else path.name)

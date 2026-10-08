@@ -18,6 +18,18 @@ export async function loginPassword(username: string, password: string) {
   return data as { access_token: string; user: OwwUser };
 }
 
+export async function registerUtilityAdmin(payload: {
+  utility_name: string;
+  full_name: string;
+  email: string;
+  password: string;
+  state_code?: string;
+}) {
+  const { data } = await api.post('/auth/register-utility-admin', payload);
+  setStoredToken(data.access_token);
+  return data as { access_token: string; user: OwwUser };
+}
+
 export async function fetchMe(): Promise<OwwUser> {
   const { data } = await api.get('/auth/me');
   return data;

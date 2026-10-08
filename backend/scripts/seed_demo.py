@@ -131,7 +131,22 @@ def main():
         upsert_user(db, "smosquea", "smosquea@omnitech-solutions.us", ["platform_admin"], "S. Mosquea", PASSWORD)
         upsert_user(db, "jnolan", "jnolan@omnitech-solutions.us", ["platform_admin"], "J. Nolan", PASSWORD)
         upsert_user(db, "tmcknight", "tmcknight@omnitech-solutions.us", ["platform_admin"], "T. McKnight", PASSWORD)
-        state = upsert_user(db, "ny-state-admin", "jenny@nysawwa.org", ["state_admin"], "NY State Admin", PASSWORD)
+        # Jenny (NYSAWWA): platform_admin so she can create utility admins for WW360 demos.
+        # Migrate legacy username ny-state-admin → jenny (same email).
+        legacy_jenny = db.query(User).filter(User.username == "ny-state-admin").first()
+        if legacy_jenny and not db.query(User).filter(User.username == "jenny").first():
+            legacy_jenny.username = "jenny"
+            db.commit()
+        jenny = upsert_user(
+            db,
+            "jenny",
+            "jenny@nysawwa.org",
+            ["platform_admin"],
+            "Jenny",
+            PASSWORD,
+        )
+        # Keep state_admin alias username pointing at same mailbox only if still present
+        _ = jenny
 
         org_ids = []
         for i, (name, otype, region, lat, lng) in enumerate(ORGS):
@@ -273,8 +288,9 @@ def main():
                 ResourceItem(state_code="NY", pathway="educate", category="lesson_plan", title="Middle school water careers lesson", url="/ny/educate"),
                 ResourceItem(state_code="NY", pathway="ambassador", category="toolkit", title="Ambassador outreach toolkit", url="/ny/ambassador"),
             ])
-        if db.query(ContentPage).count() == 0:
-            db.add(ContentPage(state_code="NY", slug="home", title="Welcome to One Water Workforce", body_html="<p>Connect to water careers.</p>", pathway="home", is_published=True))
+        from app.services.cms_service import ensure_default_home_page
+
+        ensure_default_home_page(db, state_code="NY")
         if db.query(CertificationCatalog).count() == 0:
             db.add_all([
                 CertificationCatalog(state_code="NY", name="Grade 2A Water Treatment", level="2A", issuer="NYSDOH"),
@@ -299,8 +315,8 @@ def main():
 
         ensure_default_personas(db)
         n = refresh_all_matches(db)
-        print(f"Seed complete. Admin={admin.username} State={state.username} matches_refreshed={n}")
-        print(f"Password for admin accounts (oww-admin, dmas, smosquea, jnolan, tmcknight): {PASSWORD}")
+        print(f"Seed complete. Admin={admin.username} Jenny={jenny.username} matches_refreshed={n}")
+        print(f"Password for admin accounts (oww-admin, jenny, dmas, smosquea, jnolan, tmcknight): {PASSWORD}")
     finally:
         db.close()
 

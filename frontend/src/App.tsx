@@ -5,6 +5,7 @@ import { DEFAULT_STATE } from '@/lib/constants';
 import { HIRING_ROLES, ORG_ADMIN_ROLES } from '@/config/nav';
 
 import LoginPage from '@/pages/auth/LoginPage';
+import RegisterUtilityPage from '@/pages/auth/RegisterUtilityPage';
 import ProfilePage from '@/pages/auth/ProfilePage';
 
 import HomePage from '@/pages/public/HomePage';
@@ -16,6 +17,8 @@ import InterestFormPage from '@/pages/public/InterestFormPage';
 import ProgramSubmitPage from '@/pages/public/ProgramSubmitPage';
 import JobsBoardPage from '@/pages/public/JobsBoardPage';
 import JobDetailPage from '@/pages/public/JobDetailPage';
+import BlogListPage from '@/pages/public/BlogListPage';
+import BlogPostPage from '@/pages/public/BlogPostPage';
 import CompaniesPage from '@/pages/public/CompaniesPage';
 import CompanyDetailPage from '@/pages/public/CompanyDetailPage';
 import RegionalCategoryPage from '@/pages/public/RegionalCategoryPage';
@@ -37,6 +40,7 @@ import EducatorDashboard from '@/pages/educator/EducatorDashboard';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminJurisdictionsPage from '@/pages/admin/AdminJurisdictionsPage';
 import AdminCmsPage from '@/pages/admin/AdminCmsPage';
+import AdminCmsEditorPage from '@/pages/admin/AdminCmsEditorPage';
 import AdminProgramsPage from '@/pages/admin/AdminProgramsPage';
 import AdminFeaturedPostsPage from '@/pages/admin/AdminFeaturedPostsPage';
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
@@ -59,6 +63,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to={`/${DEFAULT_STATE}`} replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register/utility" element={<RegisterUtilityPage />} />
         <Route
           path="/profile"
           element={
@@ -103,6 +108,8 @@ export default function App() {
         <Route path="/:state/programs/submit" element={<ProgramSubmitPage />} />
         <Route path="/:state/jobs" element={<JobsBoardPage />} />
         <Route path="/:state/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/:state/blog" element={<BlogListPage />} />
+        <Route path="/:state/blog/:slug" element={<BlogPostPage />} />
         <Route path="/:state/companies" element={<CompaniesPage />} />
         <Route path="/:state/companies/:id" element={<CompanyDetailPage />} />
         <Route path="/:state/regional/:category" element={<RegionalCategoryPage />} />
@@ -260,6 +267,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['platform_admin', 'state_admin']}>
               <AdminCmsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/cms/:id"
+          element={
+            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+              <AdminCmsEditorPage />
             </ProtectedRoute>
           }
         />

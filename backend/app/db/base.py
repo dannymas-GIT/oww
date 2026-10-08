@@ -19,6 +19,7 @@ def import_models() -> None:
     import app.models.interest_submission  # noqa: F401
     import app.models.program_submission  # noqa: F401
     import app.models.content_page  # noqa: F401
+    import app.models.media_asset  # noqa: F401
     import app.models.resource_item  # noqa: F401
     import app.models.testimonial  # noqa: F401
     import app.models.microvideo  # noqa: F401

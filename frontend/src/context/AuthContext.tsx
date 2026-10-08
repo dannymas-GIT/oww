@@ -5,6 +5,7 @@ import {
   getStoredToken,
   loginPassword,
   logout as apiLogout,
+  registerUtilityAdmin as apiRegisterUtilityAdmin,
   requestOtp,
   verifyOtp,
 } from '@/services/authService';
@@ -30,6 +31,13 @@ interface AuthContextValue {
   isEducator: boolean;
   activeStateCode: string;
   login: (username: string, password: string) => Promise<void>;
+  registerUtilityAdmin: (payload: {
+    utility_name: string;
+    full_name: string;
+    email: string;
+    password: string;
+    state_code?: string;
+  }) => Promise<void>;
   requestOtpCode: (payload: { email?: string; phone?: string }) => Promise<{ ok: boolean; message?: string; dev_code?: string }>;
   verifyOtpCode: (payload: { email?: string; phone?: string; code: string }) => Promise<void>;
   changePassword: (body: {
@@ -76,6 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const data = await loginPassword(username, password);
     setUser(data.user);
   }, []);
+
+  const registerUtilityAdmin = useCallback(
+    async (payload: {
+      utility_name: string;
+      full_name: string;
+      email: string;
+      password: string;
+      state_code?: string;
+    }) => {
+      const data = await apiRegisterUtilityAdmin(payload);
+      setUser(data.user);
+    },
+    []
+  );
 
   const requestOtpCode = useCallback(async (payload: { email?: string; phone?: string }) => {
     return requestOtp(payload);
@@ -131,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isEducator: hasAnyRole('educator'),
       activeStateCode: (user?.jurisdiction_code || DEFAULT_STATE).toLowerCase(),
       login,
+      registerUtilityAdmin,
       requestOtpCode,
       verifyOtpCode,
       changePassword,
@@ -147,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isPlatformAdmin,
       isStateAdmin,
       login,
+      registerUtilityAdmin,
       requestOtpCode,
       verifyOtpCode,
       changePassword,

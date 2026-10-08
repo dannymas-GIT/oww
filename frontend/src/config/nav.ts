@@ -289,7 +289,13 @@ export const roleNavGroups: NavGroup[] = [
         id: 'admin-content',
         label: 'Content',
         items: [
-          { label: 'CMS pages', path: '/admin/cms', icon: FileText, roles: ['platform_admin', 'state_admin'] },
+          {
+            label: 'Pages & blog',
+            path: '/admin/cms',
+            icon: FileText,
+            roles: ['platform_admin', 'state_admin'],
+            description: 'Landing templates, blog posts, media, and publish',
+          },
           { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: ['platform_admin', 'state_admin'] },
           { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: ['platform_admin', 'state_admin'] },
         ],

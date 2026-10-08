@@ -212,9 +212,15 @@ export const pathwayContent: Record<PathwaySlug, PathwayContent> = {
       'Update applicant status and report hires to close the outcome loop',
     ],
     nextSteps: [
+      {
+        label: 'Register as utility admin',
+        description: 'Create your utility account (complimentary demo membership)',
+        to: '/register/utility',
+        variant: 'primary',
+      },
       { label: 'Browse the job board', description: 'See how openings appear publicly', to: '/{state}/jobs', variant: 'outline' },
       { label: 'Express interest', description: 'Tell us you want to hire', to: '/{state}/interest?pathway=hire', variant: 'secondary' },
-      { label: 'Employer sign-in', description: 'Post jobs and search talent', to: '/login', variant: 'primary' },
+      { label: 'Employer sign-in', description: 'Post jobs and search talent', to: '/login', variant: 'outline' },
       { label: 'Employer directory', description: 'View public company profiles', to: '/{state}/companies', variant: 'outline' },
     ],
   },

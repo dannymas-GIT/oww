@@ -57,17 +57,23 @@ export function AppShell() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const groups = navForRoles(userRoles);
-  const isPublic = !location.pathname.startsWith('/candidate')
+  // When signed-in users have role workspaces (Hiring, Administration, …), prefer
+  // that nav on every page — including public /ny/* — so Hiring is discoverable.
+  const showRoleNav = isAuthenticated && groups.length > 0;
+  const isPublic = !showRoleNav
+    && !location.pathname.startsWith('/candidate')
     && !location.pathname.startsWith('/employer')
     && !location.pathname.startsWith('/educator')
     && !location.pathname.startsWith('/admin')
     && !location.pathname.startsWith('/profile')
     && !location.pathname.startsWith('/billing')
-    && !location.pathname.startsWith('/login');
+    && !location.pathname.startsWith('/login')
+    && !location.pathname.startsWith('/register');
 
   const quietLinks = [
     { label: 'Home', to: `/${state}` },
     { label: 'Jobs', to: `/${state}/jobs` },
+    { label: 'Blog', to: `/${state}/blog` },
     { label: 'Companies', to: `/${state}/companies` },
   ];
 
@@ -100,7 +106,14 @@ export function AppShell() {
             className="hidden flex-1 items-center justify-center gap-0.5 lg:flex"
             aria-label="Primary"
           >
-            {isPublic ? (
+            {showRoleNav ? (
+              <>
+                <NavLink to={`/${state}`} end className={({ isActive }) => linkClass(isActive)}>
+                  Explore
+                </NavLink>
+                <RoleNav />
+              </>
+            ) : isPublic ? (
               <>
                 <NavLink to={`/${state}`} end className={({ isActive }) => linkClass(isActive)}>
                   Home
@@ -108,6 +121,9 @@ export function AppShell() {
                 <PathwaysMenu state={state} />
                 <NavLink to={`/${state}/jobs`} className={({ isActive }) => linkClass(isActive)}>
                   Jobs
+                </NavLink>
+                <NavLink to={`/${state}/blog`} className={({ isActive }) => linkClass(isActive)}>
+                  Blog
                 </NavLink>
                 <NavLink to={`/${state}/companies`} className={({ isActive }) => linkClass(isActive)}>
                   Companies
@@ -152,7 +168,48 @@ export function AppShell() {
 
         {mobileOpen ? (
           <nav className="oww-flyout border-t border-slate-200 bg-white px-4 py-3 lg:hidden" aria-label="Mobile">
-            {isPublic ? (
+            {showRoleNav ? (
+              <div className="space-y-4">
+                <NavLink
+                  to={`/${state}`}
+                  end
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex min-h-[44px] items-center rounded-md px-3 text-base font-medium',
+                      isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
+                    )
+                  }
+                >
+                  Explore
+                </NavLink>
+                {groups.map(g =>
+                  g.sections.map(section => (
+                    <div key={section.id} className="space-y-1">
+                      <p className="px-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        {section.label}
+                      </p>
+                      {section.items.map(item => (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              'flex min-h-[44px] items-center gap-2 rounded-md px-3 text-base font-medium',
+                              isActive ? 'bg-[#e8f0ff] text-oww-navy' : 'text-oww-navy hover:bg-slate-50'
+                            )
+                          }
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : isPublic ? (
               <>
                 <ul className="space-y-1">
                   {quietLinks.map(l => (
@@ -230,6 +287,9 @@ export function AppShell() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-base text-oww-navy">
+            <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/blog`}>
+              Blog
+            </Link>
             <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/interest`}>
               Express interest
             </Link>

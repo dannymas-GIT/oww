@@ -17,6 +17,7 @@ from app.api.v1.endpoints import (
     admin_platform,
     billing,
     impersonation,
+    integrations_ww360,
 )
 
 api_router = APIRouter()
@@ -35,3 +36,4 @@ api_router.include_router(admin.router)
 api_router.include_router(admin_platform.router)
 api_router.include_router(billing.router)
 api_router.include_router(impersonation.router)
+api_router.include_router(integrations_ww360.router)

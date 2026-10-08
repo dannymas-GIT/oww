@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import {
   resolvePathwayPath,
   type PathwaySlug,
 } from '@/content/owwPublicContent';
+import { getPublishedPage } from '@/services/publicService';
+import type { ContentPage } from '@/types';
 
 export function PathwayPageShell({
   slug,
@@ -21,6 +24,32 @@ export function PathwayPageShell({
   extra?: ReactNode;
 }) {
   const content = pathwayContent[slug];
+  const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
+
+  useEffect(() => {
+    void getPublishedPage(state, slug)
+      .then(page => setCmsPage(page?.sections?.length ? page : null))
+      .catch(() => setCmsPage(null));
+  }, [state, slug]);
+
+  if (cmsPage === undefined) {
+    return <p className="text-base text-slate-600">Loading…</p>;
+  }
+
+  if (cmsPage) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" className="min-h-[44px] px-0 text-base text-sky-800" asChild>
+          <Link to={`/${state}`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to {state.toUpperCase()} home
+          </Link>
+        </Button>
+        <CmsPageRenderer page={cmsPage} state={state} />
+        {extra}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

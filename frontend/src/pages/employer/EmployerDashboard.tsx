@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { myMembership } from '@/services/billingService';
 import { listMyJobs } from '@/services/jobService';
+import { openWaterWorkforce360 } from '@/services/ww360Service';
 import { formatDate } from '@/lib/format';
 import type { Membership } from '@/types';
 
@@ -14,6 +15,8 @@ export default function EmployerDashboard() {
   const { isUtilityAdmin, isUtilityManager, canManageUsers } = useAuth();
   const [membership, setMembership] = useState<Membership | null | undefined>(undefined);
   const [jobCount, setJobCount] = useState<number | null>(null);
+  const [ww360Busy, setWw360Busy] = useState(false);
+  const [ww360Error, setWw360Error] = useState<string | null>(null);
 
   useEffect(() => {
     myMembership().then(r => setMembership(r.membership)).catch(() => setMembership(null));
@@ -22,6 +25,32 @@ export default function EmployerDashboard() {
 
   const active = membership && ['active', 'complimentary', 'past_due'].includes(membership.status);
   const eyebrow = isUtilityAdmin ? 'Utility administrator' : isUtilityManager ? 'Utility manager' : 'Employer';
+  const canOpenWw360 = Boolean(isUtilityAdmin || canManageUsers);
+
+  const handleWaterWorkforce360 = async () => {
+    setWw360Busy(true);
+    setWw360Error(null);
+    try {
+      const result = await openWaterWorkforce360();
+      window.location.assign(result.redirect_url);
+    } catch (err: unknown) {
+      const detail =
+        (err as { response?: { data?: { detail?: unknown }; status?: number } })?.response?.data
+          ?.detail;
+      const code =
+        typeof detail === 'object' && detail && 'code' in detail
+          ? String((detail as { code: string }).code)
+          : null;
+      if (code === 'payment_required' || (err as { response?: { status?: number } })?.response?.status === 403) {
+        setWw360Error(
+          'Payment is required. Update your OWW membership, then open Water Workforce 360 again.'
+        );
+      } else {
+        setWw360Error('Could not open Water Workforce 360. Try again or contact support.');
+      }
+      setWw360Busy(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -69,6 +98,15 @@ export default function EmployerDashboard() {
       </div>
 
       <div className="flex flex-wrap gap-3" data-tour="employer-actions">
+        {canOpenWw360 ? (
+          <Button
+            className="min-h-[44px] bg-oww-navy text-base text-white hover:bg-[#003070]"
+            disabled={ww360Busy}
+            onClick={() => void handleWaterWorkforce360()}
+          >
+            {ww360Busy ? 'Opening…' : 'Water Workforce 360'}
+          </Button>
+        ) : null}
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
           <Link to="/employer/candidates">Search candidates</Link>
         </Button>
@@ -84,6 +122,15 @@ export default function EmployerDashboard() {
           <Link to="/billing">Billing &amp; membership</Link>
         </Button>
       </div>
+
+      {ww360Error ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-base text-amber-950">
+          {ww360Error}{' '}
+          <Link className="font-semibold underline" to="/billing">
+            Update billing
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
