@@ -51,6 +51,8 @@ import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminLoginsPage from '@/pages/admin/AdminLoginsPage';
 import AdminMembershipsPage from '@/pages/admin/AdminMembershipsPage';
 import AdminCommunicationsPage from '@/pages/admin/AdminCommunicationsPage';
+import AdminRegistrationsPage from '@/pages/admin/AdminRegistrationsPage';
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
 
 import PricingPage from '@/pages/billing/PricingPage';
 import BillingPage from '@/pages/billing/BillingPage';
@@ -251,6 +253,22 @@ export default function App() {
           element={
             <ProtectedRoute roles={['platform_admin', 'state_admin']}>
               <AdminUsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/registrations"
+          element={
+            <ProtectedRoute roles={['platform_admin', 'state_admin']}>
+              <AdminRegistrationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute roles={['platform_admin']}>
+              <AdminSettingsPage />
             </ProtectedRoute>
           }
         />

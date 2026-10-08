@@ -288,12 +288,52 @@ export const owwTours: OwwTourConfig[] = [
       },
     ],
   },
+  {
+    id: 'oww-registrations',
+    label: 'Utility registrations',
+    dismissedKey: 'oww-tour-registrations-dismissed',
+    stepKey: 'oww-tour-registrations-step',
+    eventName: 'oww:tour:registrations',
+    fabLabel: 'Registrations tour',
+    slides: [
+      {
+        id: 'queue',
+        title: 'Self-registration queue',
+        body: 'Utilities that signed up at /register/utility land here when review is enabled. Payment activates access immediately — this queue is for post-hoc verify, suspend, or reinstate.',
+        highlight: '[data-tour="registrations-table"]',
+        tip: 'Seeded demos: utility-pending1 (paid) and utility-pending2 (unpaid).',
+      },
+      {
+        id: 'actions',
+        title: 'Verify or suspend',
+        body: 'Verify marks the utility as reviewed. Suspend locks hiring tools and Water Workforce 360 until you reinstate. Suspend requires a note.',
+      },
+    ],
+  },
+  {
+    id: 'oww-settings',
+    label: 'Platform settings',
+    dismissedKey: 'oww-tour-settings-dismissed',
+    stepKey: 'oww-tour-settings-step',
+    eventName: 'oww:tour:settings',
+    fabLabel: 'Settings tour',
+    slides: [
+      {
+        id: 'review-toggle',
+        title: 'Optional NYSAWWA review',
+        body: 'Turn “Review new utility registrations” off to skip the pending queue — new signups are marked review-not-required. Payment still runs through sample Stripe checkout.',
+        highlight: '[data-tour="platform-settings"]',
+      },
+    ],
+  },
 ];
 
 /** Match the best tour for the current pathname (most specific first). */
 export function tourForPath(pathname: string): OwwTourConfig | null {
   const p = pathname.toLowerCase();
   if (p.startsWith('/login')) return owwTours.find(t => t.id === 'oww-login') ?? null;
+  if (p.startsWith('/admin/registrations')) return owwTours.find(t => t.id === 'oww-registrations') ?? null;
+  if (p.startsWith('/admin/settings')) return owwTours.find(t => t.id === 'oww-settings') ?? null;
   if (p.startsWith('/admin/users') || p.startsWith('/employer/team')) return owwTours.find(t => t.id === 'oww-users') ?? null;
   if (p.startsWith('/admin/cms')) return owwTours.find(t => t.id === 'oww-cms') ?? null;
   if (p === '/admin' || p.startsWith('/admin/memberships') || p.startsWith('/admin/communications')) {

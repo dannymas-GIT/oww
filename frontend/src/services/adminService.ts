@@ -58,6 +58,26 @@ export async function listOrganizations() {
   return data as OrgOption[];
 }
 
+export async function listRegistrations(params?: { status?: string }) {
+  const { data } = await api.get('/admin/registrations', { params });
+  return data as import('@/types').UtilityRegistration[];
+}
+
+export async function reviewRegistration(id: number, body: { action: 'verify' | 'suspend' | 'reinstate'; note?: string }) {
+  const { data } = await api.post(`/admin/registrations/${id}/review`, body);
+  return data as import('@/types').UtilityRegistration;
+}
+
+export async function fetchPlatformSettings() {
+  const { data } = await api.get('/admin/settings');
+  return data as import('@/types').PlatformSettings;
+}
+
+export async function updatePlatformSettings(body: Partial<import('@/types').PlatformSettings>) {
+  const { data } = await api.put('/admin/settings', body);
+  return data as import('@/types').PlatformSettings;
+}
+
 // ---- Platform dashboard / memberships ----
 
 export async function fetchAdminDashboard() {

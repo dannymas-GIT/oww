@@ -65,6 +65,11 @@ def _org_membership(db: Session, org_id: int) -> Membership | None:
 def _subscription_status_for_org(db: Session, org_id: int | None) -> tuple[str, str | None]:
     if not org_id:
         return "none", None
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if org and not org.is_active:
+        # Jenny suspended the utility — WW360 must treat as non-active
+        m = _org_membership(db, org_id)
+        return "canceled", m.stripe_customer_id if m else None
     m = _org_membership(db, org_id)
     if not m:
         return "none", None
@@ -83,6 +88,12 @@ def access_water_workforce_360(
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
     if not org:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if not org.is_active:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail={"code": "account_suspended", "message": "This utility account has been suspended. Contact NYSAWWA."},
+        )
 
     sub_status, stripe_cus = _subscription_status_for_org(db, org.id)
     # complimentary counts as active for WW360

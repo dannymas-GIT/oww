@@ -28,10 +28,13 @@ from app.models.location import Location
 from app.models.content_page import ContentPage
 from app.models.membership import Membership, BillingEvent
 from app.models.communication import Communication
+from app.models.platform_setting import PlatformSetting
+from app.models.utility_registration import UtilityRegistration
 from app.services.matching_service import refresh_all_matches
 from app.services.engagement_service import track
 from app.services.membership_service import ensure_default_plans, DEFAULT_PLANS
 from app.services.impersonation_service import ensure_default_personas
+from app.services.registration_service import DEFAULT_SETTINGS, set_settings
 
 
 def upsert_membership(db, user, plan_code, status, *, days_left=None, days_ago_ended=None, provider="sample", org_id=None):
@@ -125,6 +128,16 @@ def main():
 
         ensure_default_plans(db)
         admin = upsert_user(db, "oww-admin", "admin@onewaterworkforce.org", ["platform_admin"], "OWW Platform Admin", PASSWORD)
+        if db.query(PlatformSetting).count() == 0:
+            set_settings(
+                db,
+                {
+                    "utility_registration_review_required": True,
+                    "registration_notify_email": DEFAULT_SETTINGS["registration_notify_email"],
+                },
+                admin,
+            )
+
         # Platform operator account (local password — preferred over OTP for admins)
         upsert_user(db, "dmas", "dmas@lsit-inc.com", ["platform_admin"], "Dan Mas", PASSWORD)
         # Omnitech Solutions platform admins (View as role via platform_admin)
@@ -183,6 +196,27 @@ def main():
                 ua = upsert_user(db, f"utility-admin{i+1}", f"utility.admin{i+1}@example.org", ["utility_admin"], f"Utility Admin {i+1}", PASSWORD, org_id=org.id)
                 upsert_user(db, f"utility-manager{i+1}", f"utility.manager{i+1}@example.org", ["utility_manager"], f"Utility Manager {i+1}", PASSWORD, org_id=org.id)
                 upsert_membership(db, ua, "utility_annual", "active" if i % 2 == 0 else "expired", days_left=45, days_ago_ended=20)
+                # Seeded utilities are already verified by Jenny
+                existing_reg = db.query(UtilityRegistration).filter(UtilityRegistration.user_id == ua.id).first()
+                if not existing_reg:
+                    db.add(
+                        UtilityRegistration(
+                            org_id=org.id,
+                            user_id=ua.id,
+                            state_code="NY",
+                            utility_name=name,
+                            contact_name=ua.full_name or ua.username,
+                            contact_email=ua.email or f"utility.admin{i+1}@example.org",
+                            phone=ua.phone,
+                            website=org.website,
+                            status="verified",
+                            review_required=True,
+                            reviewed_by=jenny.id,
+                            reviewed_at=datetime.utcnow() - timedelta(days=30 + i),
+                            review_note="Seeded demo utility — verified",
+                        )
+                    )
+                    db.commit()
             # jobs
             for k in range(2):
                 title = f"{CAREERS[(i+k) % len(CAREERS)].replace('_', ' ').title()} Specialist"
@@ -313,10 +347,70 @@ def main():
 
         # Do not seed fake login history — real sign-ins populate Login activity.
 
+        # Pending-review demo registrations for Jenny's queue (one paid, one unpaid)
+        if not db.query(UtilityRegistration).filter(UtilityRegistration.status == "pending_review").first():
+            pending_specs = [
+                ("Finger Lakes Water Authority", "utility-pending1", "pending.paid@example.org", True),
+                ("Catskill Mountain Utilities", "utility-pending2", "pending.unpaid@example.org", False),
+            ]
+            for pname, puname, pemail, paid in pending_specs:
+                porg = db.query(Organization).filter(Organization.name == pname).first()
+                if not porg:
+                    porg = Organization(
+                        name=pname,
+                        state_code="NY",
+                        org_type=["public_utility"],
+                        region="Central NY",
+                        city=pname.split()[0],
+                        description=f"{pname} awaiting NYSAWWA review.",
+                        website=f"https://example.org/{puname}",
+                        is_active=True,
+                        profile={"source": "seed_pending"},
+                    )
+                    db.add(porg)
+                    db.commit()
+                    db.refresh(porg)
+                pua = upsert_user(db, puname, pemail, ["utility_admin"], f"Pending Admin ({pname.split()[0]})", PASSWORD, org_id=porg.id)
+                if paid:
+                    upsert_membership(db, pua, "utility_annual", "active", days_left=360)
+                else:
+                    m = db.query(Membership).filter(Membership.user_id == pua.id).first()
+                    if not m:
+                        m = Membership(
+                            user_id=pua.id,
+                            org_id=porg.id,
+                            state_code="NY",
+                            plan_code="utility_annual",
+                            status="pending",
+                            provider="sample",
+                            checkout_session_id=f"cs_sample_seed_{puname}",
+                            meta={"seed": True, "success_url": "/billing/success?flow=register"},
+                        )
+                        db.add(m)
+                        db.commit()
+                if not db.query(UtilityRegistration).filter(UtilityRegistration.user_id == pua.id).first():
+                    db.add(
+                        UtilityRegistration(
+                            org_id=porg.id,
+                            user_id=pua.id,
+                            state_code="NY",
+                            utility_name=pname,
+                            contact_name=pua.full_name or pua.username,
+                            contact_email=pemail,
+                            phone="555-0100",
+                            website=porg.website,
+                            job_title="Utility Superintendent",
+                            status="pending_review",
+                            review_required=True,
+                        )
+                    )
+                    db.commit()
+
         ensure_default_personas(db)
         n = refresh_all_matches(db)
         print(f"Seed complete. Admin={admin.username} Jenny={jenny.username} matches_refreshed={n}")
         print(f"Password for admin accounts (oww-admin, jenny, dmas, smosquea, jnolan, tmcknight): {PASSWORD}")
+        print("Pending review demos: utility-pending1 (paid), utility-pending2 (unpaid)")
     finally:
         db.close()
 

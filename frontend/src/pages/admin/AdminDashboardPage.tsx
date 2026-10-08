@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Building2, CreditCard, LogIn, Mail, Users } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Building2, ClipboardList, CreditCard, LogIn, Mail, Users } from 'lucide-react';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwKpiTile } from '@/components/oww/OwwKpiTile';
 import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
@@ -91,7 +91,19 @@ export default function AdminDashboardPage() {
           }
           icon={<LogIn className="h-5 w-5 text-oww-cyan" aria-hidden />}
         />
-        <OwwKpiTile label="Engagement events (30d)" value={formatNumber(data?.engagement_events_30)} hint="Interest → employment pipeline" />
+        {data?.utility_registration_review_required !== false ? (
+          <Link to="/admin/registrations?status=pending_review" className="block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-oww-cyan">
+            <OwwKpiTile
+              label="Registrations awaiting review"
+              value={formatNumber(data?.registrations_pending)}
+              hint="Self-registered utilities · click to review"
+              icon={<ClipboardList className="h-5 w-5 text-amber-600" aria-hidden />}
+              className={(data?.registrations_pending ?? 0) > 0 ? 'border-amber-200' : undefined}
+            />
+          </Link>
+        ) : (
+          <OwwKpiTile label="Engagement events (30d)" value={formatNumber(data?.engagement_events_30)} hint="Interest → employment pipeline" />
+        )}
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">

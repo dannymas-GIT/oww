@@ -104,6 +104,13 @@ def current_membership_for_user(db: Session, user: User) -> Optional[Membership]
 def has_active_membership(db: Session, user: User, audiences: tuple[str, ...] | None = None) -> bool:
     if user.has_role("platform_admin") or user.has_role("state_admin"):
         return True
+    # Suspended utilities (Jenny review) lose paid entitlements until reinstated
+    if user.org_id:
+        from app.models.organization import Organization
+
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        if org and not org.is_active:
+            return False
     m = current_membership_for_user(db, user)
     if not m or effective_status(m) not in ACTIVE_STATUSES:
         return False

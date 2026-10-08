@@ -14,16 +14,29 @@ import type { Membership } from '@/types';
 export default function EmployerDashboard() {
   const { isUtilityAdmin, isUtilityManager, canManageUsers } = useAuth();
   const [membership, setMembership] = useState<Membership | null | undefined>(undefined);
+  const [orgSuspended, setOrgSuspended] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [jobCount, setJobCount] = useState<number | null>(null);
   const [ww360Busy, setWw360Busy] = useState(false);
   const [ww360Error, setWw360Error] = useState<string | null>(null);
 
   useEffect(() => {
-    myMembership().then(r => setMembership(r.membership)).catch(() => setMembership(null));
+    myMembership()
+      .then(r => {
+        setMembership(r.membership);
+        setOrgSuspended(Boolean(r.org_suspended));
+        setCheckoutUrl(r.checkout_url || null);
+      })
+      .catch(() => {
+        setMembership(null);
+        setOrgSuspended(false);
+        setCheckoutUrl(null);
+      });
     listMyJobs().then(j => setJobCount(j.length)).catch(() => setJobCount(null));
   }, []);
 
   const active = membership && ['active', 'complimentary', 'past_due'].includes(membership.status);
+  const pendingPay = membership?.status === 'pending' || (!membership && Boolean(checkoutUrl));
   const eyebrow = isUtilityAdmin ? 'Utility administrator' : isUtilityManager ? 'Utility manager' : 'Employer';
   const canOpenWw360 = Boolean(isUtilityAdmin || canManageUsers);
 
@@ -41,7 +54,11 @@ export default function EmployerDashboard() {
         typeof detail === 'object' && detail && 'code' in detail
           ? String((detail as { code: string }).code)
           : null;
-      if (code === 'payment_required' || (err as { response?: { status?: number } })?.response?.status === 403) {
+      if (code === 'account_suspended') {
+        setWw360Error(
+          'This utility account has been suspended by NYSAWWA. Contact them to restore access.'
+        );
+      } else if (code === 'payment_required' || (err as { response?: { status?: number } })?.response?.status === 403) {
         setWw360Error(
           'Payment is required. Update your OWW membership, then open Water Workforce 360 again.'
         );
@@ -66,7 +83,33 @@ export default function EmployerDashboard() {
         }
       />
 
-      {membership === undefined ? null : !active ? (
+      {orgSuspended ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 p-5">
+          <div>
+            <p className="font-display text-xl font-semibold text-rose-950">Account suspended</p>
+            <p className="mt-1 text-base text-rose-900">
+              NYSAWWA has suspended this utility. Hiring tools and Water Workforce 360 are locked until your
+              account is reinstated. Contact NYSAWWA for help.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {!orgSuspended && pendingPay ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div>
+            <p className="font-display text-xl font-semibold text-amber-950">Finish your membership payment</p>
+            <p className="mt-1 text-base text-amber-900">
+              Complete the Utility membership checkout to unlock job posting, candidate search, and Water Workforce 360.
+            </p>
+          </div>
+          <Button className="min-h-[44px] bg-oww-navy text-base text-white hover:bg-[#003070]" asChild>
+            <Link to={checkoutUrl || '/pricing'}>Continue to payment</Link>
+          </Button>
+        </div>
+      ) : null}
+
+      {membership === undefined || orgSuspended || pendingPay ? null : !active ? (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
           <div>
             <p className="font-display text-xl font-semibold text-amber-950">{membership ? 'Your membership has lapsed' : 'Activate a membership to post jobs'}</p>
@@ -101,7 +144,7 @@ export default function EmployerDashboard() {
         {canOpenWw360 ? (
           <Button
             className="min-h-[44px] bg-oww-navy text-base text-white hover:bg-[#003070]"
-            disabled={ww360Busy}
+            disabled={ww360Busy || orgSuspended}
             onClick={() => void handleWaterWorkforce360()}
           >
             {ww360Busy ? 'Opening…' : 'Water Workforce 360'}
@@ -126,9 +169,11 @@ export default function EmployerDashboard() {
       {ww360Error ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-base text-amber-950">
           {ww360Error}{' '}
-          <Link className="font-semibold underline" to="/billing">
-            Update billing
-          </Link>
+          {!orgSuspended ? (
+            <Link className="font-semibold underline" to="/billing">
+              Update billing
+            </Link>
+          ) : null}
         </div>
       ) : null}
     </div>

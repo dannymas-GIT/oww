@@ -40,16 +40,19 @@ cd frontend && npm install && npm run dev -- --port 5174
 | `oww-admin` | `ChangeMe-OWW!` | `platform_admin` |
 | `jenny` | `ChangeMe-OWW!` | `platform_admin` (NYSAWWA; email `jenny@nysawwa.org`) |
 | `utility-admin1` | `ChangeMe-OWW!` | `utility_admin` (active membership — WW360 handoff) |
+| `utility-pending1` | `ChangeMe-OWW!` | `utility_admin` (paid, pending Jenny review) |
+| `utility-pending2` | `ChangeMe-OWW!` | `utility_admin` (unpaid checkout pending) |
 | OTP login | Use any seeded email; code logged to backend console in dev | individual / employer / educator |
 
-### UI test — Water Workforce 360 handoff
+### UI test — Utility self-registration → pay → WW360
 
-1. Sign in as `utility-admin1` (or self-register at `/register/utility`).
-2. Header shows **Workspace / Hiring / …** (role nav) plus **Explore** — not only public Jobs/Companies.
-3. Open **Workspace → Dashboard** (`/employer`) → **Water Workforce 360**.
-4. Or as Jenny (`jenny`): **Administration → Users & access** → Add user with role `utility_admin` + org, then grant complimentary membership under Memberships if needed.
+1. Open `/register/utility` → create account → sample Stripe checkout (`4242…`) → success.
+2. Header shows **Workspace / Hiring / …** plus **Explore**. Open **Workspace → Dashboard** (`/employer`) → **Water Workforce 360**.
+3. In WW360, invite utility managers / team members (Invite user → accept link). OWW does not invite WW360 staff.
+4. As Jenny (`jenny`): **Administration → Utility registrations** to verify / suspend / reinstate. Toggle review under **Platform settings**.
+5. Seeded pending demos: `utility-pending1` (paid) and `utility-pending2` (unpaid), password `ChangeMe-OWW!`.
 
-Self-registration creates org + `utility_admin` + complimentary `utility_annual` membership and lands on `/employer`.
+Self-registration creates org + `utility_admin` + a **pending** Utility checkout (not complimentary). Membership activates after payment. Jenny can still grant complimentary memberships from Users & access.
 
 **Landing page + blog CMS (Jenny / platform_admin):** Administration → **Pages & blog** → Landing pages tab for home/pathway templates, or Blog tab for ongoing topics. Edit sections (hero, stats, cards, rich text, media gallery, quotes, CTAs), set author/tags/excerpt on posts, upload media, Publish. Home (`/ny`) and pathway slugs render published CMS pages; blog posts appear at `/ny/blog` and `/ny/blog/{slug}`.
 

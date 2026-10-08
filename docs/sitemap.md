@@ -24,12 +24,14 @@ Default jurisdiction: **NY** (`/` → `/ny`).
 | Path | Roles |
 |------|-------|
 | `/login` | Public (OTP + admin password) |
+| `/register/utility` | Public — utility admin self-registration → sample Stripe |
 | `/profile` | Authenticated |
+| `/pricing` `/billing` `/billing/sample-checkout` `/billing/success` | Membership checkout |
 | `/candidate` `/candidate/profile` `/candidate/matches` | individual |
-| `/employer` `/employer/org` `/employer/jobs` `/employer/candidates` `/employer/applications` `/employer/messages` `/employer/interviews` | employer |
+| `/employer` `/employer/org` `/employer/jobs` `/employer/candidates` `/employer/applications` `/employer/messages` `/employer/interviews` `/employer/team` | hiring roles |
 | `/educator` | educator |
 | `/admin/*` | state_admin / platform_admin |
 
 ## Admin
 
-Users, Jurisdictions, CMS, Programs, Featured posts, Analytics (+ CSV), Certifications, Locations, National map.
+Dashboard, Memberships, Communications, Login activity, Analytics, Users & access, **Utility registrations** (`/admin/registrations`), **Platform settings** (`/admin/settings`), Pages & blog, Programs, Featured posts, Certifications, Locations, Jurisdictions, National map.

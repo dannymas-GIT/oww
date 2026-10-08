@@ -145,6 +145,50 @@ export interface AdminDashboard {
   logins?: LoginStats;
   recent_logins?: LoginEventRow[];
   sample_mode: boolean;
+  registrations_pending?: number;
+  utility_registration_review_required?: boolean;
+}
+
+export type UtilityRegistrationStatus = 'pending_review' | 'verified' | 'not_required' | 'suspended';
+
+export interface UtilityRegistration {
+  id: number;
+  org_id: number;
+  user_id: number;
+  state_code: string;
+  utility_name: string;
+  contact_name: string;
+  contact_email: string;
+  phone?: string | null;
+  website?: string | null;
+  job_title?: string | null;
+  status: UtilityRegistrationStatus;
+  review_required: boolean;
+  reviewed_by?: number | null;
+  reviewed_by_name?: string | null;
+  reviewed_at?: string | null;
+  review_note?: string | null;
+  payment_status?: MembershipStatus | null;
+  plan_code?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface PlatformSettings {
+  utility_registration_review_required: boolean;
+  registration_notify_email: string;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
+  updated_at?: string | null;
+}
+
+export interface RegisterUtilityResult {
+  access_token: string;
+  token_type?: string;
+  user: OwwUser;
+  checkout: CheckoutResult;
+  review_required: boolean;
+  registration_id?: number;
 }
 
 export interface LoginStats {

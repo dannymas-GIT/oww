@@ -19,6 +19,22 @@
       "tags": ["oww", "auth"]
     },
     {
+      "id": "oww-utility-registration",
+      "specFile": "frontend/e2e/utility_registration.spec.ts",
+      "pathPatterns": [
+        "frontend/src/pages/auth/**",
+        "frontend/src/pages/billing/**",
+        "frontend/src/pages/admin/AdminRegistrationsPage.tsx",
+        "frontend/src/pages/admin/AdminSettingsPage.tsx",
+        "backend/app/api/v1/endpoints/auth.py",
+        "backend/app/api/v1/endpoints/admin_platform.py",
+        "backend/app/services/registration_service.py"
+      ],
+      "defaultRunOn": ["pr", "staging"],
+      "flakeBudget": 2,
+      "tags": ["oww", "auth", "billing", "admin"]
+    },
+    {
       "id": "oww-admin-analytics",
       "specFile": "frontend/e2e/admin_analytics.spec.ts",
       "pathPatterns": ["frontend/src/pages/admin/**", "backend/app/api/v1/endpoints/admin.py"],
