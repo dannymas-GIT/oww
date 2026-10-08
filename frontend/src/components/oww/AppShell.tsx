@@ -20,6 +20,7 @@ import { PathwaysMenu } from '@/components/oww/PathwaysMenu';
 import { NavDropdown } from '@/components/oww/NavDropdown';
 import { PersonaSwitcher, ImpersonationBanner } from '@/components/oww/PersonaSwitcher';
 import { PageAwareTour } from '@/components/oww/PageAwareTour';
+import { Ww360LaunchButton } from '@/components/oww/Ww360LaunchButton';
 import { DEFAULT_STATE } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -161,6 +162,7 @@ export function AppShell() {
           <div className="flex shrink-0 items-center gap-1.5">
             {isAuthenticated ? (
               <>
+                <Ww360LaunchButton variant="header" />
                 <PersonaSwitcher />
                 <Button
                   variant="ghost"
@@ -299,7 +301,11 @@ export function AppShell() {
               </div>
             )}
             {isAuthenticated ? (
-              <div className="mt-2 px-1">
+              <div className="mt-2 space-y-2 px-1">
+                <Ww360LaunchButton
+                  variant="mobile"
+                  onLaunched={() => setMobileOpen(false)}
+                />
                 <PersonaSwitcher variant="mobile" />
               </div>
             ) : null}

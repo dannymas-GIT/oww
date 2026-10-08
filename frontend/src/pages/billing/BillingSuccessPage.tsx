@@ -2,18 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Ww360LaunchButton } from '@/components/oww/Ww360LaunchButton';
 import { useAuth } from '@/context/AuthContext';
 import { myMembership } from '@/services/billingService';
-import { openWaterWorkforce360 } from '@/services/ww360Service';
 import { formatDate } from '@/lib/format';
 import type { Membership } from '@/types';
 
 export default function BillingSuccessPage() {
   const [params] = useSearchParams();
-  const { hasAnyRole, isUtilityAdmin, canManageUsers } = useAuth();
+  const { hasAnyRole } = useAuth();
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [ww360Busy, setWw360Busy] = useState(false);
-  const [ww360Error, setWw360Error] = useState<string | null>(null);
   const isRegisterFlow = params.get('flow') === 'register';
   const reviewNote = params.get('review') === '1';
 
@@ -22,28 +20,6 @@ export default function BillingSuccessPage() {
   }, [params]);
 
   const hiring = hasAnyRole('employer', 'employer_admin', 'employer_member', 'utility_admin', 'utility_manager');
-  const canOpenWw360 = Boolean(isUtilityAdmin || canManageUsers);
-
-  async function handleWw360() {
-    setWw360Busy(true);
-    setWw360Error(null);
-    try {
-      const result = await openWaterWorkforce360();
-      window.location.assign(result.redirect_url);
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-      const code =
-        typeof detail === 'object' && detail && 'code' in detail ? String((detail as { code: string }).code) : null;
-      if (code === 'account_suspended') {
-        setWw360Error('This utility account has been suspended. Contact NYSAWWA.');
-      } else if (code === 'payment_required') {
-        setWw360Error('Payment is required before opening Water Workforce 360.');
-      } else {
-        setWw360Error('Could not open Water Workforce 360. Try again from your hiring workspace.');
-      }
-      setWw360Busy(false);
-    }
-  }
 
   return (
     <div className="oww-rise mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -68,17 +44,8 @@ export default function BillingSuccessPage() {
             : ''}
         </p>
       ) : null}
-      {ww360Error ? <p className="mt-4 rounded-lg bg-amber-50 p-3 text-base text-amber-950">{ww360Error}</p> : null}
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        {isRegisterFlow && canOpenWw360 ? (
-          <Button
-            className="min-h-[48px] bg-oww-navy text-base text-white hover:bg-[#003070]"
-            disabled={ww360Busy}
-            onClick={() => void handleWw360()}
-          >
-            {ww360Busy ? 'Opening…' : 'Open Water Workforce 360'}
-          </Button>
-        ) : null}
+        {isRegisterFlow ? <Ww360LaunchButton variant="inline" /> : null}
         {hiring ? (
           <Button className="min-h-[48px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
             <Link to={isRegisterFlow ? '/employer' : '/employer/jobs'}>
