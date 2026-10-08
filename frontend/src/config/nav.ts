@@ -19,6 +19,8 @@ import {
   Mail,
   UsersRound,
   LogIn,
+  ClipboardList,
+  Settings,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DropdownSection } from '@/components/oww/NavDropdown';
@@ -270,6 +272,13 @@ export const roleNavGroups: NavGroup[] = [
             roles: ['platform_admin', 'state_admin'],
             description: 'Pipeline and engagement',
           },
+          {
+            label: 'Platform settings',
+            path: '/admin/settings',
+            icon: Settings,
+            roles: ['platform_admin'],
+            description: 'Registration review and notifications',
+          },
         ],
       },
       {
@@ -282,6 +291,13 @@ export const roleNavGroups: NavGroup[] = [
             icon: Users,
             roles: ['platform_admin', 'state_admin'],
             description: 'Accounts, roles, password reset',
+          },
+          {
+            label: 'Utility registrations',
+            path: '/admin/registrations',
+            icon: ClipboardList,
+            roles: ['platform_admin', 'state_admin'],
+            description: 'Review, verify, or suspend self-signups',
           },
         ],
       },

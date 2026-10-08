@@ -40,15 +40,37 @@ def plans(db: Session = Depends(get_db)):
 
 @router.get("/me")
 def my_membership(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.models.organization import Organization
+    from app.services.registration_service import org_is_suspended
+
     m = current_membership_for_user(db, user)
+    org_suspended = org_is_suspended(db, user.org_id)
     if not m:
-        return {"membership": None, "sample_mode": stripe_service.sample_mode()}
+        return {
+            "membership": None,
+            "sample_mode": stripe_service.sample_mode(),
+            "org_suspended": org_suspended,
+            "checkout_url": None,
+        }
     plan = db.query(MembershipPlan).filter(MembershipPlan.code == m.plan_code).first()
     events = db.query(BillingEvent).filter(BillingEvent.membership_id == m.id).order_by(BillingEvent.id.desc()).limit(10).all()
+    checkout_url = None
+    if m.status == "pending" and m.checkout_session_id and m.provider == "sample":
+        checkout_url = f"/billing/sample-checkout?session_id={m.checkout_session_id}"
+    elif m.status == "pending" and m.meta and m.meta.get("success_url"):
+        # Stripe live: no reusable URL; send them back to pricing
+        checkout_url = "/pricing"
+    org_name = None
+    if user.org_id:
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        org_name = org.name if org else None
     return {
         "membership": membership_to_dict(m, plan, user),
         "events": [{"id": e.id, "event_type": e.event_type, "amount_cents": e.amount_cents, "created_at": e.created_at.isoformat() if e.created_at else None} for e in events],
         "sample_mode": stripe_service.sample_mode(),
+        "org_suspended": org_suspended,
+        "checkout_url": checkout_url,
+        "org_name": org_name,
     }
 
 

@@ -18,8 +18,10 @@ from app.models.engagement_event import EngagementEvent
 from app.models.membership import BillingEvent, Membership, MembershipPlan
 from app.models.organization import Organization
 from app.models.user import User
+from app.models.utility_registration import UtilityRegistration
 from app.services import communication_service as comms
 from app.services import login_service
+from app.services import registration_service
 from app.services import role_catalog_service as roles
 from app.services.auth_service import user_to_dict
 from app.services.engagement_service import track
@@ -63,6 +65,16 @@ class CommunicationIn(BaseModel):
     audience: dict[str, Any] = {}
 
 
+class SettingsIn(BaseModel):
+    utility_registration_review_required: bool | None = None
+    registration_notify_email: str | None = None
+
+
+class RegistrationReviewIn(BaseModel):
+    action: str  # verify | suspend | reinstate
+    note: str | None = None
+
+
 # ---------- Dashboard ----------
 
 @router.get("/dashboard")
@@ -91,6 +103,7 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles(
     users_by_id = {u.id: u for u in users}
     logins = login_service.login_stats(db, state_code=state, days=30)
     recent_logins = login_service.list_logins(db, state_code=state, limit=12)
+    settings = registration_service.get_settings(db)
     return {
         "users_total": len(users),
         "users_active": len([u for u in users if u.is_active]),
@@ -104,6 +117,8 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles(
         "logins": logins,
         "recent_logins": recent_logins,
         "sample_mode": True,
+        "registrations_pending": registration_service.pending_count(db, state),
+        "utility_registration_review_required": bool(settings.get("utility_registration_review_required", True)),
     }
 
 
@@ -304,3 +319,52 @@ def organizations(db: Session = Depends(get_db), user: User = Depends(require_ro
     if state:
         q = q.filter(Organization.state_code == state)
     return [{"id": o.id, "name": o.name, "state_code": o.state_code, "region": o.region} for o in q.order_by(Organization.name).all()]
+
+
+# ---------- Platform settings ----------
+
+@router.get("/settings")
+def get_platform_settings(db: Session = Depends(get_db), user: User = Depends(require_roles(*ADMIN_ROLES))):
+    return registration_service.get_settings(db)
+
+
+@router.put("/settings")
+def put_platform_settings(body: SettingsIn, db: Session = Depends(get_db), admin: User = Depends(require_roles("platform_admin"))):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(400, "No settings to update")
+    return registration_service.set_settings(db, updates, admin)
+
+
+# ---------- Utility registrations (Jenny review queue) ----------
+
+@router.get("/registrations")
+def list_utility_registrations(
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*ADMIN_ROLES)),
+):
+    return registration_service.list_registrations(db, status=status, state_code=_scope_state(user))
+
+
+@router.post("/registrations/{registration_id}/review")
+def review_utility_registration(
+    registration_id: int,
+    body: RegistrationReviewIn,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_roles(*ADMIN_ROLES)),
+):
+    reg = db.query(UtilityRegistration).filter(UtilityRegistration.id == registration_id).first()
+    if not reg:
+        raise HTTPException(404, "Registration not found")
+    state = _scope_state(admin)
+    if state and reg.state_code != state:
+        raise HTTPException(403, "Outside your state")
+    reg = registration_service.review(db, reg, action=body.action, admin=admin, note=body.note)
+    user = db.query(User).filter(User.id == reg.user_id).first()
+    membership = None
+    if user:
+        from app.services.membership_service import current_membership_for_user
+
+        membership = current_membership_for_user(db, user)
+    return registration_service.registration_to_dict(reg, membership=membership, reviewer=admin)

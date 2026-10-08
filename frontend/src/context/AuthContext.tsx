@@ -37,7 +37,10 @@ interface AuthContextValue {
     email: string;
     password: string;
     state_code?: string;
-  }) => Promise<void>;
+    phone?: string;
+    website?: string;
+    job_title?: string;
+  }) => Promise<import('@/types').RegisterUtilityResult>;
   requestOtpCode: (payload: { email?: string; phone?: string }) => Promise<{ ok: boolean; message?: string; dev_code?: string }>;
   verifyOtpCode: (payload: { email?: string; phone?: string; code: string }) => Promise<void>;
   changePassword: (body: {
@@ -92,9 +95,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: string;
       password: string;
       state_code?: string;
+      phone?: string;
+      website?: string;
+      job_title?: string;
     }) => {
       const data = await apiRegisterUtilityAdmin(payload);
       setUser(data.user);
+      return data;
     },
     []
   );

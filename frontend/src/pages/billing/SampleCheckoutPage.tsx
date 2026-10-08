@@ -16,6 +16,7 @@ export default function SampleCheckoutPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = params.get('session_id') || '';
+  const isRegisterFlow = params.get('flow') === 'register';
   const [plan, setPlan] = useState<MembershipPlan | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [card, setCard] = useState('4242 4242 4242 4242');
@@ -43,7 +44,11 @@ export default function SampleCheckoutPage() {
     try {
       const digits = card.replace(/\D/g, '');
       await completeSampleCheckout(sessionId, digits.slice(-4) || '4242');
-      navigate(`/billing/success?plan=${membership?.plan_code ?? ''}`);
+      navigate(
+        isRegisterFlow
+          ? `/billing/success?flow=register&plan=${membership?.plan_code ?? 'utility_annual'}`
+          : `/billing/success?plan=${membership?.plan_code ?? ''}`
+      );
     } catch {
       setError('Payment could not be completed. Please try again.');
     } finally {
@@ -55,7 +60,11 @@ export default function SampleCheckoutPage() {
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.1fr_1fr]">
       <aside className="oww-rise rounded-2xl bg-oww-navy p-6 text-white sm:p-8">
         <OwwLogo size="footer" onDark />
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-[#7eb0ff]">Subscribe to</p>
+        {isRegisterFlow ? (
+          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-[#7eb0ff]">Step 2 of 3 — Utility membership</p>
+        ) : (
+          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-[#7eb0ff]">Subscribe to</p>
+        )}
         <h1 className="mt-1 font-display text-3xl font-semibold">{plan?.name ?? 'Membership'} membership</h1>
         <p className="mt-4 font-display text-4xl font-semibold">
           {formatPrice(plan?.price_cents)}
@@ -107,7 +116,15 @@ export default function SampleCheckoutPage() {
           {busy ? 'Processing…' : `Pay ${formatPrice(plan?.price_cents)}`}
         </Button>
         <p className="text-center text-sm text-slate-500">
-          <Link to="/pricing" className="underline underline-offset-4">Back to plans</Link>
+          {isRegisterFlow ? (
+            <Link to="/employer" className="underline underline-offset-4">
+              Pay later — go to your workspace
+            </Link>
+          ) : (
+            <Link to="/pricing" className="underline underline-offset-4">
+              Back to plans
+            </Link>
+          )}
         </p>
       </form>
     </div>

@@ -39,3 +39,5 @@ def import_models() -> None:
     import app.models.communication  # noqa: F401
     import app.models.impersonation  # noqa: F401
     import app.models.login_event  # noqa: F401
+    import app.models.platform_setting  # noqa: F401
+    import app.models.utility_registration  # noqa: F401

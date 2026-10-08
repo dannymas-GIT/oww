@@ -8,7 +8,14 @@ export async function listPlans() {
 
 export async function myMembership() {
   const { data } = await api.get('/billing/me');
-  return data as { membership: Membership | null; events?: BillingEventItem[]; sample_mode: boolean };
+  return data as {
+    membership: Membership | null;
+    events?: BillingEventItem[];
+    sample_mode: boolean;
+    org_suspended?: boolean;
+    checkout_url?: string | null;
+    org_name?: string | null;
+  };
 }
 
 export async function startCheckout(plan_code: string) {

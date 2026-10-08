@@ -20,7 +20,7 @@ export function MembershipGate({
   feature?: string;
 }) {
   const { isPlatformAdmin, isStateAdmin } = useAuth();
-  const [state, setState] = useState<'loading' | 'ok' | 'locked'>('loading');
+  const [state, setState] = useState<'loading' | 'ok' | 'locked' | 'suspended'>('loading');
   const [membership, setMembership] = useState<Membership | null>(null);
 
   useEffect(() => {
@@ -33,7 +33,12 @@ export function MembershipGate({
       .then(res => {
         if (!alive) return;
         setMembership(res.membership);
-        const paidAudience = res.membership && ['employer_annual', 'utility_annual'].includes(res.membership.plan_code);
+        if (res.org_suspended) {
+          setState('suspended');
+          return;
+        }
+        const paidAudience =
+          res.membership && ['employer_annual', 'utility_annual'].includes(res.membership.plan_code);
         setState(res.membership && ACTIVE.has(res.membership.status) && paidAudience ? 'ok' : 'locked');
       })
       .catch(() => alive && setState('locked'));
@@ -43,13 +48,25 @@ export function MembershipGate({
   }, [isPlatformAdmin, isStateAdmin]);
 
   if (state === 'loading') {
-    return <div className="flex min-h-[30vh] items-center justify-center text-lg text-slate-600">Checking your membership…</div>;
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center text-lg text-slate-600">
+        Checking your membership…
+      </div>
+    );
   }
   if (state === 'ok') return <>{children}</>;
-  return <PaywallCard feature={feature} membership={membership} />;
+  return <PaywallCard feature={feature} membership={membership} suspended={state === 'suspended'} />;
 }
 
-export function PaywallCard({ feature, membership }: { feature: string; membership?: Membership | null }) {
+export function PaywallCard({
+  feature,
+  membership,
+  suspended,
+}: {
+  feature: string;
+  membership?: Membership | null;
+  suspended?: boolean;
+}) {
   const expired = membership && (membership.status === 'expired' || membership.status === 'canceled');
   return (
     <div className="oww-rise mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -58,39 +75,56 @@ export function PaywallCard({ feature, membership }: { feature: string; membersh
           <Lock className="h-6 w-6" aria-hidden />
         </span>
         <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">Membership required</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">
+            {suspended ? 'Account suspended' : 'Membership required'}
+          </p>
           <h2 className="font-display text-2xl font-semibold text-oww-navy">
-            {expired ? 'Your membership has lapsed' : `Unlock ${feature}`}
+            {suspended
+              ? 'This utility is suspended'
+              : expired
+                ? 'Your membership has lapsed'
+                : `Unlock ${feature}`}
           </h2>
           <p className="text-lg leading-relaxed text-slate-700">
-            {expired
-              ? `Your ${membership?.plan_name} membership ended. Renew to keep posting jobs, searching the resume bank, and messaging candidates.`
-              : 'Employer and Utility memberships fund One Water Workforce and open job posting, candidate search, applicant tracking, and interview scheduling.'}
+            {suspended
+              ? 'NYSAWWA has suspended this utility account. Hiring tools and Water Workforce 360 stay locked until the account is reinstated. Contact NYSAWWA for help.'
+              : expired
+                ? `Your ${membership?.plan_name} membership ended. Renew to keep posting jobs, searching the resume bank, and messaging candidates.`
+                : 'Employer and Utility memberships fund One Water Workforce and open job posting, candidate search, applicant tracking, and interview scheduling.'}
           </p>
         </div>
       </div>
-      <ul className="mt-6 grid gap-2 text-base text-slate-700 sm:grid-cols-2">
-        {['Unlimited job postings', 'Candidate search & resume bank', 'Applicant tracking & messaging', 'Match digests to your inbox'].map(f => (
-          <li key={f} className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />
-            {f}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
-          <Link to="/pricing">
-            <CreditCard className="mr-2 h-5 w-5" aria-hidden />
-            {expired ? 'Renew membership' : 'View membership plans'}
-          </Link>
-        </Button>
-        <Button variant="outline" className="min-h-[44px] text-base" asChild>
-          <Link to="/billing">Billing &amp; membership</Link>
-        </Button>
-      </div>
-      <p className="mt-4 text-sm text-slate-500">
-        Sample checkout is enabled on this environment — no card is charged.
-      </p>
+      {!suspended ? (
+        <>
+          <ul className="mt-6 grid gap-2 text-base text-slate-700 sm:grid-cols-2">
+            {[
+              'Unlimited job postings',
+              'Candidate search & resume bank',
+              'Applicant tracking & messaging',
+              'Match digests to your inbox',
+            ].map(f => (
+              <li key={f} className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
+              <Link to="/pricing">
+                <CreditCard className="mr-2 h-5 w-5" aria-hidden />
+                {expired ? 'Renew membership' : 'View membership plans'}
+              </Link>
+            </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to="/billing">Billing &amp; membership</Link>
+            </Button>
+          </div>
+          <p className="mt-4 text-sm text-slate-500">
+            Sample checkout is enabled on this environment — no card is charged.
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }

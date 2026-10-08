@@ -24,10 +24,13 @@ export async function registerUtilityAdmin(payload: {
   email: string;
   password: string;
   state_code?: string;
+  phone?: string;
+  website?: string;
+  job_title?: string;
 }) {
   const { data } = await api.post('/auth/register-utility-admin', payload);
   setStoredToken(data.access_token);
-  return data as { access_token: string; user: OwwUser };
+  return data as import('@/types').RegisterUtilityResult;
 }
 
 export async function fetchMe(): Promise<OwwUser> {
