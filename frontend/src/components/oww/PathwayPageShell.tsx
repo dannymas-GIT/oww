@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
+import { HeroStorySlider } from '@/components/oww/HeroStorySlider';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
+import { PATHWAY_HERO_SLIDES } from '@/content/pathwayHeroSlides';
 import {
   pathwayContent,
   resolvePathwayPath,
@@ -15,6 +17,13 @@ import {
 } from '@/content/owwPublicContent';
 import { getPublishedPage } from '@/services/publicService';
 import type { ContentPage } from '@/types';
+
+/** Seeded pathway_landing templates still use this headline — treat as unpublished. */
+function isPlaceholderPathwayCms(page: ContentPage): boolean {
+  const hero = page.sections?.find(s => s.type === 'hero');
+  const headline = (hero?.headline || '').trim().toLowerCase();
+  return headline === 'pathway title' || headline === '';
+}
 
 const PUBLIC_AUTH_CTAS = [/\/login/i, /\/register/i, /create account/i, /express interest/i];
 
@@ -87,7 +96,13 @@ export function PathwayPageShell({
 
   useEffect(() => {
     void getPublishedPage(state, slug)
-      .then(page => setCmsPage(page?.sections?.length ? page : null))
+      .then(page => {
+        if (!page?.sections?.length || isPlaceholderPathwayCms(page)) {
+          setCmsPage(null);
+          return;
+        }
+        setCmsPage(page);
+      })
       .catch(() => setCmsPage(null));
   }, [state, slug]);
 
@@ -97,6 +112,17 @@ export function PathwayPageShell({
 
   const backTo = isAuthenticated ? roleHome : `/${state}`;
   const backLabel = isAuthenticated ? 'Back to workspace' : `Back to ${state.toUpperCase()} home`;
+  const pathwaySlides = PATHWAY_HERO_SLIDES[slug];
+
+  const slider = (
+    <section data-tour="pathway-slider" className="-mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
+      <HeroStorySlider
+        slides={pathwaySlides}
+        state={state}
+        ariaLabel={`${content.title} story slider`}
+      />
+    </section>
+  );
 
   if (cmsPage) {
     return (
@@ -107,6 +133,7 @@ export function PathwayPageShell({
             {backLabel}
           </Link>
         </Button>
+        {slider}
         <CmsPageRenderer page={cmsPage} state={state} />
         {extra}
       </div>
@@ -121,6 +148,8 @@ export function PathwayPageShell({
           {backLabel}
         </Link>
       </Button>
+
+      {slider}
 
       {hiring && slug !== 'hire' ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-base text-amber-950">
