@@ -226,6 +226,8 @@ class HomeSlideIn(BaseModel):
     body: str | None = ""
     image_url: str | None = None
     image_alt: str | None = ""
+    cta_label: str | None = None
+    cta_href: str | None = None
     sort_order: int | None = 100
     is_active: bool | None = True
 
@@ -237,8 +239,6 @@ def admin_list_home_slides(
     user: User = Depends(require_roles(*CMS_ROLES)),
 ):
     _ = user
-    if state_code:
-        hero_slides.ensure_default_slides(db, state_code=state_code)
     return {"slides": hero_slides.list_admin_slides(db, state_code=state_code)}
 
 
