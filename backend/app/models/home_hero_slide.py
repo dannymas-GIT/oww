@@ -1,4 +1,4 @@
-"""Home page hero rotator slides (3-tier copy + image)."""
+"""Home page hero rotator slides (3-tier copy + image + optional CTA)."""
 
 from datetime import datetime
 
@@ -17,6 +17,8 @@ class HomeHeroSlide(Base):
     body = Column(Text, nullable=False, default="")
     image_url = Column(String(500), nullable=False)
     image_alt = Column(String(300), nullable=False, default="")
+    cta_label = Column(String(80), nullable=True)
+    cta_href = Column(String(300), nullable=True)
     sort_order = Column(Integer, nullable=False, default=100)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

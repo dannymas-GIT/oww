@@ -27,6 +27,8 @@ type Slide = {
   body: string;
   image_url: string;
   image_alt: string;
+  cta_label: string | null;
+  cta_href: string | null;
   sort_order: number;
   is_active: boolean;
 };
@@ -39,6 +41,8 @@ type Draft = {
   body: string;
   image_url: string;
   image_alt: string;
+  cta_label: string;
+  cta_href: string;
   sort_order: number;
   is_active: boolean;
 };
@@ -50,6 +54,8 @@ const emptyDraft = (): Draft => ({
   body: '',
   image_url: '',
   image_alt: '',
+  cta_label: '',
+  cta_href: '',
   sort_order: 100,
   is_active: true,
 });
@@ -93,7 +99,11 @@ export default function AdminHomeSlidesPage() {
   }
 
   function openEdit(s: Slide) {
-    setDraft({ ...s });
+    setDraft({
+      ...s,
+      cta_label: s.cta_label || '',
+      cta_href: s.cta_href || '',
+    });
     setOpen(true);
   }
 
@@ -141,7 +151,7 @@ export default function AdminHomeSlidesPage() {
       <OwwPageHero
         eyebrow="Content"
         title="Home rotator slides"
-        description="Three tiers per slide — kicker, headline, and body — plus an image. Shown on the public home right panel. Upload your own photos or pick from the media library; stock search (Unsplash/Pexels) can plug in later with an API key."
+        description="Full-width public home slider: kicker, headline, body, image, and optional button label/link per slide. Upload photos or pick from the media library; stock search (Unsplash/Pexels) can plug in later with an API key."
         actions={
           <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
@@ -183,6 +193,12 @@ export default function AdminHomeSlidesPage() {
                     <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">{s.kicker}</p>
                     <p className="font-display text-lg font-semibold text-oww-navy">{s.title}</p>
                     <p className="line-clamp-2 text-base text-slate-600">{s.body}</p>
+                    {s.cta_label ? (
+                      <p className="mt-1 text-sm text-slate-500">
+                        CTA: {s.cta_label}
+                        {s.cta_href ? ` → ${s.cta_href}` : ''}
+                      </p>
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     <span
@@ -216,7 +232,7 @@ export default function AdminHomeSlidesPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-xl">{draft.id ? 'Edit slide' : 'Add slide'}</DialogTitle>
             <DialogDescription className="text-base">
-              Tier 1 = kicker · Tier 2 = headline · Tier 3 = body. Image sits below the copy on the public rotator.
+              Tier 1 = kicker · Tier 2 = headline · Tier 3 = body. Optional button uses {'{state}'} in the link (e.g. /{'{state}'}/interest).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -246,6 +262,27 @@ export default function AdminHomeSlidesPage() {
                 onChange={e => setDraft({ ...draft, body: e.target.value })}
                 placeholder="One or two sentences"
               />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label className="text-base">Button label</Label>
+                <Input
+                  className="mt-1 min-h-[44px] text-base"
+                  value={draft.cta_label}
+                  onChange={e => setDraft({ ...draft, cta_label: e.target.value })}
+                  placeholder="e.g. Express interest"
+                />
+              </div>
+              <div>
+                <Label className="text-base">Button link</Label>
+                <Input
+                  className="mt-1 min-h-[44px] text-base"
+                  value={draft.cta_href}
+                  onChange={e => setDraft({ ...draft, cta_href: e.target.value })}
+                  placeholder="/{state}/interest"
+                />
+                <p className="mt-1 text-sm text-slate-500">Use {'{state}'} for the jurisdiction slug.</p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-base">Image</Label>

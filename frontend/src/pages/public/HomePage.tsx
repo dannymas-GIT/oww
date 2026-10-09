@@ -189,40 +189,8 @@ function SignedInHome({
 function FallbackHome({ state, testimonials }: { state: string; testimonials: Testimonial[] }) {
   return (
     <div className="space-y-10">
-      <section
-        data-tour="brand"
-        className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white"
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(70% 90% at 100% 0%, rgba(0,93,248,0.12), transparent 55%), radial-gradient(50% 70% at 0% 100%, rgba(0,32,80,0.08), transparent 50%)',
-          }}
-        />
-        <div className="relative grid gap-8 px-6 py-8 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:px-10 md:py-12">
-          <div className="space-y-5">
-            <OwwLogo to={`/${state}`} size="hero" onDark={false} />
-            <p className="max-w-xl text-lg leading-relaxed text-slate-700">{owwMission.summary}</p>
-            <p className="text-base font-semibold text-oww-navy">{owwMission.supportLine}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" data-tour="interest-cta" asChild>
-                <Link to={`/${state}/interest`}>Express interest</Link>
-              </Button>
-              <Button variant="outline" className="min-h-[44px] border-oww-navy/20 text-base text-oww-navy" data-tour="jobs-cta" asChild>
-                <Link to={`/${state}/jobs`}>Browse jobs</Link>
-              </Button>
-              <Button variant="secondary" className="min-h-[44px] text-base" asChild>
-                <Link to="/login">Create account</Link>
-              </Button>
-            </div>
-            <p className="text-sm text-slate-500">
-              {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
-            </p>
-          </div>
-          <HomeHeroStage state={state} className="min-h-[360px] md:min-h-[440px]" />
-        </div>
+      <section data-tour="brand" className="-mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
+        <HomeHeroStage state={state} />
       </section>
 
       <OwwSection id="mission" title="Why One Water Workforce" description={owwMission.whyItMatters}>
