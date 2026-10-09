@@ -275,9 +275,9 @@ def ensure_default_personas(db: Session) -> None:
             "Ambassador",
             "Workforce champion",
             [
-                "Ambassador pathway → talking points and workforce facts",
-                "Outreach toolkit + sample engagement touchpoints",
-                "Interest form already on file for partner follow-up",
+                "Ambassador desk (/ambassador) — private outreach workspace",
+                "Talking points, toolkits, and sample engagement touchpoints",
+                "Interest form on file; Public pathway stays available to share",
             ],
             40,
         ),

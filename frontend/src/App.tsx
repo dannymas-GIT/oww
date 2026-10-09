@@ -44,6 +44,7 @@ import MessagingPage from '@/pages/employer/MessagingPage';
 import InterviewSchedulePage from '@/pages/employer/InterviewSchedulePage';
 
 import EducatorDashboard from '@/pages/educator/EducatorDashboard';
+import AmbassadorDashboard from '@/pages/ambassador/AmbassadorDashboard';
 
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminJurisdictionsPage from '@/pages/admin/AdminJurisdictionsPage';
@@ -221,6 +222,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['educator']}>
               <EducatorDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ambassador"
+          element={
+            <ProtectedRoute roles={['ambassador']}>
+              <AmbassadorDashboard />
             </ProtectedRoute>
           }
         />

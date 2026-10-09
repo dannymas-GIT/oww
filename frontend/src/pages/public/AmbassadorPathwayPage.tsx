@@ -1,8 +1,7 @@
-import { Link, useParams } from 'react-router-dom';
-import { Megaphone } from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PathwayPageShell } from '@/components/oww/PathwayPageShell';
 import { OwwSection } from '@/components/oww/OwwSection';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { DEFAULT_STATE } from '@/lib/constants';
 import { owwImpactStats, owwMission } from '@/content/owwPublicContent';
@@ -14,19 +13,27 @@ const talkingPoints = [
   'Ambassadors help schools, civic groups, and elected officials see water careers as skilled public-service work.',
 ];
 
-const unlockItems = [
-  'Talking points and shareable workforce facts for classrooms, boards, and civic groups',
-  'Outreach toolkit resources on this pathway (sample pack for View as role demos)',
-  'Pathways Interest form already on file so partners can follow up',
-  'Sample outreach engagement events (school visit, civic briefing, referral) in the pipeline',
-];
-
 export default function AmbassadorPathwayPage() {
   const params = useParams();
   const state = (params.state || DEFAULT_STATE).toLowerCase();
-  const { user } = useAuth();
-  const viewingAsAmbassador =
-    Boolean(user?.impersonation?.active) && user?.impersonation?.persona_key === 'ambassador';
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const isAmbassador = Boolean(user?.roles?.includes('ambassador'));
+
+  // Signed-in ambassadors (including View as role) land on the private desk, not this public page.
+  useEffect(() => {
+    if (isAuthenticated && isAmbassador) {
+      navigate('/ambassador', { replace: true });
+    }
+  }, [isAuthenticated, isAmbassador, navigate]);
+
+  if (isAuthenticated && isAmbassador) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center p-8 text-lg text-slate-600">
+        Opening your ambassador desk…
+      </div>
+    );
+  }
 
   return (
     <PathwayPageShell
@@ -34,28 +41,6 @@ export default function AmbassadorPathwayPage() {
       state={state}
       extra={
         <>
-          {viewingAsAmbassador ? (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-lg text-amber-950">
-              <div className="flex items-start gap-3">
-                <Megaphone className="mt-0.5 h-6 w-6 shrink-0 text-amber-800" aria-hidden />
-                <div className="space-y-3">
-                  <h2 className="font-display text-xl font-semibold text-navy">What this role unlocks</h2>
-                  <p className="leading-relaxed text-slate-800">
-                    You are previewing the Ambassador experience. Ambassadors do not get a private hiring desk —
-                    their power is outreach, awareness, and pipeline referrals into One Water Workforce.
-                  </p>
-                  <ul className="list-inside list-disc space-y-1 text-base text-slate-700">
-                    {unlockItems.map(item => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                  <Button className="min-h-[44px] text-base" asChild>
-                    <Link to={`/${state}/interest?pathway=ambassador`}>Open interest form</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : null}
           <OwwSection
             title="Talking points you can use tomorrow"
             description="Grounded in NYSAWWA leadership messaging and New York workforce context."
