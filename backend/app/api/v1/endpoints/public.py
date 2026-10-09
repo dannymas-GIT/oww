@@ -265,6 +265,14 @@ def get_media_file(filename: str, db: Session = Depends(get_db)):
 
 
 @router.get("/home-slides/{state_code}")
-def list_home_slides(state_code: str, db: Session = Depends(get_db)):
-    """Active home hero rotator slides for the public microsite."""
-    return {"slides": hero_slides.list_public_slides(db, state_code=state_code)}
+def list_home_slides(
+    state_code: str,
+    scope: str = "home",
+    db: Session = Depends(get_db),
+):
+    """Active hero rotator slides for home or a pathway scope."""
+    try:
+        slides = hero_slides.list_public_slides(db, state_code=state_code, scope=scope)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"slides": slides}

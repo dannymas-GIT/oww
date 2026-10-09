@@ -1,4 +1,4 @@
-"""CRUD + seed defaults for home hero rotator slides."""
+"""CRUD + seed defaults for home and pathway hero rotator slides."""
 
 from __future__ import annotations
 
@@ -8,9 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.models.home_hero_slide import HomeHeroSlide
 
+SLIDE_SCOPES = frozenset({"home", "career", "hire", "educate", "ambassador"})
+PATHWAY_SCOPES = frozenset({"career", "hire", "educate", "ambassador"})
+
 # Product slides first so the public rotator opens on OWW / WW360.
 DEFAULT_SLIDES: list[dict[str, Any]] = [
     {
+        "scope": "home",
         "kicker": "One Water Workforce",
         "title": "From GED to PhD: careers that keep water safe",
         "body": (
@@ -24,6 +28,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "sort_order": 10,
     },
     {
+        "scope": "home",
         "kicker": "Water Workforce 360",
         "title": "Utility staffing, CEU, and succession in one place",
         "body": (
@@ -37,6 +42,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "sort_order": 20,
     },
     {
+        "scope": "home",
         "kicker": "Drinking water quality",
         "title": "Lab testing protects every tap",
         "body": (
@@ -50,6 +56,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "sort_order": 30,
     },
     {
+        "scope": "home",
         "kicker": "Treatment & filtration",
         "title": "Clean water starts at the plant",
         "body": (
@@ -63,6 +70,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "sort_order": 40,
     },
     {
+        "scope": "home",
         "kicker": "Source water protection",
         "title": "Monitoring lakes, rivers, and reservoirs",
         "body": (
@@ -76,6 +84,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "sort_order": 50,
     },
     {
+        "scope": "home",
         "kicker": "Wastewater & environment",
         "title": "Protecting rivers after use",
         "body": (
@@ -90,6 +99,185 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
     },
 ]
 
+PATHWAY_DEFAULT_SLIDES: dict[str, list[dict[str, Any]]] = {
+    "career": [
+        {
+            "scope": "career",
+            "kicker": "Explore careers",
+            "title": "Six career areas, one statewide job board",
+            "body": (
+                "Treatment, distribution, lab, engineering, technology, and leadership—"
+                "browse openings that keep New York’s water systems running."
+            ),
+            "image_url": "/pathways/stage/career-1.jpg",
+            "image_alt": "Utility field crew in high-visibility vests working at a distribution hydrant",
+            "cta_label": "Browse jobs",
+            "cta_href": "/{state}/jobs",
+            "sort_order": 10,
+        },
+        {
+            "scope": "career",
+            "kicker": "Get matched",
+            "title": "Tell us your skills; see Ready now and transferable matches",
+            "body": (
+                "Complete the matching questionnaire so employers see career changers "
+                "and Ready now talent on the same taxonomy."
+            ),
+            "image_url": "/pathways/stage/career-2.jpg",
+            "image_alt": "Career changer at a laptop in a treatment plant control room",
+            "cta_label": "Express interest",
+            "cta_href": "/{state}/interest?pathway=career",
+            "sort_order": 20,
+        },
+        {
+            "scope": "career",
+            "kicker": "Train and certify",
+            "title": "Gold Standard operator training from GED to PhD",
+            "body": (
+                "Connect to OWW/B&L training, NYSDOH-approved courses, and certification prep "
+                "so you can move from interest to licensed work."
+            ),
+            "image_url": "/pathways/stage/career-3.jpg",
+            "image_alt": "Instructor and students in a hands-on operator training lab",
+            "cta_label": "Create account",
+            "cta_href": "/login",
+            "sort_order": 30,
+        },
+    ],
+    "hire": [
+        {
+            "scope": "hire",
+            "kicker": "Recruit on the shared taxonomy",
+            "title": "Post openings that surface exact and transferable matches",
+            "body": (
+                "Describe required vs trainable credentials so Ready now and Strong transferable "
+                "candidates find your roles—not keyword noise."
+            ),
+            "image_url": "/pathways/stage/hire-1.jpg",
+            "image_alt": "Utility HR manager reviewing candidate profiles on a monitor",
+            "cta_label": "Register as utility admin",
+            "cta_href": "/register/utility",
+            "sort_order": 10,
+        },
+        {
+            "scope": "hire",
+            "kicker": "Plan the bench",
+            "title": "See 30-day to 3-year staffing needs before vacancies hit",
+            "body": (
+                "Pair WW360 succession planning with OWW recruiting so mentoring and "
+                "hiring start before gaps become emergencies."
+            ),
+            "image_url": "/pathways/stage/hire-2.jpg",
+            "image_alt": "Supervisor and senior operator walking a treatment plant gallery",
+            "cta_label": "Express interest",
+            "cta_href": "/{state}/interest?pathway=hire",
+            "sort_order": 20,
+        },
+        {
+            "scope": "hire",
+            "kicker": "Close the loop",
+            "title": "Report hires that feed statewide workforce analytics",
+            "body": (
+                "Track applicants, interviews, and hiring outcomes that roll into NYSAWWA "
+                "engagement reporting for grants, boards, and legislators."
+            ),
+            "image_url": "/pathways/stage/hire-3.jpg",
+            "image_alt": "New operator receiving a handshake and badge at a plant gate",
+            "cta_label": "Employer sign-in",
+            "cta_href": "/login",
+            "sort_order": 30,
+        },
+    ],
+    "educate": [
+        {
+            "scope": "educate",
+            "kicker": "List courses and events",
+            "title": "Put training where candidates and utilities already look",
+            "body": (
+                "Publish courses and events on your educator dashboard so learners discover "
+                "them inside OWW—not only on scattered calendars."
+            ),
+            "image_url": "/pathways/stage/educate-1.jpg",
+            "image_alt": "Community college instructor teaching hydraulics at a whiteboard",
+            "cta_label": "Submit a program",
+            "cta_href": "/{state}/programs/submit",
+            "sort_order": 10,
+        },
+        {
+            "scope": "educate",
+            "kicker": "Training Center partnership",
+            "title": "Gold Standard certification and CEUs from Albany, Syracuse, Rochester",
+            "body": (
+                "Point cohorts to OWW/B&L Gold Standard operator pathways and continuing "
+                "education that utilities trust."
+            ),
+            "image_url": "/pathways/stage/educate-2.jpg",
+            "image_alt": "Hands-on operator training room with bench-scale treatment units",
+            "cta_label": "Regional training",
+            "cta_href": "/{state}/regional/training",
+            "sort_order": 20,
+        },
+        {
+            "scope": "educate",
+            "kicker": "From cohort to hire",
+            "title": "Send learners toward jobs and employer matches",
+            "body": (
+                "Align programs to certification needs and help graduates move from interest "
+                "to training to employment across New York."
+            ),
+            "image_url": "/pathways/stage/educate-3.jpg",
+            "image_alt": "Students on a plant tour with a guide pointing at a clarifier",
+            "cta_label": "Express interest",
+            "cta_href": "/{state}/interest?pathway=educate",
+            "sort_order": 30,
+        },
+    ],
+    "ambassador": [
+        {
+            "scope": "ambassador",
+            "kicker": "Make the case",
+            "title": "Credible NY workforce facts for schools, boards, and legislators",
+            "body": (
+                "Use statewide statistics—millions served, thousands of operators, aging workforce—"
+                "to show why staffing capacity is as critical as capital investment."
+            ),
+            "image_url": "/pathways/stage/ambassador-1.jpg",
+            "image_alt": "Speaker presenting to a town board in a community meeting room",
+            "cta_label": "Express interest",
+            "cta_href": "/{state}/interest?pathway=ambassador",
+            "sort_order": 10,
+        },
+        {
+            "scope": "ambassador",
+            "kicker": "Open doors",
+            "title": "Share microvideos and pathway links with your network",
+            "body": (
+                "Host career conversations and point people to Career, Hire, and Educate doorways "
+                "with toolkits that stay current."
+            ),
+            "image_url": "/pathways/stage/ambassador-2.jpg",
+            "image_alt": "Retired operator mentoring a teen at a career fair table",
+            "cta_label": "Share career pathway",
+            "cta_href": "/{state}/career",
+            "sort_order": 20,
+        },
+        {
+            "scope": "ambassador",
+            "kicker": "Connect partners",
+            "title": "Loop in NYSAWWA when a school or utility wants more",
+            "body": (
+                "Introduce utilities, schools, and local officials when a deeper partnership "
+                "is needed—ambassadors multiply OWW’s reach."
+            ),
+            "image_url": "/pathways/stage/ambassador-3.jpg",
+            "image_alt": "Partners meeting at a reservoir overlook during a watershed visit",
+            "cta_label": "Create account",
+            "cta_href": "/login",
+            "sort_order": 30,
+        },
+    ],
+}
+
 PRODUCT_SLIDE_TITLES = frozenset(
     {
         "From GED to PhD: careers that keep water safe",
@@ -98,10 +286,18 @@ PRODUCT_SLIDE_TITLES = frozenset(
 )
 
 
+def normalize_scope(scope: str | None) -> str:
+    value = (scope or "home").strip().lower()
+    if value not in SLIDE_SCOPES:
+        raise ValueError(f"scope must be one of: {', '.join(sorted(SLIDE_SCOPES))}")
+    return value
+
+
 def slide_to_dict(row: HomeHeroSlide) -> dict[str, Any]:
     return {
         "id": row.id,
         "state_code": row.state_code,
+        "scope": row.scope or "home",
         "kicker": row.kicker,
         "title": row.title,
         "body": row.body,
@@ -117,6 +313,7 @@ def slide_to_dict(row: HomeHeroSlide) -> dict[str, Any]:
 def _row_from_spec(state: str, spec: dict[str, Any]) -> HomeHeroSlide:
     return HomeHeroSlide(
         state_code=state,
+        scope=normalize_scope(spec.get("scope") or "home"),
         kicker=spec["kicker"],
         title=spec["title"],
         body=spec["body"],
@@ -129,34 +326,60 @@ def _row_from_spec(state: str, spec: dict[str, Any]) -> HomeHeroSlide:
     )
 
 
-def list_public_slides(db: Session, *, state_code: str = "NY") -> list[dict[str, Any]]:
+def list_public_slides(
+    db: Session, *, state_code: str = "NY", scope: str = "home"
+) -> list[dict[str, Any]]:
     state = (state_code or "NY").upper()[:2]
-    ensure_default_slides(db, state_code=state)
-    ensure_product_slides(db, state_code=state)
+    sc = normalize_scope(scope)
+    if sc == "home":
+        ensure_default_slides(db, state_code=state)
+        ensure_product_slides(db, state_code=state)
+    else:
+        ensure_pathway_slides(db, state_code=state, scope=sc)
     rows = (
         db.query(HomeHeroSlide)
-        .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.is_active.is_(True))
+        .filter(
+            HomeHeroSlide.state_code == state,
+            HomeHeroSlide.scope == sc,
+            HomeHeroSlide.is_active.is_(True),
+        )
         .order_by(HomeHeroSlide.sort_order, HomeHeroSlide.id)
         .all()
     )
     return [slide_to_dict(r) for r in rows]
 
 
-def list_admin_slides(db: Session, *, state_code: str | None = None) -> list[dict[str, Any]]:
+def list_admin_slides(
+    db: Session, *, state_code: str | None = None, scope: str | None = None
+) -> list[dict[str, Any]]:
+    sc = normalize_scope(scope) if scope else None
     if state_code:
         state = state_code.upper()[:2]
-        ensure_default_slides(db, state_code=state)
-        ensure_product_slides(db, state_code=state)
+        if sc is None or sc == "home":
+            ensure_default_slides(db, state_code=state)
+            ensure_product_slides(db, state_code=state)
+        if sc is None:
+            ensure_pathway_slides(db, state_code=state)
+        elif sc in PATHWAY_SCOPES:
+            ensure_pathway_slides(db, state_code=state, scope=sc)
     q = db.query(HomeHeroSlide)
     if state_code:
         q = q.filter(HomeHeroSlide.state_code == state_code.upper()[:2])
-    rows = q.order_by(HomeHeroSlide.state_code, HomeHeroSlide.sort_order, HomeHeroSlide.id).all()
+    if sc:
+        q = q.filter(HomeHeroSlide.scope == sc)
+    rows = q.order_by(
+        HomeHeroSlide.state_code, HomeHeroSlide.scope, HomeHeroSlide.sort_order, HomeHeroSlide.id
+    ).all()
     return [slide_to_dict(r) for r in rows]
 
 
 def ensure_default_slides(db: Session, *, state_code: str = "NY") -> None:
     state = (state_code or "NY").upper()[:2]
-    existing = db.query(HomeHeroSlide).filter(HomeHeroSlide.state_code == state).count()
+    existing = (
+        db.query(HomeHeroSlide)
+        .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.scope == "home")
+        .count()
+    )
     if existing:
         return
     for spec in DEFAULT_SLIDES:
@@ -165,18 +388,18 @@ def ensure_default_slides(db: Session, *, state_code: str = "NY") -> None:
 
 
 def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
-    """Insert OWW + WW360 slides if missing; promote to front; backfill empty CTAs.
-
-    Does not overwrite admin-edited kicker/title/body/image — only sort order for
-    product titles, empty CTA fields, and non-product slides colliding at 10/20.
-    """
+    """Insert OWW + WW360 home slides if missing; promote to front; backfill empty CTAs."""
     state = (state_code or "NY").upper()[:2]
     product_specs = [s for s in DEFAULT_SLIDES if s["title"] in PRODUCT_SLIDE_TITLES]
     changed = False
     for spec in product_specs:
         found = (
             db.query(HomeHeroSlide)
-            .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.title == spec["title"])
+            .filter(
+                HomeHeroSlide.state_code == state,
+                HomeHeroSlide.scope == "home",
+                HomeHeroSlide.title == spec["title"],
+            )
             .first()
         )
         if not found:
@@ -193,11 +416,11 @@ def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
             found.cta_href = spec["cta_href"]
             changed = True
 
-    # Free sort slots 10/20 when older defaults still occupy them.
     others = (
         db.query(HomeHeroSlide)
         .filter(
             HomeHeroSlide.state_code == state,
+            HomeHeroSlide.scope == "home",
             ~HomeHeroSlide.title.in_(list(PRODUCT_SLIDE_TITLES)),
         )
         .order_by(HomeHeroSlide.sort_order, HomeHeroSlide.id)
@@ -210,9 +433,12 @@ def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
                 row.sort_order = target
                 changed = True
 
-    # Backfill empty CTAs on known default slides (new columns on existing rows).
     defaults_by_title = {s["title"]: s for s in DEFAULT_SLIDES}
-    for row in db.query(HomeHeroSlide).filter(HomeHeroSlide.state_code == state).all():
+    for row in (
+        db.query(HomeHeroSlide)
+        .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.scope == "home")
+        .all()
+    ):
         spec = defaults_by_title.get(row.title or "")
         if not spec:
             continue
@@ -227,9 +453,38 @@ def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
         db.commit()
 
 
+def ensure_pathway_slides(
+    db: Session, *, state_code: str = "NY", scope: str | None = None
+) -> None:
+    """Insert pathway slides by (scope, title) when missing. Does not overwrite admin edits."""
+    state = (state_code or "NY").upper()[:2]
+    scopes = [normalize_scope(scope)] if scope else sorted(PATHWAY_SCOPES)
+    added = False
+    for sc in scopes:
+        if sc not in PATHWAY_SCOPES:
+            continue
+        for spec in PATHWAY_DEFAULT_SLIDES.get(sc, []):
+            found = (
+                db.query(HomeHeroSlide)
+                .filter(
+                    HomeHeroSlide.state_code == state,
+                    HomeHeroSlide.scope == sc,
+                    HomeHeroSlide.title == spec["title"],
+                )
+                .first()
+            )
+            if found:
+                continue
+            db.add(_row_from_spec(state, spec))
+            added = True
+    if added:
+        db.commit()
+
+
 def create_slide(db: Session, data: dict[str, Any]) -> HomeHeroSlide:
     row = HomeHeroSlide(
         state_code=(data.get("state_code") or "NY").upper()[:2],
+        scope=normalize_scope(data.get("scope") or "home"),
         kicker=(data.get("kicker") or "").strip()[:120],
         title=(data.get("title") or "").strip()[:200],
         body=(data.get("body") or "").strip(),
@@ -254,6 +509,8 @@ def update_slide(db: Session, slide_id: int, data: dict[str, Any]) -> HomeHeroSl
         return None
     if "state_code" in data and data["state_code"]:
         row.state_code = str(data["state_code"]).upper()[:2]
+    if "scope" in data and data["scope"] is not None:
+        row.scope = normalize_scope(str(data["scope"]))
     if "kicker" in data and data["kicker"] is not None:
         row.kicker = str(data["kicker"]).strip()[:120]
     if "title" in data and data["title"] is not None:

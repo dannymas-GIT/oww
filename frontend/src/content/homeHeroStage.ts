@@ -2,6 +2,7 @@
 
 export type HomeHeroSlide = {
   id: string | number;
+  scope?: string;
   kicker: string;
   title: string;
   body: string;

@@ -1,16 +1,10 @@
-import { useEffect, useState } from 'react';
 import { HeroStorySlider } from '@/components/oww/HeroStorySlider';
-import {
-  HOME_HERO_SLIDES,
-  HOME_HERO_VIDEO,
-  normalizeHeroSlide,
-  type HomeHeroSlide,
-} from '@/content/homeHeroStage';
-import { api } from '@/lib/api';
+import { HOME_HERO_SLIDES, HOME_HERO_VIDEO } from '@/content/homeHeroStage';
+import { usePublicSlides } from '@/hooks/usePublicSlides';
 import { cn } from '@/lib/utils';
 
 /**
- * Home hero: loads `/public/home-slides/{state}` with static fallback, or optional video.
+ * Home hero: loads `/public/home-slides/{state}?scope=home` with static fallback, or optional video.
  */
 export function HomeHeroStage({
   state = 'ny',
@@ -19,22 +13,7 @@ export function HomeHeroStage({
   state?: string;
   className?: string;
 }) {
-  const [slides, setSlides] = useState(() => HOME_HERO_SLIDES.map(normalizeHeroSlide));
-
-  useEffect(() => {
-    let alive = true;
-    void api
-      .get(`/public/home-slides/${state}`)
-      .then(res => {
-        const raw = (res.data?.slides || []) as HomeHeroSlide[];
-        if (!alive || !raw.length) return;
-        setSlides(raw.map(normalizeHeroSlide));
-      })
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, [state]);
+  const slides = usePublicSlides(state, 'home', HOME_HERO_SLIDES);
 
   if (HOME_HERO_VIDEO) {
     const v = HOME_HERO_VIDEO;

@@ -49,6 +49,12 @@ export const owwTours: OwwTourConfig[] = [
     fabLabel: 'Pathway tour',
     slides: [
       {
+        id: 'slider',
+        title: 'Pathway story slider',
+        body: 'Each pathway opens with image-led slides that go deeper into that door — careers, hiring, education, or ambassadors — with its own calls to action.',
+        highlight: '[data-tour="pathway-slider"]',
+      },
+      {
         id: 'who',
         title: 'Who this pathway is for',
         body: 'Each pathway page opens with who it serves and what you can do here — career seekers, employers, educators, or ambassadors.',
