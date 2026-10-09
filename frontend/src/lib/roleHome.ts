@@ -10,7 +10,7 @@ export function homeForRoles(roles: string[] | undefined): string {
     return '/employer';
   }
   if (r.includes('educator')) return '/educator';
-  if (r.includes('ambassador')) return `/${DEFAULT_STATE}/ambassador`;
+  if (r.includes('ambassador')) return '/ambassador';
   if (r.includes('individual') || r.includes('student')) return '/candidate';
   return `/${DEFAULT_STATE}`;
 }

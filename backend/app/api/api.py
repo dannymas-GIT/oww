@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     favorites,
     messaging,
     educator,
+    ambassador,
     admin,
     admin_platform,
     billing,
@@ -32,6 +33,7 @@ api_router.include_router(matches.router)
 api_router.include_router(favorites.router)
 api_router.include_router(messaging.router)
 api_router.include_router(educator.router)
+api_router.include_router(ambassador.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_platform.router)
 api_router.include_router(billing.router)

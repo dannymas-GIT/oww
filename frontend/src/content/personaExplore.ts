@@ -36,10 +36,11 @@ export const PERSONA_EXPLORE: Record<string, PersonaExploreGuide> = {
     ],
   },
   ambassador: {
-    headline: 'Talking points, toolkits, and sample outreach engagement on the pathway.',
+    headline: 'Private ambassador desk — outreach, toolkits, talking points (not the public pathway).',
     links: [
-      { label: 'Ambassador pathway', path: '/ny/ambassador' },
+      { label: 'Ambassador desk', path: '/ambassador' },
       { label: 'Interest form', path: '/ny/interest?pathway=ambassador' },
+      { label: 'Public pathway', path: '/ny/ambassador' },
     ],
   },
   'employer-hiring': {

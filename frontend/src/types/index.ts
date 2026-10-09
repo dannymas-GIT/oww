@@ -304,6 +304,9 @@ export interface IndividualProfile {
   display_name?: string;
   answers: Record<string, unknown>;
   completion_pct?: number;
+  career_stage?: string | null;
+  region?: string | null;
+  resume_bank_opt_in?: boolean | null;
   updated_at?: string;
 }
 
@@ -564,15 +567,22 @@ export interface LocationItem {
 export interface Course {
   id: number;
   title: string;
+  description?: string | null;
   provider?: string;
   modality?: string;
+  region?: string | null;
+  published?: boolean;
   start_date?: string;
+  created_at?: string | null;
 }
 
 export interface EducatorEvent {
   id: number;
   title: string;
+  description?: string | null;
   starts_at: string;
   location?: string;
+  region?: string | null;
   capacity?: number;
+  published?: boolean;
 }
