@@ -6,6 +6,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Map,
+  Megaphone,
   MessageSquare,
   Search,
   Shield,
@@ -253,7 +254,27 @@ export const roleNavGroups: NavGroup[] = [
             path: '/educator',
             icon: GraduationCap,
             roles: ['educator'],
-            description: 'Courses and events',
+            description: 'Courses, events, and program submissions',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ambassador',
+    label: 'Ambassador',
+    sections: [
+      {
+        id: 'ambassador-overview',
+        label: 'Overview',
+        icon: Megaphone,
+        items: [
+          {
+            label: 'Dashboard',
+            path: '/ambassador',
+            icon: Megaphone,
+            roles: ['ambassador'],
+            description: 'Outreach desk, toolkits, and talking points',
           },
         ],
       },
