@@ -53,7 +53,7 @@ export default function OrgProfilePage() {
   const [canEditShare, setCanEditShare] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [roleLabels, setRoleLabels] = useState<Map<string, string>>(new Map());
-  const state = (user?.state_code || DEFAULT_STATE).toLowerCase();
+  const [state, setState] = useState(DEFAULT_STATE);
 
   useEffect(() => {
     void getMyOrg()
@@ -63,6 +63,7 @@ export default function OrgProfilePage() {
         setDescription(o.description || '');
         setWebsite(o.website || '');
         setCity(o.city || '');
+        setState((o.state_code || DEFAULT_STATE).toLowerCase());
         setPrefs({ ...DEFAULT_PREFS, ...(o.public_share_prefs || {}) });
         if (o.share_labels) setShareLabels({ ...DEFAULT_LABELS, ...o.share_labels });
         setCanEditShare(Boolean(o.can_edit_public_share));
