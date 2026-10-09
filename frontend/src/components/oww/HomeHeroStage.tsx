@@ -1,19 +1,37 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import {
   HOME_HERO_SLIDES,
   HOME_HERO_VIDEO,
   normalizeHeroSlide,
+  resolveSlideHref,
   type HomeHeroSlide,
 } from '@/content/homeHeroStage';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const ROTATE_MS = 7000;
 
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
 /**
- * Full-panel home hero rotator: 3-tier copy (kicker / title / body) + image.
- * Loads from `/public/home-slides/{state}` with static fallback.
+ * Full-width home hero slider: full-bleed image + left text panel + per-slide CTA.
+ * Advances right→left via translateX. Loads from `/public/home-slides/{state}` with static fallback.
  */
 export function HomeHeroStage({
   state = 'ny',
@@ -25,6 +43,7 @@ export function HomeHeroStage({
   const [slides, setSlides] = useState(() => HOME_HERO_SLIDES.map(normalizeHeroSlide));
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     let alive = true;
@@ -50,30 +69,51 @@ export function HomeHeroStage({
     return () => window.clearInterval(id);
   }, [paused, slides.length]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setIndex(i => (i - 1 + slides.length) % slides.length);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setIndex(i => (i + 1) % slides.length);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [slides.length]);
+
   if (HOME_HERO_VIDEO) {
     const v = HOME_HERO_VIDEO;
     return (
       <div
         className={cn(
-          'flex h-full min-h-[320px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
+          'relative min-h-[420px] overflow-hidden bg-oww-navy md:min-h-[520px]',
           className
         )}
       >
-        <div className="space-y-2 px-4 py-4 sm:px-5">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src={v.src}
+          poster={v.poster}
+          controls
+          playsInline
+          muted
+          loop
+          autoPlay
+        >
+          Your browser does not support embedded video.
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-r from-oww-navy/90 via-oww-navy/55 to-transparent" />
+        <div className="relative z-10 flex min-h-[420px] max-w-xl flex-col justify-center px-6 py-10 md:min-h-[520px] md:px-12">
           <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">Water workforce</p>
-          <h2 className="font-display text-xl font-semibold text-oww-navy sm:text-2xl">{v.caption}</h2>
-        </div>
-        <div className="relative min-h-0 flex-1 bg-oww-navy">
-          <video className="h-full w-full object-cover" src={v.src} poster={v.poster} controls playsInline muted loop autoPlay>
-            Your browser does not support embedded video.
-          </video>
+          <h2 className="mt-2 font-display text-3xl font-semibold text-white md:text-4xl">{v.caption}</h2>
         </div>
       </div>
     );
   }
 
-  const slide = slides[index] ?? slides[0];
-  if (!slide) return null;
+  if (!slides.length) return null;
 
   function go(delta: number) {
     setIndex(i => (i + delta + slides.length) % slides.length);
@@ -81,45 +121,69 @@ export function HomeHeroStage({
 
   return (
     <div
-      className={cn(
-        'flex h-full min-h-[320px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
-        className
-      )}
+      className={cn('relative w-full', className)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={e => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
+      }}
       aria-roledescription="carousel"
-      aria-label="Home story rotator"
+      aria-label="Home story slider"
     >
-      {/* Entire card is the rotator unit: 3 tiers + image */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        {slides.map((s, i) => (
-          <div
-            key={s.id}
-            className={cn(
-              'absolute inset-0 flex flex-col transition-opacity duration-700',
-              i === index ? 'opacity-100' : 'pointer-events-none opacity-0'
-            )}
-            aria-hidden={i !== index}
-          >
-            <div className="shrink-0 space-y-2 px-4 py-4 sm:px-5 sm:py-5">
-              <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">{s.kicker}</p>
-              <h2 className="font-display text-xl font-semibold leading-snug text-oww-navy sm:text-2xl">{s.title}</h2>
-              <p className="text-base leading-relaxed text-slate-700">{s.body}</p>
-            </div>
-            <div className="relative min-h-0 flex-1 bg-slate-100">
-              <img
-                src={s.imageSrc}
-                alt={s.imageAlt}
-                className="absolute inset-0 h-full w-full object-cover"
-                loading={i === 0 ? 'eager' : 'lazy'}
-              />
-            </div>
-          </div>
-        ))}
+      <div className="relative min-h-[420px] overflow-hidden bg-oww-navy md:min-h-[520px]">
+        <div
+          className={cn(
+            'flex h-full min-h-[420px] w-full md:min-h-[520px]',
+            !reducedMotion && 'transition-transform duration-700 ease-out'
+          )}
+          style={{ transform: `translateX(-${index * 100}%)` }}
+        >
+          {slides.map((s, i) => {
+            const href = resolveSlideHref(s.ctaHref, state);
+            const showCta = Boolean(s.ctaLabel && href);
+            return (
+              <div
+                key={s.id}
+                className="relative min-h-[420px] w-full shrink-0 md:min-h-[520px]"
+                aria-hidden={i !== index}
+              >
+                <img
+                  src={s.imageSrc}
+                  alt={s.imageAlt}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-r from-oww-navy/92 via-oww-navy/65 to-oww-navy/20"
+                />
+                <div className="relative z-10 flex min-h-[420px] max-w-2xl flex-col justify-center px-6 py-12 md:min-h-[520px] md:px-12 lg:px-16">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-oww-cyan">{s.kicker}</p>
+                  <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+                    {s.title}
+                  </h2>
+                  <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/90">{s.body}</p>
+                  {showCta ? (
+                    <div className="mt-6">
+                      <Button
+                        className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
+                        data-tour={i === index ? 'hero-cta' : undefined}
+                        asChild
+                      >
+                        <Link to={href}>{s.ctaLabel}</Link>
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="relative z-10 flex shrink-0 items-center justify-between gap-2 border-t border-slate-100 bg-white px-2 py-1.5">
-        <div className="flex items-center gap-0.5" role="tablist" aria-label="Slide">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-2 py-1.5 sm:px-4">
+        <div className="flex flex-wrap items-center gap-0.5" role="tablist" aria-label="Slide">
           {slides.map((s, i) => (
             <button
               key={s.id}
