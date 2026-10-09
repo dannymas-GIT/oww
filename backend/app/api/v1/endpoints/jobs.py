@@ -162,7 +162,7 @@ def list_apps(job_id: int | None = None, db: Session = Depends(get_db), user: Us
     q = db.query(Application)
     if user.has_any_role(*HIRING_ROLES) and user.org_id:
         q = q.filter(Application.org_id == user.org_id)
-    elif user.has_role("individual"):
+    elif user.has_any_role("individual", "student"):
         q = q.filter(Application.user_id == user.id)
     if job_id:
         q = q.filter(Application.job_id == job_id)
@@ -187,7 +187,7 @@ def list_apps(job_id: int | None = None, db: Session = Depends(get_db), user: Us
     return out
 
 @router.post("/{job_id}/applications")
-def apply(job_id: int, body: ApplyIn, db: Session = Depends(get_db), user: User = Depends(require_roles("individual", "platform_admin"))):
+def apply(job_id: int, body: ApplyIn, db: Session = Depends(get_db), user: User = Depends(require_roles("individual", "student", "platform_admin"))):
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(404)

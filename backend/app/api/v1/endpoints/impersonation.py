@@ -32,7 +32,10 @@ class StartIn(BaseModel):
 
 
 @router.get("/personas")
-def personas(db: Session = Depends(get_db), actor: User = Depends(require_roles("platform_admin", "state_admin"))):
+def personas(db: Session = Depends(get_db), actor: User = Depends(get_actor_user)):
+    """Catalog for View as role. Uses actor (not impersonated target) so the banner can reload tips mid-session."""
+    if not actor.has_any_role("platform_admin", "state_admin"):
+        raise HTTPException(403, "View as role requires platform or state admin")
     ensure_default_personas(db)
     return list_personas_for_actor(db, actor)
 
@@ -59,6 +62,15 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), actor:
     if not target:
         raise HTTPException(404, "Target user not found")
 
+    # Enrich role-specific sample data so View as role always lands in a rich demo world.
+    try:
+        from app.services.sample_data_service import ensure_persona_sample_world
+
+        ensure_persona_sample_world(db, persona_key)
+    except Exception:
+        # Never block impersonation start if sample enrichment fails.
+        db.rollback()
+
     session = start_impersonation(
         db,
         actor=actor,
@@ -69,7 +81,14 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), actor:
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
-    return issue_impersonation_token(actor=actor, target=target, session=session, mode=body.mode, persona_key=persona_key)
+    return issue_impersonation_token(
+        actor=actor,
+        target=target,
+        session=session,
+        mode=body.mode,
+        persona_key=persona_key,
+        db=db,
+    )
 
 
 @router.post("/stop")

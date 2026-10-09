@@ -15,7 +15,7 @@ router = APIRouter(prefix="/matches", tags=["matches"])
 @router.get("")
 def list_matches(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     out = []
-    if user.has_any_role("individual"):
+    if user.has_any_role("individual", "student"):
         profile = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
         if not profile:
             return []
@@ -32,7 +32,7 @@ def list_matches(db: Session = Depends(get_db), user: User = Depends(get_current
                 "organization_name": org.name if org else None,
                 "explanation": (m.explanation or {}).get("summary"),
             })
-    elif user.has_any_role("employer", "employer_admin", "employer_member") and user.org_id:
+    elif user.has_any_role("employer", "employer_admin", "employer_member", "utility_admin", "utility_manager") and user.org_id:
         rows = db.query(Match).filter(Match.org_id == user.org_id).order_by(Match.score.desc()).limit(100).all()
         for m in rows:
             p = db.query(IndividualProfile).filter(IndividualProfile.id == m.individual_profile_id).first()

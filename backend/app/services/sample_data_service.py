@@ -657,3 +657,647 @@ def ensure_admin_directory_samples(db: Session, audience: str) -> list[User]:
 def user_is_sample(u: User) -> bool:
     prefs = u.contact_prefs or {}
     return bool(prefs.get("is_sample")) or (u.username or "").startswith("sample-")
+
+
+# ---------------------------------------------------------------------------
+# Persona sample worlds (View as role)
+# ---------------------------------------------------------------------------
+
+PERSONA_SAMPLE_PACK = "persona_v1"
+PERSONA_META = {"is_sample": True, "sample_pack": PERSONA_SAMPLE_PACK}
+
+
+def ensure_persona_sample_world(db: Session, persona_key: str | None) -> dict[str, Any]:
+    """Idempotently enrich the demo world for a View-as-role persona."""
+    if not persona_key:
+        return {"ok": False, "reason": "no_persona"}
+    key = persona_key.strip()
+    handlers = {
+        "student-explorer": _ensure_student_world,
+        "job-seeker": _ensure_job_seeker_world,
+        "educator": _ensure_educator_world,
+        "ambassador": _ensure_ambassador_world,
+        "employer-hiring": _ensure_employer_hiring_world,
+        "employer-paywall": _ensure_employer_paywall_world,
+        "utility-admin": _ensure_utility_hiring_world,
+        "utility-manager": _ensure_utility_hiring_world,
+        "state-admin": _ensure_state_admin_world,
+    }
+    fn = handlers.get(key)
+    if not fn:
+        return {"ok": False, "reason": "unknown_persona", "persona_key": key}
+    try:
+        result = fn(db)
+        result["persona_key"] = key
+        return result
+    except Exception as exc:  # noqa: BLE001 — demos must not break impersonation start
+        db.rollback()
+        return {"ok": False, "reason": "error", "persona_key": key, "error": str(exc)}
+
+
+def ensure_all_persona_sample_worlds(db: Session) -> dict[str, Any]:
+    keys = [
+        "student-explorer",
+        "job-seeker",
+        "educator",
+        "ambassador",
+        "employer-hiring",
+        "employer-paywall",
+        "utility-admin",
+        "utility-manager",
+        "state-admin",
+    ]
+    out = {}
+    for key in keys:
+        out[key] = ensure_persona_sample_world(db, key)
+    return out
+
+
+def _user_by_username(db: Session, username: str) -> User | None:
+    return db.query(User).filter(User.username == username).first()
+
+
+def _ensure_candidate_profile(
+    db: Session,
+    user: User,
+    *,
+    career_stage: str,
+    region: str,
+    career: str,
+    completeness: int,
+) -> IndividualProfile:
+    p = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
+    if not p:
+        p = IndividualProfile(user_id=user.id, state_code=user.state_code or "NY")
+        db.add(p)
+        db.flush()
+    p.display_name = user.full_name or user.username
+    p.career_stage = career_stage
+    p.region = region
+    p.headline = p.headline or f"{career_stage} — water workforce pathways"
+    p.bio = p.bio or (
+        "Sample View-as-role profile illustrating Exact Matching answers. "
+        "Replace with real candidate data in production."
+    )
+    answers = dict(p.answers or {})
+    if not answers.get("career_area"):
+        answers.update(
+            {
+                "career_area": [career, "water_distribution"],
+                "opportunity_type": ["entry_level", "internship"]
+                if career_stage == "Entry-Level"
+                else ["experienced"],
+                "timing": "within_1_3_months",
+                "skills": ["treatment_ops", "sampling", "tools"],
+                "professional_experience": "lt_1" if career_stage == "Entry-Level" else "1_3",
+                "transferable_industries": ["education"] if career_stage == "Entry-Level" else ["construction"],
+                "education": "hs" if career_stage == "Entry-Level" else "associates",
+                "licenses": [],
+                "location": region,
+                "schedule": ["full_time"],
+                "work_environment": ["treatment", "outdoor"],
+                "travel": "local",
+                "outreach": ["share_yes", "email"],
+                "_persona_sample": True,
+                "sample_pack": PERSONA_SAMPLE_PACK,
+            }
+        )
+    p.answers = answers
+    p.profile_completeness = max(int(p.profile_completeness or 0), completeness)
+    p.is_public = True
+    p.resume_bank_opt_in = True
+    p.share_with_employers = "yes"
+    db.add(p)
+    db.flush()
+    return p
+
+
+def _ensure_interest(
+    db: Session,
+    *,
+    email: str,
+    full_name: str,
+    pathway: str,
+    career_stage: str,
+    region: str,
+    interests: list[str],
+) -> InterestSubmission:
+    from app.models.interest_submission import InterestSubmission
+
+    row = (
+        db.query(InterestSubmission)
+        .filter(
+            InterestSubmission.email == email.lower(),
+            InterestSubmission.pathway == pathway,
+        )
+        .first()
+    )
+    if row:
+        return row
+    row = InterestSubmission(
+        state_code="NY",
+        full_name=full_name,
+        email=email.lower(),
+        phone="585-555-0199",
+        pathway=pathway,
+        career_stage=career_stage,
+        region=region,
+        interests=interests,
+        permissions={"job_alerts": True, "event_updates": True},
+        source="persona_sample",
+        notes="Sample interest submission for View as role demos.",
+        status="new",
+    )
+    db.add(row)
+    db.flush()
+    return row
+
+
+def _open_jobs(db: Session, *, limit: int = 6) -> list[Job]:
+    return (
+        db.query(Job)
+        .filter(Job.state_code == "NY", Job.status.in_(["open", "active"]))
+        .order_by(Job.is_featured.desc(), Job.id)
+        .limit(limit)
+        .all()
+    )
+
+
+def _ensure_candidate_applications_and_messages(
+    db: Session,
+    *,
+    user: User,
+    profile: IndividualProfile,
+    jobs: list[Job],
+    max_apps: int = 3,
+) -> dict[str, int]:
+    created_apps = 0
+    created_msgs = 0
+    if not jobs:
+        return {"applications": 0, "messages": 0}
+
+    for i, job in enumerate(jobs[:max_apps]):
+        existing = (
+            db.query(Application)
+            .filter(Application.user_id == user.id, Application.job_id == job.id)
+            .first()
+        )
+        if not existing:
+            statuses = ("submitted", "under_review", "interview")
+            db.add(
+                Application(
+                    job_id=job.id,
+                    individual_profile_id=profile.id,
+                    user_id=user.id,
+                    org_id=job.org_id,
+                    status=statuses[i % len(statuses)],
+                    cover_note=(
+                        f"Sample application from {user.full_name or user.username} — illustrative "
+                        "View-as-role cover note showing pipeline status."
+                    ),
+                    meta=dict(PERSONA_META),
+                )
+            )
+            created_apps += 1
+
+        employer = (
+            db.query(User)
+            .filter(User.org_id == job.org_id, User.is_active.is_(True))
+            .order_by(User.id)
+            .first()
+        )
+        if not employer:
+            continue
+        has_msg = (
+            db.query(Message)
+            .filter(
+                Message.org_id == job.org_id,
+                Message.job_id == job.id,
+                Message.is_sample.is_(True),
+                ((Message.from_user_id == user.id) | (Message.to_user_id == user.id)),
+            )
+            .first()
+        )
+        if has_msg:
+            continue
+        subject = f"Next steps — {job.title}"
+        db.add(
+            Message(
+                from_user_id=employer.id,
+                to_user_id=user.id,
+                org_id=job.org_id,
+                job_id=job.id,
+                subject=subject,
+                body=(
+                    f"Hi {profile.display_name or 'there'},\n\n"
+                    f"Thanks for applying to {job.title}. This sample message shows how employers "
+                    "reach candidates inside OWW Messaging.\n\n— Hiring team (sample)"
+                ),
+                read=False,
+                is_sample=True,
+            )
+        )
+        db.add(
+            Message(
+                from_user_id=user.id,
+                to_user_id=employer.id,
+                org_id=job.org_id,
+                job_id=job.id,
+                subject=subject,
+                body=(
+                    "Thank you — I am available for a screen next week. "
+                    "(Sample candidate reply for View as role.)"
+                ),
+                read=True,
+                is_sample=True,
+            )
+        )
+        created_msgs += 2
+
+    db.commit()
+    return {"applications": created_apps, "messages": created_msgs}
+
+
+def _ensure_student_world(db: Session) -> dict[str, Any]:
+    from app.services.matching_service import refresh_matches_for_profile
+    from app.services.membership_service import ensure_default_plans
+    from app.models.membership import Membership
+
+    ensure_default_plans(db)
+    user = _user_by_username(db, "student1")
+    if not user:
+        return {"ok": False, "reason": "user_missing"}
+    # Students browse matches like individuals
+    roles = list(user.roles or [])
+    if "individual" not in roles:
+        roles.append("individual")
+        user.roles = roles
+        db.add(user)
+
+    profile = _ensure_candidate_profile(
+        db,
+        user,
+        career_stage="Entry-Level",
+        region="Capital Region",
+        career="drinking_water_treatment",
+        completeness=62,
+    )
+    _ensure_interest(
+        db,
+        email=user.email or "student1@school.example.org",
+        full_name=user.full_name or "Student Explorer",
+        pathway="career",
+        career_stage="Entry-Level",
+        region="Capital Region",
+        interests=["job_board", "certification_prep", "mentoring"],
+    )
+    # complimentary membership if missing (seed usually creates it)
+    if not db.query(Membership).filter(Membership.user_id == user.id).first():
+        db.add(
+            Membership(
+                user_id=user.id,
+                state_code="NY",
+                plan_code="individual_free",
+                status="complimentary",
+                provider="comp",
+                current_period_start=datetime.utcnow() - timedelta(days=10),
+                current_period_end=datetime.utcnow() + timedelta(days=355),
+                meta={"seed": True, "persona_sample": True},
+            )
+        )
+    refresh_matches_for_profile(db, profile)
+    jobs = _open_jobs(db, limit=2)
+    eng = _ensure_candidate_applications_and_messages(
+        db, user=user, profile=profile, jobs=jobs, max_apps=1
+    )
+    db.commit()
+    return {"ok": True, "profile_id": profile.id, **eng}
+
+
+def _ensure_job_seeker_world(db: Session) -> dict[str, Any]:
+    from app.services.matching_service import refresh_matches_for_profile
+
+    user = _user_by_username(db, "candidate1")
+    if not user:
+        return {"ok": False, "reason": "user_missing"}
+    profile = _ensure_candidate_profile(
+        db,
+        user,
+        career_stage="Mid-Level",
+        region="Western NY",
+        career="wastewater_treatment",
+        completeness=88,
+    )
+    refresh_matches_for_profile(db, profile)
+    jobs = _open_jobs(db, limit=4)
+    eng = _ensure_candidate_applications_and_messages(
+        db, user=user, profile=profile, jobs=jobs, max_apps=3
+    )
+    return {"ok": True, "profile_id": profile.id, **eng}
+
+
+def _ensure_educator_world(db: Session) -> dict[str, Any]:
+    from app.models.course import Course
+    from app.models.event import Event
+    from app.models.program_submission import ProgramSubmission
+
+    user = _user_by_username(db, "educator1")
+    if not user:
+        return {"ok": False, "reason": "user_missing"}
+
+    course_titles = [
+        ("Intro to Water Treatment", "Career awareness module for CTE classrooms."),
+        ("Operator Pathways Bootcamp", "Pre-certification overview — Grade 2A / WW operator tracks."),
+        ("Safety & Confined Space Awareness", "Utility site safety orientation for apprentices."),
+    ]
+    for title, desc in course_titles:
+        if not db.query(Course).filter(Course.educator_user_id == user.id, Course.title == title).first():
+            db.add(
+                Course(
+                    state_code="NY",
+                    educator_user_id=user.id,
+                    title=title,
+                    description=desc,
+                    educators=[user.full_name or "CTE Educator"],
+                    region="Capital Region",
+                    published=True,
+                )
+            )
+
+    event_specs = [
+        ("Water Career Fair", 21, "Albany BOCES — Main Gym"),
+        ("Treatment Plant Field Trip (Sample)", 45, "Albany Water Board — Visitor Center"),
+    ]
+    for title, days, loc in event_specs:
+        if not db.query(Event).filter(Event.organizer_user_id == user.id, Event.title == title).first():
+            db.add(
+                Event(
+                    state_code="NY",
+                    organizer_user_id=user.id,
+                    title=title,
+                    description="Sample educator event for View as role demos.",
+                    starts_at=datetime.utcnow() + timedelta(days=days),
+                    location=loc,
+                    region="Capital Region",
+                    published=True,
+                )
+            )
+
+    if not db.query(ProgramSubmission).filter(
+        ProgramSubmission.contact_email == (user.email or "").lower()
+    ).first():
+        db.add(
+            ProgramSubmission(
+                state_code="NY",
+                program_name="Capital Region Water Career Academy (Sample)",
+                organization_name="BOCES Capital Region CTE",
+                contact_name=user.full_name or "CTE Educator",
+                contact_email=user.email or "educator@boces.example.org",
+                contact_phone="518-555-0142",
+                program_type="cte_pathway",
+                region="Capital Region",
+                description=(
+                    "Sample program submission illustrating educator → NYSAWWA review workflow. "
+                    "Includes classroom modules, plant tours, and employer guest speakers."
+                ),
+                tags=["sample", "cte", "operator_pathway"],
+                payload={"is_sample": True, "sample_pack": PERSONA_SAMPLE_PACK},
+                status="pending",
+            )
+        )
+    db.commit()
+    courses = db.query(Course).filter(Course.educator_user_id == user.id).count()
+    events = db.query(Event).filter(Event.organizer_user_id == user.id).count()
+    return {"ok": True, "courses": courses, "events": events}
+
+
+def _ensure_ambassador_world(db: Session) -> dict[str, Any]:
+    from app.models.resource_item import ResourceItem
+    from app.services.engagement_service import track
+
+    user = _user_by_username(db, "ambassador1")
+    if not user:
+        return {"ok": False, "reason": "user_missing"}
+
+    _ensure_interest(
+        db,
+        email=user.email or "ambassador@example.org",
+        full_name=user.full_name or "Workforce Ambassador",
+        pathway="ambassador",
+        career_stage="Ambassador",
+        region="Hudson Valley",
+        interests=["mentoring", "membership_information", "outreach"],
+    )
+
+    toolkit_titles = [
+        ("Ambassador outreach toolkit", "/ny/ambassador"),
+        ("Classroom water careers one-pager (Sample)", "/ny/ambassador"),
+        ("Legislative talking points — NY workforce (Sample)", "/ny/ambassador"),
+    ]
+    for title, url in toolkit_titles:
+        if not db.query(ResourceItem).filter(
+            ResourceItem.pathway == "ambassador", ResourceItem.title == title
+        ).first():
+            db.add(
+                ResourceItem(
+                    state_code="NY",
+                    pathway="ambassador",
+                    category="toolkit",
+                    title=title,
+                    url=url,
+                )
+            )
+
+    # Sample outreach engagement (idempotent by event_type + actor)
+    from app.models.engagement_event import EngagementEvent
+
+    for etype, stage, note in [
+        ("ambassador_outreach", "engagement", "Sample school visit — 28 students reached"),
+        ("ambassador_civic", "engagement", "Sample rotary club briefing on operator shortage"),
+        ("ambassador_referral", "interest", "Sample referral into Pathways Interest form"),
+    ]:
+        exists = (
+            db.query(EngagementEvent)
+            .filter(
+                EngagementEvent.actor_user_id == user.id,
+                EngagementEvent.event_type == etype,
+                EngagementEvent.source == "persona_sample",
+            )
+            .first()
+        )
+        if not exists:
+            track(
+                db,
+                event_type=etype,
+                pipeline_stage=stage,
+                actor_user_id=user.id,
+                region="Hudson Valley",
+                career_stage="Ambassador",
+                state_code="NY",
+                source="persona_sample",
+                meta={"is_sample": True, "note": note},
+            )
+    db.commit()
+    return {"ok": True}
+
+
+def _ensure_employer_hiring_world(db: Session) -> dict[str, Any]:
+    user = _user_by_username(db, "employer2")
+    if not user or not user.org_id:
+        return {"ok": False, "reason": "user_or_org_missing"}
+    return ensure_utility_sample_pack(
+        db, user.org_id, actor_user_id=user.id, force_refresh_engagement=False
+    )
+
+
+def _ensure_employer_paywall_world(db: Session) -> dict[str, Any]:
+    """Lapsed employer still sees teaser sample jobs/candidates behind MembershipGate."""
+    user = _user_by_username(db, "employer9")
+    if not user or not user.org_id:
+        return {"ok": False, "reason": "user_or_org_missing"}
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    if not org:
+        return {"ok": False, "reason": "org_missing"}
+
+    # Ensure sample jobs exist even when real seed jobs are present — teasers for the gate.
+    state = (org.state_code or "NY").upper()
+    existing_sample = db.query(Job).filter(Job.org_id == org.id, Job.is_sample.is_(True)).count()
+    if not existing_sample:
+        for spec in SAMPLE_JOBS:
+            db.add(
+                Job(
+                    org_id=org.id,
+                    state_code=state,
+                    title=spec["title"],
+                    description=(
+                        spec["description"]
+                        + " Visible as a teaser when membership is expired — renew to unlock hiring tools."
+                    ),
+                    opportunity_type=spec["opportunity_type"],
+                    career_areas=[spec["primary_career_area"]],
+                    primary_career_area=spec["primary_career_area"],
+                    region=spec["region"],
+                    city=spec["city"],
+                    county="Onondaga",
+                    status="open",
+                    is_featured=False,
+                    is_sample=True,
+                    criteria=dict(SAMPLE_META),
+                    published_at=datetime.utcnow(),
+                    created_by=user.id,
+                )
+            )
+        db.flush()
+
+    return ensure_utility_sample_pack(
+        db, org.id, actor_user_id=user.id, force_refresh_engagement=False
+    )
+
+
+def _ensure_utility_hiring_world(db: Session) -> dict[str, Any]:
+    user = _user_by_username(db, "utility-admin1")
+    if not user or not user.org_id:
+        return {"ok": False, "reason": "user_or_org_missing"}
+    result = ensure_utility_sample_pack(
+        db, user.org_id, actor_user_id=user.id, force_refresh_engagement=False
+    )
+    # Feature one sample (or first) job so the dashboard feels alive
+    job = (
+        db.query(Job)
+        .filter(Job.org_id == user.org_id, Job.status.in_(["open", "active"]))
+        .order_by(Job.is_sample.desc(), Job.id)
+        .first()
+    )
+    if job and not job.is_featured:
+        job.is_featured = True
+        db.add(job)
+        db.commit()
+    return result
+
+
+def _ensure_state_admin_world(db: Session) -> dict[str, Any]:
+    from app.models.content_page import ContentPage
+    from app.models.communication import Communication
+    from app.services.engagement_service import track
+    from app.models.engagement_event import EngagementEvent
+
+    user = _user_by_username(db, "state-admin-ny")
+    if not user:
+        return {"ok": False, "reason": "user_missing"}
+
+    draft = (
+        db.query(ContentPage)
+        .filter(
+            ContentPage.state_code == "NY",
+            ContentPage.slug == "ny-workforce-spotlight-draft",
+        )
+        .first()
+    )
+    if not draft:
+        db.add(
+            ContentPage(
+                state_code="NY",
+                slug="ny-workforce-spotlight-draft",
+                title="NY Workforce Spotlight (Draft — Sample)",
+                template="story_feature",
+                pathway=None,
+                summary="Sample CMS draft for state admin View as role — publish after review.",
+                body_html=(
+                    "<p>This draft story illustrates how state partners edit NY microsite content "
+                    "before publish. Sample only.</p>"
+                ),
+                body_json={"sections": [], "is_sample": True},
+                is_published=False,
+                sort_order=90,
+                author_name=user.full_name or "NY State Admin",
+                tags=["sample", "draft", "persona"],
+                created_by=user.id,
+            )
+        )
+
+    if not db.query(Communication).filter(
+        Communication.subject == "State partner outreach — sample draft"
+    ).first():
+        db.add(
+            Communication(
+                state_code="NY",
+                subject="State partner outreach — sample draft",
+                body=(
+                    "Hi {{name}}, this sample draft shows the Communications portal for state admins — "
+                    "audience by role and membership state."
+                ),
+                channel="email",
+                audience={"roles": ["utility_admin", "employer"], "membership_status": "expiring", "expiring_days": 30},
+                status="draft",
+                recipient_count=0,
+                created_by=user.id,
+            )
+        )
+
+    for stage in ("interest", "engagement", "training", "interview", "employment"):
+        exists = (
+            db.query(EngagementEvent)
+            .filter(
+                EngagementEvent.event_type == f"state_demo_{stage}",
+                EngagementEvent.source == "persona_sample",
+            )
+            .first()
+        )
+        if not exists:
+            track(
+                db,
+                event_type=f"state_demo_{stage}",
+                pipeline_stage=stage,
+                actor_user_id=user.id,
+                region="Capital Region",
+                career_stage="Entry-Level",
+                state_code="NY",
+                source="persona_sample",
+                meta={"is_sample": True},
+            )
+
+    for audience in ("candidates", "hirers", "ambassadors", "educators"):
+        ensure_admin_directory_samples(db, audience)
+
+    db.commit()
+    return {"ok": True}

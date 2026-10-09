@@ -28,6 +28,8 @@ def impersonation_dict(
     session_id: str | None = None,
     expires_at: datetime | None = None,
     actor_username: str | None = None,
+    persona_label: str | None = None,
+    narrative_bullets: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "active": active,
@@ -37,6 +39,8 @@ def impersonation_dict(
         "session_id": session_id,
         "expires_at": expires_at.isoformat() if expires_at else None,
         "actor_username": actor_username,
+        "persona_label": persona_label,
+        "narrative_bullets": narrative_bullets or [],
     }
 
 
@@ -53,6 +57,7 @@ def issue_impersonation_token(
     session: ImpersonationSession,
     mode: str,
     persona_key: str | None,
+    db: Session | None = None,
 ) -> dict[str, Any]:
     """JWT sub = target (viewed) user; act_as carries actor + session for AuthZ."""
     token = create_access_token(
@@ -71,6 +76,18 @@ def issue_impersonation_token(
             },
         },
     )
+    persona_label = None
+    narrative_bullets: list[str] = []
+    if persona_key:
+        from sqlalchemy.orm import object_session
+
+        sess = db or object_session(session)
+        if sess:
+            row = sess.query(DemoPersona).filter(DemoPersona.persona_key == persona_key).first()
+            if row:
+                persona_label = row.label
+                narrative_bullets = list(row.narrative_bullets or [])
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -84,6 +101,8 @@ def issue_impersonation_token(
                 session_id=session.id,
                 expires_at=session.expires_at,
                 actor_username=actor.username,
+                persona_label=persona_label,
+                narrative_bullets=narrative_bullets,
             ),
         ),
     }
@@ -210,24 +229,123 @@ def list_personas_for_actor(db: Session, actor: User) -> list[dict[str, Any]]:
 def ensure_default_personas(db: Session) -> None:
     """Map seeded demo users to View as role personas."""
     specs = [
-        ("student-explorer", "student1", "community", "Student explorer", "High school / college learner",
-         ["Browse pathways and interest form", "Free Individual membership", "No hiring tools"], 10),
-        ("job-seeker", "candidate1", "community", "Job seeker", "Individual with matching profile",
-         ["Complete questionnaire", "See match scores", "Apply to openings"], 20),
-        ("educator", "educator1", "community", "Educator / trainer", "CTE / BOCES publisher",
-         ["Courses and events", "Program submit", "Free Educator membership"], 30),
-        ("ambassador", "ambassador1", "community", "Ambassador", "Workforce champion",
-         ["Outreach talking points", "Share toolkits"], 40),
-        ("employer-hiring", "employer2", "utility", "Employer (active member)", "Consultant / industry HR with paid plan",
-         ["Post jobs", "Search candidates", "Billing & membership"], 50),
-        ("employer-paywall", "employer9", "utility", "Employer (lapsed membership)", "Sees the paywall on hiring tools",
-         ["Renew from /pricing", "Sample Stripe checkout"], 55),
-        ("utility-admin", "utility-admin1", "utility", "Utility administrator", "Manages org seats and membership",
-         ["Team at /employer/team", "Cannot assign national/state roles"], 60),
-        ("utility-manager", "utility-manager1", "utility", "Utility manager", "Posts jobs under utility membership",
-         ["Hiring workspace", "Covered by org membership"], 70),
-        ("state-admin", "jenny", "state", "State administrator", "NY microsite + CMS",
-         ["Admin dashboard scoped to NY", "Locked national roles"], 80),
+        (
+            "student-explorer",
+            "student1",
+            "community",
+            "Student explorer",
+            "High school / college learner",
+            [
+                "Open Dashboard → profile completeness + free Individual membership",
+                "My matches → Exact Matching scores against NY openings",
+                "Pathways Interest form + career checklist (no hiring tools)",
+            ],
+            10,
+        ),
+        (
+            "job-seeker",
+            "candidate1",
+            "community",
+            "Job seeker",
+            "Individual with matching profile",
+            [
+                "My profile → 17-category questionnaire already filled",
+                "My matches → ranked Ready now / Near-term / Future scores",
+                "Sample applications + employer messages in the pipeline",
+            ],
+            20,
+        ),
+        (
+            "educator",
+            "educator1",
+            "community",
+            "Educator / trainer",
+            "CTE / BOCES publisher",
+            [
+                "Dashboard → published courses and upcoming events",
+                "Program submission awaiting NYSAWWA review",
+                "Free Educator membership (no hiring paywall)",
+            ],
+            30,
+        ),
+        (
+            "ambassador",
+            "ambassador1",
+            "community",
+            "Ambassador",
+            "Workforce champion",
+            [
+                "Ambassador pathway → talking points and workforce facts",
+                "Outreach toolkit + sample engagement touchpoints",
+                "Interest form already on file for partner follow-up",
+            ],
+            40,
+        ),
+        (
+            "employer-hiring",
+            "employer2",
+            "utility",
+            "Employer (active member)",
+            "Consultant / industry HR with paid plan",
+            [
+                "Hiring → Jobs, Candidates, Applications with live membership",
+                "Collaborate → sample message threads and interview schedule",
+                "Billing → active Employer annual plan",
+            ],
+            50,
+        ),
+        (
+            "employer-paywall",
+            "employer9",
+            "utility",
+            "Employer (lapsed membership)",
+            "Sees the paywall on hiring tools",
+            [
+                "Open Jobs or Candidates → MembershipGate with teaser sample data",
+                "Renew from /pricing → sample Stripe checkout (no card charged)",
+                "Compare with Employer (active member) to see unlocked hiring",
+            ],
+            55,
+        ),
+        (
+            "utility-admin",
+            "utility-admin1",
+            "utility",
+            "Utility administrator",
+            "Manages org seats and membership",
+            [
+                "Workspace → Utility profile + Water Workforce 360 launch",
+                "Hiring pipeline → ranked candidates, apps, messages, interviews",
+                "Users & access stays utility-tier only (no national/state roles)",
+            ],
+            60,
+        ),
+        (
+            "utility-manager",
+            "utility-manager1",
+            "utility",
+            "Utility manager",
+            "Posts jobs under utility membership",
+            [
+                "Same Hudson Falls hiring pack as the utility admin",
+                "Post and manage jobs covered by org membership",
+                "No Team admin or billing tools — hiring focus only",
+            ],
+            70,
+        ),
+        (
+            "state-admin",
+            "state-admin-ny",
+            "state",
+            "State administrator",
+            "NY microsite + CMS (state scoped)",
+            [
+                "Operations → memberships, pending utility registrations, pipeline KPIs",
+                "People → directories; Content → CMS draft + communications",
+                "National/state roles stay locked for utility managers",
+            ],
+            80,
+        ),
     ]
     for key, username, tier, label, subtitle, bullets, order in specs:
         user = db.query(User).filter(User.username == username).first()
