@@ -56,6 +56,7 @@ import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminCertificationsPage from '@/pages/admin/AdminCertificationsPage';
 import AdminLocationsPage from '@/pages/admin/AdminLocationsPage';
 import NationalMapPage from '@/pages/admin/NationalMapPage';
+import NyRegionsMapPage from '@/pages/admin/NyRegionsMapPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminLoginsPage from '@/pages/admin/AdminLoginsPage';
 import AdminMembershipsPage from '@/pages/admin/AdminMembershipsPage';
@@ -389,8 +390,16 @@ export default function App() {
         <Route
           path="/admin/map"
           element={
-            <ProtectedRoute roles={PLATFORM_ADMIN_ROLES}>
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <NationalMapPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/regions"
+          element={
+            <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
+              <NyRegionsMapPage />
             </ProtectedRoute>
           }
         />

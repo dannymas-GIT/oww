@@ -38,7 +38,7 @@ One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: publi
 
 - Platform dashboard: memberships, expiring/expired, sample ARR, accounts by role
 - Memberships inventory + communications portal (audience by role + membership state)
-- Users & access with WW360-aligned role tiers (national/state locked)
+- Users & access with OWW marketplace roles (platform/state locked; plant/CEU roles in WW360)
 - View as role (preview / act-as) for support walkthroughs
 - Analytics, CMS, programs, featured posts, certifications, locations, national map
 - Employer/utility hiring workspace (jobs, candidates, team, billing)
@@ -77,7 +77,7 @@ One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: publi
 | Sample Stripe checkout | `/pricing` → `POST /billing/checkout` → `/billing/sample-checkout` → `/billing/success` | Runs in sample mode when `STRIPE_SECRET_KEY` is empty; real Stripe Checkout + webhook (`POST /billing/webhook`) when keys are set |
 | Paywall | `require_membership("employer","utility")` on job create/duplicate/feature and candidate search | Returns **402 `membership_required`**; frontend `MembershipGate` shows plan card. Org-level memberships cover all users in that org |
 | Member billing | `/billing` | Plan, renewal date, provider, payment history, cancel at period end |
-| Role catalog | `role_catalog_service.py`, `GET /admin/roles/catalog` | National (`platform_admin`) and State (`state_admin`) locked; Utility tier `utility_admin`, `utility_manager`, `employer`, `employer_member`; Community `educator`, `ambassador`, `student`, `individual`. Same vocabulary as WW360 for later SSO federation |
+| Role catalog | `role_catalog_service.py`, `GET /admin/roles/catalog` | OWW-only: Platform (`platform_admin` + staff) and State (`state_admin`) locked; Hiring `utility_admin` / `utility_manager` / `employer*`; Community `educator`, `ambassador`, `student`, `individual`. WW360 keeps district/CEU/operator roles separately |
 | Users & access | `/admin/users` (platform/state), `/employer/team` (utility/employer admins) | Add user with temp password, tier-grouped bordered role checkboxes, edit roles, deactivate/reactivate, reset password, comp membership; Users \| Roles & permissions tabs. Utility admins are forced to their own `org_id` (IDOR-safe) and cannot assign protected roles |
 | Platform dashboard | `/admin` | Active / expiring 30d / expired 90d / sample ARR, accounts by role, expiring-soon table, recent communications |
 | Memberships | `/admin/memberships` | Status tabs (All, Active, Expiring ≤60d, Past due, Canceling, Expired, Complimentary), sortable + filterable, extend / grant access (platform admin) |

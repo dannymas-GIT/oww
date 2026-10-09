@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
@@ -33,9 +34,17 @@ export default function NationalMapPage() {
       <OwwPageHero
         eyebrow="Administration"
         title="National map"
-        description="Jurisdiction footprint across One Water Workforce deployments. Toggle the NYSAWWA 10-region overlay for New York detail."
+        description="Jurisdiction footprint across One Water Workforce deployments. For New York’s 10 NYSAWWA regions, open the regional map."
+        actions={
+          <Link
+            to="/admin/regions"
+            className="inline-flex min-h-[44px] items-center rounded-md bg-oww-cyan px-4 text-base font-semibold text-white hover:bg-sky-700"
+          >
+            NY regions map
+          </Link>
+        }
       />
-      <div className="h-[28rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="h-[28rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:h-[32rem]">
         <OwwLeafletMap center={[39.8, -98.5]} zoom={4} defaultRegionsVisible={false} scrollWheelZoom>
           {rows.map(j => {
             const pos = CENTROIDS[j.code.toUpperCase()] || [39.8, -98.5];

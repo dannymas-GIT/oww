@@ -72,7 +72,7 @@ export const PERSONA_EXPLORE: Record<string, PersonaExploreGuide> = {
     ],
   },
   'utility-manager': {
-    headline: 'Same utility hiring pack — post and manage jobs without Team admin.',
+    headline: 'OWW hiring manager — post and manage jobs (plant ops roles stay in WW360).',
     links: [
       { label: 'Workspace', path: '/employer' },
       { label: 'Jobs', path: '/employer/jobs' },

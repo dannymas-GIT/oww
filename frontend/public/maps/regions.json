@@ -1,0 +1,138 @@
+{
+  "title": "NYSAWWA New York 10 Regions",
+  "source_image": "docs/ny-regions/NY10Regions.png",
+  "regions": [
+    {
+      "id": "north_country",
+      "name": "North Country",
+      "color": "#2f6b3a",
+      "counties": [
+        "Clinton",
+        "Essex",
+        "Franklin",
+        "Hamilton",
+        "Jefferson",
+        "Lewis",
+        "St. Lawrence"
+      ]
+    },
+    {
+      "id": "western_ny",
+      "name": "Western New York",
+      "color": "#3d9ea8",
+      "counties": [
+        "Allegany",
+        "Cattaraugus",
+        "Chautauqua",
+        "Erie",
+        "Niagara"
+      ]
+    },
+    {
+      "id": "finger_lakes",
+      "name": "Finger Lakes",
+      "color": "#6b7a2e",
+      "counties": [
+        "Genesee",
+        "Livingston",
+        "Monroe",
+        "Ontario",
+        "Orleans",
+        "Seneca",
+        "Wayne",
+        "Wyoming",
+        "Yates"
+      ]
+    },
+    {
+      "id": "southern_tier",
+      "name": "Southern Tier",
+      "color": "#c47a3a",
+      "counties": [
+        "Broome",
+        "Chemung",
+        "Chenango",
+        "Delaware",
+        "Schuyler",
+        "Steuben",
+        "Tioga",
+        "Tompkins"
+      ]
+    },
+    {
+      "id": "central_ny",
+      "name": "Central New York",
+      "color": "#8b2e3d",
+      "counties": [
+        "Cayuga",
+        "Cortland",
+        "Madison",
+        "Onondaga",
+        "Oswego"
+      ]
+    },
+    {
+      "id": "mohawk_valley",
+      "name": "Mohawk Valley",
+      "color": "#6b3d8b",
+      "counties": [
+        "Fulton",
+        "Herkimer",
+        "Montgomery",
+        "Oneida",
+        "Otsego",
+        "Schoharie"
+      ]
+    },
+    {
+      "id": "capital_district",
+      "name": "Capital District",
+      "color": "#2a4fbf",
+      "counties": [
+        "Albany",
+        "Columbia",
+        "Greene",
+        "Rensselaer",
+        "Saratoga",
+        "Schenectady",
+        "Warren",
+        "Washington"
+      ]
+    },
+    {
+      "id": "mid_hudson",
+      "name": "Mid-Hudson",
+      "color": "#7a7a8a",
+      "counties": [
+        "Dutchess",
+        "Orange",
+        "Putnam",
+        "Rockland",
+        "Sullivan",
+        "Ulster",
+        "Westchester"
+      ]
+    },
+    {
+      "id": "new_york_city",
+      "name": "New York City",
+      "color": "#d45a7a",
+      "counties": [
+        "Bronx",
+        "Kings",
+        "New York",
+        "Queens",
+        "Richmond"
+      ]
+    },
+    {
+      "id": "long_island",
+      "name": "Long Island",
+      "color": "#2eb0c9",
+      "counties": [
+        "Nassau",
+        "Suffolk"
+      ]
+    }
+  ]
+}

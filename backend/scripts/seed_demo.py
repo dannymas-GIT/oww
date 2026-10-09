@@ -144,7 +144,7 @@ def main():
         upsert_user(db, "smosquea", "smosquea@omnitech-solutions.us", ["platform_admin"], "S. Mosquea", PASSWORD)
         upsert_user(db, "jnolan", "jnolan@omnitech-solutions.us", ["platform_admin"], "J. Nolan", PASSWORD)
         upsert_user(db, "tmcknight", "tmcknight@omnitech-solutions.us", ["platform_admin"], "T. McKnight", PASSWORD)
-        # Jenny (NYSAWWA): platform_admin so she can create utility admins for WW360 demos.
+        # Jenny (NYSAWWA): platform_admin for OWW Users & access + WW360 handoff as platform_admin.
         # Migrate legacy username ny-state-admin → jenny (same email).
         legacy_jenny = db.query(User).filter(User.username == "ny-state-admin").first()
         if legacy_jenny and not db.query(User).filter(User.username == "jenny").first():

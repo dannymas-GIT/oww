@@ -35,10 +35,10 @@ Any SaaS app with signed-in users / user management **must** ship a first-class 
 
 ## Role definition area
 
-- **System vs custom:** National and State tiers are **locked** (lock icon, read-only cards). Utility managers fine-tune utility-tier roles only.
-- **Hierarchy:** National → State → Utility. Do not let utility admins invent national/state roles in UI or API.
-- **Utility fine-tune:** Category-grouped list (Administration, Workforce, CEU, Operator) with enable/disable toggles and **Select all** per category.
-- **Reference implementation:** WW360 `/district/users` + role catalog API (`role_catalog_service.py`).
+- **System vs custom:** Platform/National and State tiers are **locked** (lock icon, read-only cards). Do not let utility/district admins invent platform/state roles in UI or API.
+- **Product split:** OWW role catalog is marketplace-only (platform staff, hiring orgs, community). WW360 owns district / CEU / operator / plant roles. Do not copy OWW community/hiring role codes into WW360 assignable lists (or vice versa). Bridge: OWW `utility_admin` hands off as WW360 `district_admin`.
+- **WW360 utility fine-tune:** Category-grouped list (Administration, Workforce, CEU, Operator) with enable/disable toggles and **Select all** per category on `/district/users`.
+- **Reference implementation:** WW360 `/district/users` + `district_roles_service.py`; OWW `/admin/users` + `role_catalog_service.py`.
 
 ## Navigation
 

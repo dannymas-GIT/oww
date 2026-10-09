@@ -89,7 +89,7 @@ MATRIX = [
     ("Phase I", "Candidate dashboard + matching questionnaire", "Provided", "17 categories + 4 match types"),
     ("Phase I", "Employer jobs + match feed + applicants", "Provided", "Jobs manage, candidates, applications, messaging"),
     ("Phase I", "Membership / payment to post jobs", "Provided", "Sample Stripe; 402 membership_required on hiring APIs"),
-    ("Phase I", "Roles: platform, utility admin/manager, student…", "Provided", "WW360-aligned catalog; locked national/state"),
+    ("Phase I", "Roles: platform, utility admin/manager, student…", "Provided", "OWW marketplace catalog; plant/CEU roles in WW360"),
     ("Phase I", "Platform admin: memberships, expiring, communications", "Provided", "/admin + memberships + communications portal"),
     ("Phase I", "Admin CMS / programs / analytics / certs / locations", "Provided", "Full Administration nav group"),
     ("Matching", "17 shared categories + 4 match types", "Provided", "YAML taxonomy + scorer"),
@@ -350,7 +350,7 @@ def build():
             [
                 ListItem(Paragraph("Platform dashboard: memberships, expiring/expired, sample ARR, accounts by role", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Memberships table + communications portal (role + membership audience)", s["body"]), leftIndent=12),
-                ListItem(Paragraph("Users & access with WW360-aligned role tiers (national/state locked)", s["body"]), leftIndent=12),
+                ListItem(Paragraph("Users & access with OWW marketplace roles (platform/state locked; plant/CEU in WW360)", s["body"]), leftIndent=12),
                 ListItem(Paragraph("View as role preview/act-as for support walkthroughs", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Analytics, CMS, programs, featured posts, certifications, locations, national map", s["body"]), leftIndent=12),
                 ListItem(Paragraph("Employer/utility hiring workspace (jobs, candidates, team, billing)", s["body"]), leftIndent=12),
@@ -691,7 +691,7 @@ def build_html() -> None:
       <ul>
         <li>Platform dashboard: memberships, ARR, accounts by role</li>
         <li>Memberships + communications portal</li>
-        <li>Users &amp; access (WW360-aligned tiers)</li>
+        <li>Users &amp; access (OWW marketplace roles; plant/CEU in WW360)</li>
         <li>View as role (preview / act-as)</li>
         <li>Analytics, CMS, programs, locations, national map</li>
         <li>Employer hiring workspace (jobs, candidates, billing)</li>
