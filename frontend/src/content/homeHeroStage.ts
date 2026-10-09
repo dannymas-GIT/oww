@@ -1,13 +1,14 @@
-/** Public home hero media stage — water quality focused slides. */
+/** Fallback home hero slides when the API is empty/unreachable. */
 
 export type HomeHeroSlide = {
-  id: string;
-  /** Short kicker above the title (caption floor text-sm). */
+  id: string | number;
   kicker: string;
   title: string;
   body: string;
-  imageSrc: string;
-  imageAlt: string;
+  imageSrc?: string;
+  image_url?: string;
+  imageAlt?: string;
+  image_alt?: string;
 };
 
 export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
@@ -43,7 +44,41 @@ export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
     imageSrc: '/home/stage/wastewater.jpg',
     imageAlt: 'Wastewater treatment aeration basin protecting receiving waters',
   },
+  {
+    id: 'oww',
+    kicker: 'One Water Workforce',
+    title: 'From GED to PhD: careers that keep water safe',
+    body: 'OWW connects seekers, educators, ambassadors, and hiring utilities so New York can recruit and train the next generation of water professionals.',
+    imageSrc: '/home/stage/oww-careers.jpg',
+    imageAlt: 'Workforce participants touring a water treatment plant control room',
+  },
+  {
+    id: 'ww360',
+    kicker: 'Water Workforce 360',
+    title: 'Utility staffing, CEU, and succession in one place',
+    body: 'WW360 helps utilities document operators, training, and upcoming vacancies—so OWW outreach and candidate development start before gaps become emergencies.',
+    imageSrc: '/home/stage/ww360.jpg',
+    imageAlt: 'Utility manager reviewing workforce and training dashboards',
+  },
 ];
 
 /** Optional future hero video (when set, stage can prefer video over the carousel). */
 export const HOME_HERO_VIDEO: { src: string; poster?: string; caption: string } | null = null;
+
+export function normalizeHeroSlide(s: HomeHeroSlide): {
+  id: string | number;
+  kicker: string;
+  title: string;
+  body: string;
+  imageSrc: string;
+  imageAlt: string;
+} {
+  return {
+    id: s.id,
+    kicker: s.kicker || '',
+    title: s.title || '',
+    body: s.body || '',
+    imageSrc: s.imageSrc || s.image_url || '',
+    imageAlt: s.imageAlt || s.image_alt || s.title || 'Home slide',
+  };
+}

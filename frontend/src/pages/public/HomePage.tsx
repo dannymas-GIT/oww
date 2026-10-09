@@ -221,7 +221,7 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
               {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
             </p>
           </div>
-          <HomeHeroStage className="min-h-[320px] md:min-h-[380px]" />
+          <HomeHeroStage state={state} className="min-h-[360px] md:min-h-[440px]" />
         </div>
       </section>
 
