@@ -347,11 +347,16 @@ def main():
                 ResourceItem(state_code="NY", pathway="ambassador", category="toolkit", title="Ambassador outreach toolkit", url="/ny/ambassador"),
             ])
         from app.services.cms_service import ensure_default_home_page
-        from app.services.home_hero_slide_service import ensure_default_slides, ensure_product_slides
+        from app.services.home_hero_slide_service import (
+            ensure_default_slides,
+            ensure_pathway_slides,
+            ensure_product_slides,
+        )
 
         ensure_default_home_page(db, state_code="NY")
         ensure_default_slides(db, state_code="NY")
         ensure_product_slides(db, state_code="NY")
+        ensure_pathway_slides(db, state_code="NY")
         if db.query(CertificationCatalog).count() == 0:
             db.add_all([
                 CertificationCatalog(state_code="NY", name="Grade 2A Water Treatment", level="2A", issuer="NYSDOH"),

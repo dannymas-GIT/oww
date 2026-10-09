@@ -409,11 +409,11 @@ export const roleNavGroups: NavGroup[] = [
             description: 'Landing templates, blog posts, media, and publish',
           },
           {
-            label: 'Home rotator',
+            label: 'Hero slides',
             path: '/admin/home-slides',
             icon: ImagePlus,
             roles: PLATFORM_EDITOR_ROLES,
-            description: 'Hero stage slides — kicker, headline, body, image',
+            description: 'Home and pathway sliders — kicker, headline, body, image, CTA',
           },
           { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: PLATFORM_EDITOR_ROLES },
           { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: PLATFORM_EDITOR_ROLES },

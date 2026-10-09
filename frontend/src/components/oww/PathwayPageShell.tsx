@@ -8,6 +8,7 @@ import { OwwSection } from '@/components/oww/OwwSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { usePublicSlides } from '@/hooks/usePublicSlides';
 import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
 import { PATHWAY_HERO_SLIDES } from '@/content/pathwayHeroSlides';
 import {
@@ -44,6 +45,7 @@ export function PathwayPageShell({
   const content = pathwayContent[slug];
   const { isAuthenticated, userRoles } = useAuth();
   const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
+  const pathwaySlides = usePublicSlides(state, slug, PATHWAY_HERO_SLIDES[slug]);
   const roleHome = homeForRoles(userRoles);
   const hiring = isHiringRole(userRoles);
   const platform = isPlatformStaff(userRoles);
@@ -112,7 +114,6 @@ export function PathwayPageShell({
 
   const backTo = isAuthenticated ? roleHome : `/${state}`;
   const backLabel = isAuthenticated ? 'Back to workspace' : `Back to ${state.toUpperCase()} home`;
-  const pathwaySlides = PATHWAY_HERO_SLIDES[slug];
 
   const slider = (
     <section data-tour="pathway-slider" className="-mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">

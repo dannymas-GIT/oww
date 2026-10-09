@@ -1,4 +1,4 @@
-"""Home page hero rotator slides (3-tier copy + image + optional CTA)."""
+"""Home / pathway hero rotator slides (3-tier copy + image + optional CTA)."""
 
 from datetime import datetime
 
@@ -12,6 +12,8 @@ class HomeHeroSlide(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     state_code = Column(String(2), nullable=False, default="NY", index=True)
+    # home | career | hire | educate | ambassador
+    scope = Column(String(24), nullable=False, default="home", index=True)
     kicker = Column(String(120), nullable=False, default="")
     title = Column(String(200), nullable=False)
     body = Column(Text, nullable=False, default="")
