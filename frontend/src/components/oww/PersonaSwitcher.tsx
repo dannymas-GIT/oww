@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Eye, Users, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useImpersonation } from '@/context/ImpersonationContext';
 import { useAuth } from '@/context/AuthContext';
+import { PERSONA_EXPLORE } from '@/content/personaExplore';
 import { cn } from '@/lib/utils';
 
 const TIER_LABELS: Record<string, string> = {
@@ -149,44 +151,85 @@ export function PersonaSwitcher({ variant = 'header' }: { variant?: 'header' | '
 }
 
 export function ImpersonationBanner() {
-  const { isImpersonating, isPreviewMode, stop } = useImpersonation();
+  const { isImpersonating, isPreviewMode, stop, personas, loadPersonas } = useImpersonation();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
+
+  const personaKey = user?.impersonation?.persona_key || null;
+
+  useEffect(() => {
+    if (isImpersonating && personas.length === 0) void loadPersonas();
+  }, [isImpersonating, personas.length, loadPersonas]);
 
   if (!isImpersonating || !user?.impersonation?.active) return null;
 
   const expires = user.impersonation.expires_at
     ? new Date(user.impersonation.expires_at).toLocaleTimeString()
     : null;
+  const persona = personaKey ? personas.find(p => p.persona_key === personaKey) : undefined;
+  const explore = personaKey ? PERSONA_EXPLORE[personaKey] : undefined;
+  const bullets = (
+    persona?.narrative_bullets ||
+    user.impersonation.narrative_bullets ||
+    []
+  ).slice(0, 3);
+  const label =
+    persona?.label || user.impersonation.persona_label || user.full_name || user.username;
 
   return (
     <div
-      className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-amber-300 bg-amber-100 px-4 py-3 text-lg"
+      className="sticky top-0 z-50 border-b border-amber-300 bg-amber-100 px-4 py-3 text-lg"
       role="status"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <Eye className="h-5 w-5 text-amber-800" aria-hidden />
-        <span>
-          Viewing as <strong>{user.full_name || user.username}</strong>
-          {user.impersonation.persona_key ? (
-            <span className="text-slate-600"> ({user.impersonation.persona_key})</span>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Eye className="h-5 w-5 shrink-0 text-amber-800" aria-hidden />
+            <span>
+              Viewing as <strong>{label}</strong>
+              {persona?.subtitle ? <span className="text-slate-600"> — {persona.subtitle}</span> : null}
+            </span>
+            <Badge className="text-sm">{isPreviewMode ? 'Read-only preview' : 'Act-as (audited)'}</Badge>
+            {expires ? <span className="text-sm text-slate-600">Expires {expires}</span> : null}
+          </div>
+          {explore?.headline ? (
+            <p className="text-base leading-relaxed text-amber-950/90">{explore.headline}</p>
           ) : null}
-        </span>
-        <Badge className="text-sm">{isPreviewMode ? 'Read-only preview' : 'Act-as (audited)'}</Badge>
-        {expires ? <span className="text-sm text-slate-600">Expires {expires}</span> : null}
+          {bullets.length > 0 ? (
+            <ul className="list-inside list-disc space-y-0.5 text-sm text-slate-700">
+              {bullets.map(b => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          ) : null}
+          {explore?.links?.length ? (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {explore.links.map(link => (
+                <Button key={link.path} variant="outline" className="min-h-[44px] text-base" asChild>
+                  <Link to={link.path}>{link.label}</Link>
+                </Button>
+              ))}
+            </div>
+          ) : null}
+          {isPreviewMode ? (
+            <p className="text-sm text-slate-600">
+              Writes are blocked in preview. Clear sample data only works in act-as or as your admin account.
+            </p>
+          ) : null}
+        </div>
+        <Button
+          variant="outline"
+          className="min-h-[44px] shrink-0 gap-1 text-base"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            void stop().finally(() => setBusy(false));
+          }}
+        >
+          <X className="h-4 w-4" />
+          Exit preview
+        </Button>
       </div>
-      <Button
-        variant="outline"
-        className="min-h-[44px] gap-1 text-base"
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void stop().finally(() => setBusy(false));
-        }}
-      >
-        <X className="h-4 w-4" />
-        Exit preview
-      </Button>
     </div>
   );
 }
