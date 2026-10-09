@@ -287,17 +287,55 @@ export interface Job {
   posted_at?: string;
 }
 
+export type PublicSharePrefs = {
+  open_jobs: boolean;
+  hires_12mo: boolean;
+  applicants_contacted: boolean;
+  hiring_projection: boolean;
+  workforce_size: boolean;
+  show_region: boolean;
+};
+
+export type OrgPublicStats = {
+  org_id: number;
+  name: string;
+  open_jobs?: number;
+  hires_12mo?: number;
+  applicants_contacted?: number;
+  hiring_projection?: number;
+  workforce_size?: number;
+  region?: string | null;
+  county?: string | null;
+  city?: string | null;
+  shared_keys?: string[];
+};
+
 export interface Organization {
   id: number;
   name: string;
   org_type?: string;
   city?: string;
+  region?: string | null;
   state_code?: string;
   website?: string;
   description?: string;
   latitude?: number | null;
   longitude?: number | null;
   logo_url?: string | null;
+  hiring_projections?: Record<string, unknown>;
+  public_share_prefs?: PublicSharePrefs;
+  can_edit_public_share?: boolean;
+  share_labels?: Record<string, string>;
+  public_stats?: OrgPublicStats | null;
+}
+
+export interface WorkforceStatsResponse {
+  state_code: string;
+  org_count: number;
+  summary: Record<string, number>;
+  keys_present: string[];
+  organizations: OrgPublicStats[];
+  share_labels: Record<string, string>;
 }
 
 export interface IndividualProfile {
@@ -316,6 +354,10 @@ export interface OrgProfile {
   id?: number;
   name?: string;
   answers: Record<string, unknown>;
+  hiring_projections?: Record<string, unknown>;
+  public_share_prefs?: PublicSharePrefs;
+  can_edit_public_share?: boolean;
+  share_labels?: Record<string, string>;
   updated_at?: string;
 }
 

@@ -1,5 +1,8 @@
 
 from __future__ import annotations
+
+from datetime import datetime
+
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,8 +14,12 @@ from app.models.individual_profile import IndividualProfile
 from app.models.match import Match
 from app.services.membership_service import require_membership
 from app.services.role_catalog_service import HIRING_ROLES
+from app.services import org_public_share_service as share_svc
 
 router = APIRouter(prefix="/orgs", tags=["orgs"])
+
+SHARE_PREF_ROLES = ("utility_admin", "employer_admin", "platform_admin")
+
 
 class OrgIn(BaseModel):
     name: str | None = None
@@ -22,6 +29,8 @@ class OrgIn(BaseModel):
     region: str | None = None
     answers: dict | None = None
     hiring_projections: dict | None = None
+    public_share_prefs: dict | None = None
+
 
 def _ensure_org(db: Session, user: User) -> Organization:
     if user.org_id:
@@ -40,25 +49,36 @@ def _ensure_org(db: Session, user: User) -> Organization:
     db.commit()
     return org
 
+
+def _can_edit_share_prefs(user: User) -> bool:
+    return user.has_any_role(*SHARE_PREF_ROLES)
+
+
 @router.get("/me")
 def get_my_org(db: Session = Depends(get_db), user: User = Depends(require_roles(*HIRING_ROLES, "platform_admin", "state_admin"))):
     from app.services.sample_data_service import sample_pack_active, sample_status_for_org
 
     org = _ensure_org(db, user)
+    prefs = share_svc.normalize_prefs(org.public_share_prefs)
     return {
         "id": org.id,
         "name": org.name,
         "description": org.description,
         "website": org.website,
         "city": org.city,
+        "region": org.region,
         "state_code": org.state_code,
         "answers": org.profile or {},
         "hiring_projections": org.hiring_projections or {},
+        "public_share_prefs": prefs,
+        "can_edit_public_share": _can_edit_share_prefs(user),
+        "share_labels": share_svc.SHARE_LABELS,
         "latitude": org.latitude,
         "longitude": org.longitude,
         "sample_pack_active": sample_pack_active(org),
         "sample_status": sample_status_for_org(db, org.id),
     }
+
 
 @router.put("/me")
 def put_my_org(body: OrgIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*HIRING_ROLES, "platform_admin"))):
@@ -77,9 +97,23 @@ def put_my_org(body: OrgIn, db: Session = Depends(get_db), user: User = Depends(
         org.profile = merged
     if body.hiring_projections is not None:
         org.hiring_projections = body.hiring_projections
+    if body.public_share_prefs is not None:
+        if not _can_edit_share_prefs(user):
+            raise HTTPException(
+                403,
+                "Only utility admins, employer admins, or platform admins can change public data sharing.",
+            )
+        org.public_share_prefs = share_svc.normalize_prefs(body.public_share_prefs)
+        org.public_share_updated_at = datetime.utcnow()
+        org.public_share_updated_by = user.id
     db.commit()
     db.refresh(org)
-    return {"id": org.id, "name": org.name, "answers": org.profile or {}}
+    return {
+        "id": org.id,
+        "name": org.name,
+        "answers": org.profile or {},
+        "public_share_prefs": share_svc.normalize_prefs(org.public_share_prefs),
+    }
 
 
 @router.get("/sample-status")
@@ -104,6 +138,7 @@ def ensure_sample_pack(db: Session = Depends(get_db), user: User = Depends(requi
 
     org = _ensure_org(db, user)
     return ensure_utility_sample_pack(db, org.id, actor_user_id=user.id)
+
 
 @router.get("/candidates")
 def search_candidates(q: str | None = None, career_area: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_roles(*HIRING_ROLES, "platform_admin", "state_admin")), _paid: User = Depends(require_membership("employer", "utility"))):

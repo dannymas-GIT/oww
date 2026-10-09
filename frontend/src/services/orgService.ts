@@ -1,12 +1,18 @@
 import { api } from '@/lib/api';
-import type { OrgProfile, Organization } from '@/types';
+import type { OrgProfile, Organization, PublicSharePrefs } from '@/types';
 
 export async function getMyOrg(): Promise<Organization & OrgProfile> {
   const { data } = await api.get('/orgs/me');
   return data;
 }
 
-export async function saveMyOrg(body: Partial<Organization> & { answers?: Record<string, unknown> }) {
+export async function saveMyOrg(
+  body: Partial<Organization> & {
+    answers?: Record<string, unknown>;
+    public_share_prefs?: PublicSharePrefs;
+    hiring_projections?: Record<string, unknown>;
+  }
+) {
   const { data } = await api.put('/orgs/me', body);
   return data;
 }

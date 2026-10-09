@@ -8,6 +8,7 @@ import type {
   Organization,
   ProgramSubmission,
   Testimonial,
+  WorkforceStatsResponse,
 } from '@/types';
 
 export async function submitInterest(body: InterestSubmission) {
@@ -38,6 +39,11 @@ export async function listPublicCompanies(params?: { state?: string; q?: string 
 export async function getPublicCompany(id: number | string) {
   const { data } = await api.get(`/public/companies/${id}`);
   return data as Organization;
+}
+
+export async function getWorkforceStats(state: string) {
+  const { data } = await api.get(`/public/workforce-stats/${state}`);
+  return data as WorkforceStatsResponse;
 }
 
 export async function listTestimonials(params?: { state?: string }) {
