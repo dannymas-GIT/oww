@@ -41,7 +41,13 @@ def init_db() -> None:
         for table in ("jobs", "messages", "interviews", "matches"):
             conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false"))
             conn.execute(text(f"CREATE INDEX IF NOT EXISTS ix_{table}_is_sample ON {table} (is_sample)"))
-        # Home hero rotator — per-slide CTA (table may already exist from earlier deploys)
+        # Home hero rotator — per-slide CTA + scope (home | career | hire | educate | ambassador)
         conn.execute(text("ALTER TABLE home_hero_slides ADD COLUMN IF NOT EXISTS cta_label VARCHAR(80)"))
         conn.execute(text("ALTER TABLE home_hero_slides ADD COLUMN IF NOT EXISTS cta_href VARCHAR(300)"))
+        conn.execute(
+            text(
+                "ALTER TABLE home_hero_slides ADD COLUMN IF NOT EXISTS scope VARCHAR(24) NOT NULL DEFAULT 'home'"
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_home_hero_slides_scope ON home_hero_slides (scope)"))
 

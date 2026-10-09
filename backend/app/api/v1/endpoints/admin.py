@@ -221,6 +221,7 @@ def list_cms_media(db: Session = Depends(get_db), user: User = Depends(require_r
 
 class HomeSlideIn(BaseModel):
     state_code: str | None = "NY"
+    scope: str | None = "home"
     kicker: str | None = ""
     title: str | None = None
     body: str | None = ""
@@ -235,11 +236,16 @@ class HomeSlideIn(BaseModel):
 @router.get("/home-slides")
 def admin_list_home_slides(
     state_code: str | None = None,
+    scope: str | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(*CMS_ROLES)),
 ):
     _ = user
-    return {"slides": hero_slides.list_admin_slides(db, state_code=state_code)}
+    try:
+        slides = hero_slides.list_admin_slides(db, state_code=state_code, scope=scope)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"slides": slides}
 
 
 @router.post("/home-slides")
@@ -264,7 +270,10 @@ def admin_patch_home_slide(
     user: User = Depends(require_roles(*CMS_ROLES)),
 ):
     _ = user
-    row = hero_slides.update_slide(db, slide_id, body.model_dump(exclude_unset=True))
+    try:
+        row = hero_slides.update_slide(db, slide_id, body.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     if not row:
         raise HTTPException(404, "Slide not found")
     return hero_slides.slide_to_dict(row)

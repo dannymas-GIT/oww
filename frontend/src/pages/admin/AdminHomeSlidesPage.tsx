@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ImagePlus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { SortableTableHead } from '@/components/oww/SortableTableHead';
+import { TableSearchFilter } from '@/components/oww/TableSearchFilter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,14 +16,26 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useTableControls } from '@/hooks/useTableControls';
 import { api } from '@/lib/api';
 import { uploadCmsMedia, listCmsMedia } from '@/services/adminService';
 import type { MediaAsset } from '@/types';
 import { cn } from '@/lib/utils';
 
+type SlideScope = 'home' | 'career' | 'hire' | 'educate' | 'ambassador';
+
+const SCOPE_TABS: { id: SlideScope; label: string }[] = [
+  { id: 'home', label: 'Home' },
+  { id: 'career', label: 'Career' },
+  { id: 'hire', label: 'Hire' },
+  { id: 'educate', label: 'Educate' },
+  { id: 'ambassador', label: 'Ambassador' },
+];
+
 type Slide = {
   id: number;
   state_code: string;
+  scope: SlideScope | string;
   kicker: string;
   title: string;
   body: string;
@@ -36,6 +50,7 @@ type Slide = {
 type Draft = {
   id?: number;
   state_code: string;
+  scope: SlideScope;
   kicker: string;
   title: string;
   body: string;
@@ -47,8 +62,9 @@ type Draft = {
   is_active: boolean;
 };
 
-const emptyDraft = (): Draft => ({
+const emptyDraft = (scope: SlideScope): Draft => ({
   state_code: 'NY',
+  scope,
   kicker: '',
   title: '',
   body: '',
@@ -61,21 +77,38 @@ const emptyDraft = (): Draft => ({
 });
 
 export default function AdminHomeSlidesPage() {
+  const [scope, setScope] = useState<SlideScope>('home');
   const [slides, setSlides] = useState<Slide[]>([]);
   const [media, setMedia] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft('home'));
   const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  async function load() {
+  const table = useTableControls({
+    rows: slides,
+    initialSortKey: 'sort_order',
+    initialSortDir: 'asc',
+    getValue: (row, key) => {
+      if (key === 'sort_order') return row.sort_order;
+      if (key === 'title') return row.title;
+      if (key === 'is_active') return row.is_active ? 1 : 0;
+      return '';
+    },
+    getSearchText: row =>
+      [row.kicker, row.title, row.body, row.cta_label, row.cta_href, row.image_alt]
+        .filter(Boolean)
+        .join(' '),
+  });
+
+  async function load(activeScope: SlideScope = scope) {
     setLoading(true);
     setError(null);
     try {
       const [{ data }, assets] = await Promise.all([
-        api.get('/admin/home-slides', { params: { state_code: 'NY' } }),
+        api.get('/admin/home-slides', { params: { state_code: 'NY', scope: activeScope } }),
         listCmsMedia().catch(() => [] as MediaAsset[]),
       ]);
       setSlides(data.slides || []);
@@ -83,24 +116,26 @@ export default function AdminHomeSlidesPage() {
         assets.filter(a => (a.kind || '') === 'image' || (a.content_type || '').startsWith('image/'))
       );
     } catch {
-      setError('Could not load home slides.');
+      setError('Could not load hero slides.');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void load();
-  }, []);
+    void load(scope);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when scope tab changes
+  }, [scope]);
 
   function openCreate() {
-    setDraft(emptyDraft());
+    setDraft(emptyDraft(scope));
     setOpen(true);
   }
 
   function openEdit(s: Slide) {
     setDraft({
       ...s,
+      scope: (s.scope as SlideScope) || scope,
       cta_label: s.cta_label || '',
       cta_href: s.cta_href || '',
     });
@@ -116,13 +151,14 @@ export default function AdminHomeSlidesPage() {
         setSaving(false);
         return;
       }
+      const payload = { ...draft, scope };
       if (draft.id) {
-        await api.patch(`/admin/home-slides/${draft.id}`, draft);
+        await api.patch(`/admin/home-slides/${draft.id}`, payload);
       } else {
-        await api.post('/admin/home-slides', draft);
+        await api.post('/admin/home-slides', payload);
       }
       setOpen(false);
-      await load();
+      await load(scope);
     } catch {
       setError('Could not save slide.');
     } finally {
@@ -133,7 +169,7 @@ export default function AdminHomeSlidesPage() {
   async function remove(id: number) {
     if (!window.confirm('Delete this slide?')) return;
     await api.delete(`/admin/home-slides/${id}`);
-    await load();
+    await load(scope);
   }
 
   async function onUpload(file: File) {
@@ -146,12 +182,14 @@ export default function AdminHomeSlidesPage() {
     setMedia(m => [asset, ...m]);
   }
 
+  const scopeLabel = SCOPE_TABS.find(t => t.id === scope)?.label || 'Home';
+
   return (
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Content"
-        title="Home rotator slides"
-        description="Full-width public home slider: kicker, headline, body, image, and optional button label/link per slide. Upload photos or pick from the media library; stock search (Unsplash/Pexels) can plug in later with an API key."
+        title="Hero slides"
+        description="Full-width sliders for the public home and each pathway. Edit kicker, headline, body, image, and optional button label/link per slide."
         actions={
           <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
@@ -160,30 +198,78 @@ export default function AdminHomeSlidesPage() {
         }
       />
 
+      <div className="flex flex-wrap gap-1 border-b border-slate-200" role="tablist" aria-label="Slide scope">
+        {SCOPE_TABS.map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={scope === tab.id}
+            className={cn(
+              'min-h-[44px] px-4 text-base font-semibold transition-colors',
+              scope === tab.id
+                ? 'border-b-2 border-oww-cyan text-oww-navy'
+                : 'text-slate-600 hover:text-oww-navy'
+            )}
+            onClick={() => setScope(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-base text-red-800" role="alert">
           {error}
         </p>
       ) : null}
 
+      <TableSearchFilter
+        value={table.filter}
+        onChange={table.setFilter}
+        resultCount={table.resultCount}
+        totalCount={table.totalCount}
+        placeholder={`Filter ${scopeLabel.toLowerCase()} slides…`}
+      />
+
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <p className="p-6 text-base text-slate-600">Loading slides…</p>
         ) : slides.length === 0 ? (
-          <p className="p-6 text-base text-slate-600">No slides yet. Add one to populate the home rotator.</p>
+          <p className="p-6 text-base text-slate-600">No slides yet for {scopeLabel}. Add one to populate this slider.</p>
+        ) : table.rows.length === 0 ? (
+          <p className="p-6 text-base text-slate-600">No slides match this filter.</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-base">Order</TableHead>
+                <SortableTableHead
+                  column="sort_order"
+                  label="Order"
+                  sortKey={table.sortKey}
+                  sortDir={table.sortDir}
+                  onSort={table.toggleSort}
+                />
                 <TableHead className="text-base">Preview</TableHead>
-                <TableHead className="text-base">Tiers</TableHead>
-                <TableHead className="text-base">Status</TableHead>
+                <SortableTableHead
+                  column="title"
+                  label="Tiers"
+                  sortKey={table.sortKey}
+                  sortDir={table.sortDir}
+                  onSort={table.toggleSort}
+                />
+                <SortableTableHead
+                  column="is_active"
+                  label="Status"
+                  sortKey={table.sortKey}
+                  sortDir={table.sortDir}
+                  onSort={table.toggleSort}
+                />
                 <TableHead className="text-base">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {slides.map(s => (
+              {table.rows.map(s => (
                 <TableRow key={s.id}>
                   <TableCell className="text-base tabular-nums">{s.sort_order}</TableCell>
                   <TableCell>
@@ -232,17 +318,22 @@ export default function AdminHomeSlidesPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-xl">{draft.id ? 'Edit slide' : 'Add slide'}</DialogTitle>
             <DialogDescription className="text-base">
-              Tier 1 = kicker · Tier 2 = headline · Tier 3 = body. Optional button uses {'{state}'} in the link (e.g. /{'{state}'}/interest).
+              Scope: <strong>{scopeLabel}</strong>. Tier 1 = kicker · Tier 2 = headline · Tier 3 = body. Optional button uses{' '}
+              {'{state}'} in the link.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label className="text-base">Scope</Label>
+              <Input className="mt-1 min-h-[44px] text-base" value={scopeLabel} readOnly />
+            </div>
             <div>
               <Label className="text-base">Tier 1 — Kicker</Label>
               <Input
                 className="mt-1 min-h-[44px] text-base"
                 value={draft.kicker}
                 onChange={e => setDraft({ ...draft, kicker: e.target.value })}
-                placeholder="e.g. Drinking water quality"
+                placeholder="e.g. Explore careers"
               />
             </div>
             <div>
@@ -270,7 +361,7 @@ export default function AdminHomeSlidesPage() {
                   className="mt-1 min-h-[44px] text-base"
                   value={draft.cta_label}
                   onChange={e => setDraft({ ...draft, cta_label: e.target.value })}
-                  placeholder="e.g. Express interest"
+                  placeholder="e.g. Browse jobs"
                 />
               </div>
               <div>
@@ -279,7 +370,7 @@ export default function AdminHomeSlidesPage() {
                   className="mt-1 min-h-[44px] text-base"
                   value={draft.cta_href}
                   onChange={e => setDraft({ ...draft, cta_href: e.target.value })}
-                  placeholder="/{state}/interest"
+                  placeholder="/{state}/jobs"
                 />
                 <p className="mt-1 text-sm text-slate-500">Use {'{state}'} for the jurisdiction slug.</p>
               </div>
@@ -308,7 +399,7 @@ export default function AdminHomeSlidesPage() {
                 className="min-h-[44px] text-base"
                 value={draft.image_url}
                 onChange={e => setDraft({ ...draft, image_url: e.target.value })}
-                placeholder="/home/stage/… or uploaded media URL"
+                placeholder="/pathways/stage/… or uploaded media URL"
               />
               {draft.image_url ? (
                 <img src={draft.image_url} alt="" className="mt-2 h-36 w-full rounded-lg object-cover" />
@@ -319,11 +410,6 @@ export default function AdminHomeSlidesPage() {
                 onChange={e => setDraft({ ...draft, image_alt: e.target.value })}
                 placeholder="Image alt text"
               />
-              <p className="text-sm text-slate-500">
-                Stock photos: paste an Unsplash/Pexels URL for now, or upload. A licensed search panel can use{' '}
-                <code className="rounded bg-slate-100 px-1">UNSPLASH_ACCESS_KEY</code> /{' '}
-                <code className="rounded bg-slate-100 px-1">PEXELS_API_KEY</code> when you are ready.
-              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -342,7 +428,7 @@ export default function AdminHomeSlidesPage() {
                   checked={draft.is_active}
                   onChange={e => setDraft({ ...draft, is_active: e.target.checked })}
                 />
-                Active on public home
+                Active on public {scopeLabel.toLowerCase()} slider
               </label>
             </div>
           </div>
