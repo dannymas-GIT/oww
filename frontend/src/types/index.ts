@@ -38,6 +38,8 @@ export interface ImpersonationState {
   expires_at?: string | null;
   actor_username?: string | null;
   actor_user_id?: number | null;
+  persona_label?: string | null;
+  narrative_bullets?: string[] | null;
 }
 
 // ---- Membership / billing ----

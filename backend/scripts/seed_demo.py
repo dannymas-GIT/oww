@@ -158,8 +158,16 @@ def main():
             "Jenny",
             PASSWORD,
         )
-        # Keep state_admin alias username pointing at same mailbox only if still present
-        _ = jenny
+        # Dedicated state_admin for View as role (jenny stays platform_admin and is filtered from the switcher).
+        upsert_user(
+            db,
+            "state-admin-ny",
+            "state.admin.ny@nysawwa.example.org",
+            ["state_admin"],
+            "NY State Admin (Demo)",
+            PASSWORD,
+            state="NY",
+        )
 
         # Delegate-able platform staff (jenny/platform_admin can assign these)
         upsert_user(db, "oww-editor", "editor@onewaterworkforce.org", ["platform_editor"], "OWW Platform Editor", PASSWORD)
@@ -438,12 +446,24 @@ def main():
                     actor_user_id=ua.id if ua else None,
                     force_refresh_engagement=True,
                 )
+            # Paywall employer org (Onondaga / employer9) — teaser sample pack behind MembershipGate
+            if i == 8:
+                emp9 = db.query(User).filter(User.username == "employer9").first()
+                sample_data_service.ensure_utility_sample_pack(
+                    db,
+                    org_id,
+                    actor_user_id=emp9.id if emp9 else None,
+                    force_refresh_engagement=True,
+                )
         for audience in ("candidates", "hirers", "ambassadors", "educators"):
             sample_data_service.ensure_admin_directory_samples(db, audience)
 
+        persona_worlds = sample_data_service.ensure_all_persona_sample_worlds(db)
+
         print(f"Seed complete. Admin={admin.username} Jenny={jenny.username} matches_refreshed={n}")
-        print(f"Password for admin accounts (oww-admin, jenny, dmas, smosquea, jnolan, tmcknight, oww-editor, oww-ops, oww-manager): {PASSWORD}")
+        print(f"Password for admin accounts (oww-admin, jenny, state-admin-ny, dmas, smosquea, jnolan, tmcknight, oww-editor, oww-ops, oww-manager): {PASSWORD}")
         print("Pending review demos: utility-pending1 (paid), utility-pending2 (unpaid)")
+        print(f"Persona sample worlds: { {k: v.get('ok') for k, v in persona_worlds.items()} }")
     finally:
         db.close()
 

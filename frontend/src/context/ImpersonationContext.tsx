@@ -37,7 +37,8 @@ export const ImpersonationProvider: React.FC<{ children: React.ReactNode }> = ({
   const canActAs = isPlatformAdmin && !isImpersonating;
 
   const loadPersonas = useCallback(async () => {
-    if (!canUsePersonaSwitcher && !canActAs) return;
+    // Allow catalog load while impersonating so the amber banner can show narrative tips.
+    if (!canUsePersonaSwitcher && !canActAs && !isImpersonating) return;
     setPersonasLoading(true);
     try {
       setPersonas(await fetchPersonas());
@@ -46,7 +47,7 @@ export const ImpersonationProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setPersonasLoading(false);
     }
-  }, [canUsePersonaSwitcher, canActAs]);
+  }, [canUsePersonaSwitcher, canActAs, isImpersonating]);
 
   const finishSession = useCallback(
     (next: OwwUser) => {
