@@ -165,21 +165,65 @@ def ensure_default_slides(db: Session, *, state_code: str = "NY") -> None:
 
 
 def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
-    """Insert OWW + WW360 slides if missing (by title). Does not overwrite admin edits."""
+    """Insert OWW + WW360 slides if missing; promote to front; backfill empty CTAs.
+
+    Does not overwrite admin-edited kicker/title/body/image — only sort order for
+    product titles, empty CTA fields, and non-product slides colliding at 10/20.
+    """
     state = (state_code or "NY").upper()[:2]
     product_specs = [s for s in DEFAULT_SLIDES if s["title"] in PRODUCT_SLIDE_TITLES]
-    added = False
+    changed = False
     for spec in product_specs:
         found = (
             db.query(HomeHeroSlide)
             .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.title == spec["title"])
             .first()
         )
-        if found:
+        if not found:
+            db.add(_row_from_spec(state, spec))
+            changed = True
             continue
-        db.add(_row_from_spec(state, spec))
-        added = True
-    if added:
+        if found.sort_order != spec["sort_order"]:
+            found.sort_order = int(spec["sort_order"])
+            changed = True
+        if not (found.cta_label or "").strip() and spec.get("cta_label"):
+            found.cta_label = spec["cta_label"]
+            changed = True
+        if not (found.cta_href or "").strip() and spec.get("cta_href"):
+            found.cta_href = spec["cta_href"]
+            changed = True
+
+    # Free sort slots 10/20 when older defaults still occupy them.
+    others = (
+        db.query(HomeHeroSlide)
+        .filter(
+            HomeHeroSlide.state_code == state,
+            ~HomeHeroSlide.title.in_(list(PRODUCT_SLIDE_TITLES)),
+        )
+        .order_by(HomeHeroSlide.sort_order, HomeHeroSlide.id)
+        .all()
+    )
+    if any(int(row.sort_order or 0) in (10, 20) for row in others):
+        for i, row in enumerate(others):
+            target = 30 + i * 10
+            if int(row.sort_order or 0) != target:
+                row.sort_order = target
+                changed = True
+
+    # Backfill empty CTAs on known default slides (new columns on existing rows).
+    defaults_by_title = {s["title"]: s for s in DEFAULT_SLIDES}
+    for row in db.query(HomeHeroSlide).filter(HomeHeroSlide.state_code == state).all():
+        spec = defaults_by_title.get(row.title or "")
+        if not spec:
+            continue
+        if not (row.cta_label or "").strip() and spec.get("cta_label"):
+            row.cta_label = spec["cta_label"]
+            changed = True
+        if not (row.cta_href or "").strip() and spec.get("cta_href"):
+            row.cta_href = spec["cta_href"]
+            changed = True
+
+    if changed:
         db.commit()
 
 
