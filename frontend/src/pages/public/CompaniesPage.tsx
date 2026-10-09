@@ -4,6 +4,7 @@ import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { SortableTableHead } from '@/components/oww/SortableTableHead';
 import { TableSearchFilter } from '@/components/oww/TableSearchFilter';
 import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
@@ -36,6 +37,11 @@ export default function CompaniesPage() {
         eyebrow={`${state.toUpperCase()} employers`}
         title="Companies & organizations"
         description="Utilities, contractors, manufacturers, and partners hiring into the water workforce."
+        actions={
+          <Button variant="outline" className="min-h-[44px] text-base" asChild>
+            <Link to={`/${state}/workforce-stats`}>Workforce stats</Link>
+          </Button>
+        }
       />
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">

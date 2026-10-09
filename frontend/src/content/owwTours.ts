@@ -98,6 +98,23 @@ export const owwTours: OwwTourConfig[] = [
     ],
   },
   {
+    id: 'oww-workforce-stats',
+    label: 'Workforce stats',
+    dismissedKey: 'oww-tour-workforce-stats-dismissed',
+    stepKey: 'oww-tour-workforce-stats-step',
+    eventName: 'oww:tour:workforce-stats',
+    fabLabel: 'Stats tour',
+    slides: [
+      {
+        id: 'overview',
+        title: 'Shared workforce statistics',
+        body: 'Utilities opt in field-by-field to share aggregate metrics. Statewide totals and the table only include what they chose to publish.',
+        tip: 'Utility admins manage sharing on Organization profile.',
+        highlight: '[data-tour="workforce-stats"]',
+      },
+    ],
+  },
+  {
     id: 'oww-pricing',
     label: 'Membership',
     dismissedKey: 'oww-tour-pricing-dismissed',
@@ -344,6 +361,7 @@ export function tourForPath(pathname: string): OwwTourConfig | null {
   if (p.startsWith('/billing')) return owwTours.find(t => t.id === 'oww-billing') ?? null;
   if (p.startsWith('/pricing')) return owwTours.find(t => t.id === 'oww-pricing') ?? null;
   if (/\/[^/]+\/jobs(\/|$)/.test(p)) return owwTours.find(t => t.id === 'oww-jobs') ?? null;
+  if (/\/[^/]+\/workforce-stats(\/|$)/.test(p)) return owwTours.find(t => t.id === 'oww-workforce-stats') ?? null;
   if (/\/[^/]+\/(career|hire|educate|ambassador)(\/|$)/.test(p)) return owwTours.find(t => t.id === 'oww-pathway') ?? null;
   if (/^\/[a-z]{2}\/?$/.test(p) || p === '/') return owwTours.find(t => t.id === 'oww-home') ?? null;
   return null;

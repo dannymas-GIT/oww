@@ -29,6 +29,7 @@ import BlogListPage from '@/pages/public/BlogListPage';
 import BlogPostPage from '@/pages/public/BlogPostPage';
 import CompaniesPage from '@/pages/public/CompaniesPage';
 import CompanyDetailPage from '@/pages/public/CompanyDetailPage';
+import WorkforceStatsPage from '@/pages/public/WorkforceStatsPage';
 import RegionalCategoryPage from '@/pages/public/RegionalCategoryPage';
 
 import CandidateDashboard from '@/pages/candidate/CandidateDashboard';
@@ -126,6 +127,7 @@ export default function App() {
         <Route path="/:state/blog/:slug" element={<BlogPostPage />} />
         <Route path="/:state/companies" element={<CompaniesPage />} />
         <Route path="/:state/companies/:id" element={<CompanyDetailPage />} />
+        <Route path="/:state/workforce-stats" element={<WorkforceStatsPage />} />
         <Route path="/:state/regional/:category" element={<RegionalCategoryPage />} />
 
         <Route

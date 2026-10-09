@@ -29,6 +29,10 @@ class Organization(Base):
     hiring_projections = Column(JSONB, nullable=False, default=dict)
     statistics = Column(JSONB, nullable=False, default=dict)
     profile = Column(JSONB, nullable=False, default=dict)
+    # Granular opt-in flags for public workforce stats (all false by default).
+    public_share_prefs = Column(JSONB, nullable=False, default=dict)
+    public_share_updated_at = Column(DateTime, nullable=True)
+    public_share_updated_by = Column(Integer, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_featured = Column(Boolean, default=False, nullable=False)
     ww360_org_id = Column(String(64), nullable=True, index=True)

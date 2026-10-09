@@ -346,6 +346,9 @@ export function AppShell() {
             <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/blog`}>
               Blog
             </Link>
+            <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/workforce-stats`}>
+              Workforce stats
+            </Link>
             {!isAuthenticated ? (
               <>
                 <Link className="inline-flex min-h-[44px] items-center" to={`/${state}/interest`}>

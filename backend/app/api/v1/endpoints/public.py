@@ -67,8 +67,8 @@ def _job_ser(j: Job, org: Organization | None = None) -> dict:
         "posted_at": j.published_at.isoformat() if j.published_at else None,
     }
 
-def _org_ser(o: Organization) -> dict:
-    return {
+def _org_ser(o: Organization, db: Session | None = None, *, include_public_stats: bool = False) -> dict:
+    data = {
         "id": o.id,
         "name": o.name,
         "org_type": (o.org_type or [None])[0] if isinstance(o.org_type, list) else o.org_type,
@@ -82,6 +82,13 @@ def _org_ser(o: Organization) -> dict:
         "region": o.region,
         "hiring_projections": o.hiring_projections,
     }
+    if include_public_stats and db is not None:
+        from app.services import org_public_share_service as share_svc
+
+        payload = share_svc.compute_share_payload(db, o)
+        if payload:
+            data["public_stats"] = payload
+    return data
 
 @router.post("/interest")
 def submit_interest(body: InterestIn, db: Session = Depends(get_db)):
@@ -159,7 +166,15 @@ def get_company(org_id: int, db: Session = Depends(get_db)):
     o = db.query(Organization).filter(Organization.id == org_id).first()
     if not o:
         raise HTTPException(404, "Not found")
-    return _org_ser(o)
+    return _org_ser(o, db, include_public_stats=True)
+
+
+@router.get("/workforce-stats/{state_code}")
+def workforce_stats(state_code: str, db: Session = Depends(get_db)):
+    """Statewide rollup of utilities that opted in to share workforce aggregates."""
+    from app.services import org_public_share_service as share_svc
+
+    return share_svc.statewide_workforce_stats(db, state_code=state_code)
 
 @router.get("/testimonials")
 def testimonials(state: str | None = None, db: Session = Depends(get_db)):
