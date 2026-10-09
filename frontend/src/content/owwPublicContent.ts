@@ -222,6 +222,12 @@ export const pathwayContent: Record<PathwaySlug, PathwayContent> = {
       { label: 'Express interest', description: 'Tell us you want to hire', to: '/{state}/interest?pathway=hire', variant: 'secondary' },
       { label: 'Employer sign-in', description: 'Post jobs and search talent', to: '/login', variant: 'outline' },
       { label: 'Employer directory', description: 'View public company profiles', to: '/{state}/companies', variant: 'outline' },
+      {
+        label: 'Workforce stats',
+        description: 'See aggregate metrics utilities opt in to share',
+        to: '/{state}/workforce-stats',
+        variant: 'outline',
+      },
     ],
   },
   educate: {

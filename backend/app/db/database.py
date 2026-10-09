@@ -31,6 +31,12 @@ def init_db() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS ww360_user_id VARCHAR(64)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_organizations_ww360_org_id ON organizations (ww360_org_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_users_ww360_user_id ON users (ww360_user_id)"))
+        # Granular public workforce-stats opt-in (district / utility sharing)
+        conn.execute(
+            text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS public_share_prefs JSONB DEFAULT '{}'::jsonb")
+        )
+        conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS public_share_updated_at TIMESTAMP"))
+        conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS public_share_updated_by INTEGER"))
         conn.execute(text("ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS template VARCHAR(50) DEFAULT 'simple_page'"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_content_pages_template ON content_pages (template)"))
         conn.execute(text("ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS author_name VARCHAR(255)"))

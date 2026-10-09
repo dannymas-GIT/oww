@@ -187,6 +187,24 @@ def main():
             org.longitude = lng
             org.description = f"{name} partners with One Water Workforce."
             org.hiring_projections = {"next_12_months": 3 + (i % 5)}
+            org.statistics = {
+                "hires_12mo": 1 + (i % 4),
+                "applicants_contacted": 5 + (i % 8),
+                "workforce_size": 18 + (i * 7) % 40,
+                "open_jobs": 1 + (i % 3),
+            }
+            # Demo opt-in: first three public utilities share a partial mix of fields.
+            if otype == "public_utility" and i < 3:
+                org.public_share_prefs = {
+                    "open_jobs": True,
+                    "hires_12mo": True,
+                    "applicants_contacted": i == 0,
+                    "hiring_projection": True,
+                    "workforce_size": i < 2,
+                    "show_region": True,
+                }
+            elif not org.public_share_prefs:
+                org.public_share_prefs = {}
             # Preserve sample-pack flags so re-seed does not wipe utility hiring illustrations.
             prev = dict(org.profile or {})
             org.profile = {
