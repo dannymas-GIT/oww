@@ -1,6 +1,6 @@
 # NYSAWWA New York 10 Regions
 
-Reference artwork and county mapping for the **togglable regions overlay** on OWW Leaflet maps (Jobs board, National map).
+Reference artwork and county mapping for the **togglable regions overlay** on OWW Leaflet maps (Jobs board, Administration → **NY regions map** at `/admin/regions`, optional toggle on **National map** at `/admin/map`).
 
 ## Assets
 
@@ -10,10 +10,11 @@ Reference artwork and county mapping for the **togglable regions overlay** on OW
 | [jobs-board-map-reference.png](./jobs-board-map-reference.png) | Example jobs board map with utility pins |
 | [regions.json](./regions.json) | Machine-readable region → county list + colors |
 
-Runtime GeoJSON (county polygons + region properties) ships with the frontend:
+Runtime assets ship with the frontend under `frontend/public/maps/`:
 
-- `frontend/public/maps/ny-counties-regions.geojson`
-- Reference PNG also copied to `frontend/public/maps/NY10Regions.png`
+- `ny-counties-regions.geojson` — county polygons + region properties
+- `regions.json` — legend for `/admin/regions`
+- `NY10Regions.png` — reference artwork
 
 ## Regions (from artwork)
 

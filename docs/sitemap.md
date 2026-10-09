@@ -14,6 +14,8 @@ Default jurisdiction: **NY** (`/` → `/ny`).
 | `/:state/interest` | Pathways Interest & Access form |
 | `/:state/programs/submit` | Workforce program submission |
 | `/:state/jobs` | Job board (search + map; togglable NYSAWWA 10-region overlay) |
+| `/admin/map` | **National map** (Administration → Operations) — US jurisdiction footprint |
+| `/admin/regions` | **NY regions map** (Administration → Operations) — NYSAWWA 10-region choropleth (default on) |
 | `/:state/jobs/:id` | Job detail |
 | `/:state/companies` | Company search |
 | `/:state/companies/:id` | Company profile |

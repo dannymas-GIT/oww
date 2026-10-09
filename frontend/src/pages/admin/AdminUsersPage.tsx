@@ -29,12 +29,12 @@ import { initials, titleCase } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const TIER_LABEL: Record<RoleCatalogEntry['tier'], string> = {
-  national: 'National (platform)',
+  platform: 'Platform',
   state: 'State',
-  utility: 'Utility / employer',
+  hiring: 'Hiring (utility / employer)',
   community: 'Community',
 };
-const TIER_ORDER: RoleCatalogEntry['tier'][] = ['national', 'state', 'utility', 'community'];
+const TIER_ORDER: RoleCatalogEntry['tier'][] = ['platform', 'state', 'hiring', 'community'];
 
 const ROLE_CHIP: Record<string, string> = {
   platform_admin: 'bg-oww-navy text-white',
@@ -45,6 +45,7 @@ const ROLE_CHIP: Record<string, string> = {
   utility_admin: 'bg-sky-100 text-sky-900',
   utility_manager: 'bg-cyan-100 text-cyan-900',
   employer: 'bg-teal-100 text-teal-900',
+  employer_admin: 'bg-teal-100 text-teal-900',
   employer_member: 'bg-teal-50 text-teal-800',
   educator: 'bg-violet-100 text-violet-900',
   ambassador: 'bg-amber-100 text-amber-900',
@@ -203,7 +204,7 @@ export default function AdminUsersPage() {
         }
         badges={
           <span className="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/30">
-            National → State → Utility hierarchy · mirrors WW360
+            OWW marketplace roles · plant/CEU roles live in WW360
           </span>
         }
         actions={
@@ -361,8 +362,8 @@ export default function AdminUsersPage() {
       ) : (
         <div className="space-y-4">
           <p className="text-lg text-slate-700">
-            National and State tiers are locked system roles. Utility administrators fine-tune only their own utility’s managers and team members. The same
-            vocabulary is used by Water Workforce 360, so accounts can federate later.
+            These are One Water Workforce marketplace roles only. Platform and State tiers are locked. Hiring roles cover OWW job posting and membership —
+            plant operators, CEU, and district staff are assigned in Water Workforce 360 after handoff, not here.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
             {TIER_ORDER.map(tier => {

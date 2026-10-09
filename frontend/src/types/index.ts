@@ -2,6 +2,7 @@ export type OwwRole =
   | 'individual'
   | 'student'
   | 'employer'
+  | 'employer_admin'
   | 'employer_member'
   | 'utility_admin'
   | 'utility_manager'
@@ -134,7 +135,8 @@ export interface Communication {
 export interface RoleCatalogEntry {
   code: string;
   label: string;
-  tier: 'national' | 'state' | 'utility' | 'community';
+  /** OWW marketplace tiers — not WW360 district/CEU plant roles. */
+  tier: 'platform' | 'state' | 'hiring' | 'community';
   locked: boolean;
   category: string;
   description: string;
