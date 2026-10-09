@@ -28,6 +28,7 @@ from app.services.outbound_service import post_webhook
 from app.services.auth_service import user_to_dict
 from app.services import featured_post_service
 from app.services import cms_service, media_service
+from app.services import home_hero_slide_service as hero_slides
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -216,6 +217,69 @@ async def upload_cms_media(
 def list_cms_media(db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
     rows = db.query(MediaAsset).order_by(MediaAsset.id.desc()).limit(100).all()
     return [media_service.asset_to_dict(a) for a in rows]
+
+
+class HomeSlideIn(BaseModel):
+    state_code: str | None = "NY"
+    kicker: str | None = ""
+    title: str | None = None
+    body: str | None = ""
+    image_url: str | None = None
+    image_alt: str | None = ""
+    sort_order: int | None = 100
+    is_active: bool | None = True
+
+
+@router.get("/home-slides")
+def admin_list_home_slides(
+    state_code: str | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    _ = user
+    if state_code:
+        hero_slides.ensure_default_slides(db, state_code=state_code)
+    return {"slides": hero_slides.list_admin_slides(db, state_code=state_code)}
+
+
+@router.post("/home-slides")
+def admin_create_home_slide(
+    body: HomeSlideIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    _ = user
+    try:
+        row = hero_slides.create_slide(db, body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return hero_slides.slide_to_dict(row)
+
+
+@router.patch("/home-slides/{slide_id}")
+def admin_patch_home_slide(
+    slide_id: int,
+    body: HomeSlideIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    _ = user
+    row = hero_slides.update_slide(db, slide_id, body.model_dump(exclude_unset=True))
+    if not row:
+        raise HTTPException(404, "Slide not found")
+    return hero_slides.slide_to_dict(row)
+
+
+@router.delete("/home-slides/{slide_id}")
+def admin_delete_home_slide(
+    slide_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
+    _ = user
+    if not hero_slides.delete_slide(db, slide_id):
+        raise HTTPException(404, "Slide not found")
+    return {"ok": True}
 
 
 @router.get("/cms/{page_id}")

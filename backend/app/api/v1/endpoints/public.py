@@ -17,6 +17,7 @@ from app.models.content_page import ContentPage
 from app.models.media_asset import MediaAsset
 from app.services.engagement_service import track
 from app.services import cms_service, media_service
+from app.services import home_hero_slide_service as hero_slides
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -261,3 +262,9 @@ def get_media_file(filename: str, db: Session = Depends(get_db)):
     asset = db.query(MediaAsset).filter(MediaAsset.filename == path.name).first()
     media_type = asset.content_type if asset else "application/octet-stream"
     return FileResponse(path, media_type=media_type, filename=asset.original_name if asset else path.name)
+
+
+@router.get("/home-slides/{state_code}")
+def list_home_slides(state_code: str, db: Session = Depends(get_db)):
+    """Active home hero rotator slides for the public microsite."""
+    return {"slides": hero_slides.list_public_slides(db, state_code=state_code)}

@@ -50,6 +50,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminJurisdictionsPage from '@/pages/admin/AdminJurisdictionsPage';
 import AdminCmsPage from '@/pages/admin/AdminCmsPage';
 import AdminCmsEditorPage from '@/pages/admin/AdminCmsEditorPage';
+import AdminHomeSlidesPage from '@/pages/admin/AdminHomeSlidesPage';
 import AdminProgramsPage from '@/pages/admin/AdminProgramsPage';
 import AdminFeaturedPostsPage from '@/pages/admin/AdminFeaturedPostsPage';
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
@@ -344,6 +345,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
               <AdminCmsEditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/home-slides"
+          element={
+            <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
+              <AdminHomeSlidesPage />
             </ProtectedRoute>
           }
         />
