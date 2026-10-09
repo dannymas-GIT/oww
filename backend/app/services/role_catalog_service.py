@@ -1,10 +1,12 @@
-"""Role catalog — mirrors WW360 tiers so accounts can later federate via SSO.
+"""OWW role catalog — marketplace / pathways accounts only.
 
-Tiers:
-  national  (locked admin)  platform_admin; delegate-able platform_editor/ops/manager
-  state     (locked)        state_admin
-  utility   (tunable)       utility_admin, utility_manager, employer, employer_member
-  community                 educator, ambassador, student, individual
+OWW owns hiring, candidate, educator, ambassador, and platform microsite roles.
+Water Workforce 360 owns district / CEU / operator / plant roles (district_admin,
+ceu_*, workforce_*, etc.). Do not put WW360 plant-ops roles in this catalog.
+
+Shared bridge identities (not shared role codes):
+  - OWW ``utility_admin`` hands off to WW360 as ``district_admin``
+  - OWW ``platform_admin`` / ``state_admin`` may also exist on WW360 for program partners
 """
 
 from __future__ import annotations
@@ -15,15 +17,15 @@ ROLE_CATALOG: list[dict] = [
     {
         "code": "platform_admin",
         "label": "Platform administrator",
-        "tier": "national",
+        "tier": "platform",
         "locked": True,
         "category": "Administration",
-        "description": "Full platform control across every jurisdiction. May assign all roles.",
+        "description": "Full OWW platform control across every jurisdiction. May assign all OWW roles.",
     },
     {
         "code": "platform_editor",
         "label": "Platform editor",
-        "tier": "national",
+        "tier": "platform",
         "locked": False,
         "category": "Content",
         "description": "CMS, programs, featured posts, certifications, and locations.",
@@ -31,7 +33,7 @@ ROLE_CATALOG: list[dict] = [
     {
         "code": "platform_ops",
         "label": "Platform operations",
-        "tier": "national",
+        "tier": "platform",
         "locked": False,
         "category": "Operations",
         "description": "Memberships, utility registrations, communications, logins, and analytics.",
@@ -39,7 +41,7 @@ ROLE_CATALOG: list[dict] = [
     {
         "code": "platform_manager",
         "label": "Platform manager",
-        "tier": "national",
+        "tier": "platform",
         "locked": False,
         "category": "People",
         "description": "Ops surfaces plus People directories. No user create, settings, or jurisdictions.",
@@ -54,32 +56,46 @@ ROLE_CATALOG: list[dict] = [
     },
     {
         "code": "utility_admin",
-        "label": "Utility administrator",
-        "tier": "utility",
+        "label": "Utility administrator (OWW hiring)",
+        "tier": "hiring",
         "locked": False,
         "category": "Administration",
-        "description": "Manages a utility’s account, members, billing, and postings.",
+        "description": (
+            "OWW utility org owner: membership, billing, and job postings. "
+            "Plant staff / CEU / operators are invited in Water Workforce 360 after handoff."
+        ),
     },
     {
         "code": "utility_manager",
-        "label": "Utility manager",
-        "tier": "utility",
+        "label": "Utility hiring manager",
+        "tier": "hiring",
         "locked": False,
         "category": "Workforce",
-        "description": "Posts jobs, reviews matches, schedules interviews.",
+        "description": (
+            "Posts jobs and reviews matches under the utility’s OWW membership. "
+            "Not a WW360 plant-ops role (use district_manager / operators there)."
+        ),
     },
     {
         "code": "employer",
         "label": "Employer (hiring)",
-        "tier": "utility",
+        "tier": "hiring",
         "locked": False,
         "category": "Workforce",
         "description": "Non-utility employer or consultant hiring through OWW.",
     },
     {
+        "code": "employer_admin",
+        "label": "Employer administrator",
+        "tier": "hiring",
+        "locked": False,
+        "category": "Administration",
+        "description": "Manages an employer organization’s team and billing on OWW.",
+    },
+    {
         "code": "employer_member",
         "label": "Employer team member",
-        "tier": "utility",
+        "tier": "hiring",
         "locked": False,
         "category": "Workforce",
         "description": "Read-only access to organization postings and applicants.",
@@ -120,7 +136,9 @@ ROLE_CATALOG: list[dict] = [
 
 ROLE_CODES = {r["code"] for r in ROLE_CATALOG}
 PROTECTED_ROLES = {r["code"] for r in ROLE_CATALOG if r["locked"]}
-UTILITY_ROLES = {r["code"] for r in ROLE_CATALOG if r["tier"] == "utility"}
+HIRING_ORG_ROLES = {r["code"] for r in ROLE_CATALOG if r["tier"] == "hiring"}
+# Back-compat alias used by assignable_roles_for / older callers.
+UTILITY_ROLES = HIRING_ORG_ROLES
 COMMUNITY_ROLES = {r["code"] for r in ROLE_CATALOG if r["tier"] == "community"}
 PLATFORM_STAFF_ROLES = frozenset(
     {"platform_admin", "platform_editor", "platform_ops", "platform_manager"}
@@ -138,7 +156,13 @@ PLATFORM_STAFF_VIEW_ROLES = (
     "state_admin",
 )
 
-HIRING_ROLES = ("employer", "employer_admin", "employer_member", "utility_admin", "utility_manager")
+HIRING_ROLES = (
+    "employer",
+    "employer_admin",
+    "employer_member",
+    "utility_admin",
+    "utility_manager",
+)
 ORG_ADMIN_ROLES = ("employer", "employer_admin", "utility_admin")
 
 
@@ -158,7 +182,11 @@ def assignable_roles_for(actor_roles: Iterable[str]) -> set[str]:
         # State admins cannot assign platform staff or elevate to platform_admin.
         return ROLE_CODES - PLATFORM_STAFF_ROLES
     if "utility_admin" in actor:
-        return UTILITY_ROLES | {"individual", "student"}
+        # Utility plant staff are invited in WW360; OWW utility_admin may only
+        # assign OWW hiring helpers + community seekers under their org flows.
+        return {"utility_manager", "individual", "student"}
+    if "employer" in actor or "employer_admin" in actor:
+        return {"employer_member", "employer_admin", "individual", "student"}
     return set()
 
 

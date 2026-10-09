@@ -260,7 +260,7 @@ export const owwTours: OwwTourConfig[] = [
       {
         id: 'roles',
         title: 'Roles & hierarchy',
-        body: 'National and State tiers are locked. Utility admins fine-tune only their org. Same vocabulary as WW360 for future federation.',
+        body: 'OWW roles cover marketplace accounts (platform, hiring, community). Plant / CEU / operator roles live only in Water Workforce 360.',
         highlight: '[data-tour="users-tabs"]',
       },
     ],

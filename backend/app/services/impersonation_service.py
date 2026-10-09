@@ -316,7 +316,7 @@ def ensure_default_personas(db: Session) -> None:
             [
                 "Workspace → Utility profile + Water Workforce 360 launch",
                 "Hiring pipeline → ranked candidates, apps, messages, interviews",
-                "Users & access stays utility-tier only (no national/state roles)",
+                "Invite plant/CEU staff in WW360 — not via OWW Users & access",
             ],
             60,
         ),
@@ -324,12 +324,12 @@ def ensure_default_personas(db: Session) -> None:
             "utility-manager",
             "utility-manager1",
             "utility",
-            "Utility manager",
+            "Utility hiring manager",
             "Posts jobs under utility membership",
             [
                 "Same Hudson Falls hiring pack as the utility admin",
                 "Post and manage jobs covered by org membership",
-                "No Team admin or billing tools — hiring focus only",
+                "OWW hiring only — WW360 plant ops use district_manager / operators",
             ],
             70,
         ),
@@ -342,7 +342,7 @@ def ensure_default_personas(db: Session) -> None:
             [
                 "Operations → memberships, pending utility registrations, pipeline KPIs",
                 "People → directories; Content → CMS draft + communications",
-                "National/state roles stay locked for utility managers",
+                "Platform/state roles stay locked; WW360 has its own district catalog",
             ],
             80,
         ),
