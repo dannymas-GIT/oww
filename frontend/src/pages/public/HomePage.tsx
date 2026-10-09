@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, GraduationCap, HeartHandshake, Briefcase, Users } from 'lucide-react';
 import { CmsPageRenderer } from '@/components/oww/CmsPageRenderer';
+import { HomeHeroStage } from '@/components/oww/HomeHeroStage';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { OwwLogo } from '@/components/oww/OwwLogo';
@@ -220,22 +221,7 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
               {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
             </p>
           </div>
-          <div className="relative hidden min-h-[220px] overflow-hidden rounded-xl bg-oww-navy md:block">
-            <div
-              aria-hidden
-              className="absolute inset-0 opacity-80"
-              style={{
-                background:
-                  'radial-gradient(80% 70% at 70% 30%, rgba(0,93,248,0.55), transparent 60%), radial-gradient(60% 80% at 20% 90%, rgba(0,92,232,0.35), transparent 55%)',
-              }}
-            />
-            <div className="relative flex h-full flex-col justify-end gap-3 p-6 text-white">
-              <p className="font-display text-2xl font-semibold leading-snug">{owwMission.tagline}</p>
-              <p className="text-base text-slate-200">
-                Career awareness, Gold Standard training, hiring infrastructure, and measurable workforce outcomes—in one place.
-              </p>
-            </div>
-          </div>
+          <HomeHeroStage className="min-h-[320px] md:min-h-[380px]" />
         </div>
       </section>
 
