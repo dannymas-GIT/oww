@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ImagePlus, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ImagePlus, Images, Pencil, Plus, Trash2 } from 'lucide-react';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { SortableTableHead } from '@/components/oww/SortableTableHead';
 import { TableSearchFilter } from '@/components/oww/TableSearchFilter';
@@ -16,6 +16,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  HERO_SLIDE_IMAGE_SPECS,
+  stockCatalogForScope,
+  type HeroStockImage,
+} from '@/content/heroSlideStockCatalog';
 import { useTableControls } from '@/hooks/useTableControls';
 import { api } from '@/lib/api';
 import { uploadCmsMedia, listCmsMedia } from '@/services/adminService';
@@ -86,6 +91,29 @@ export default function AdminHomeSlidesPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft('home'));
   const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
+  const [stockFilter, setStockFilter] = useState('');
+
+  const stockItems = useMemo(() => {
+    const list = stockCatalogForScope(scope);
+    const q = stockFilter.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(
+      img =>
+        img.title.toLowerCase().includes(q) ||
+        img.alt.toLowerCase().includes(q) ||
+        img.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }, [scope, stockFilter]);
+
+  function applyStockImage(img: HeroStockImage) {
+    setDraft(d => ({
+      ...d,
+      image_url: img.url,
+      image_alt: d.image_alt || img.alt,
+    }));
+    setStockOpen(false);
+  }
 
   const table = useTableControls({
     rows: slides,
@@ -189,7 +217,7 @@ export default function AdminHomeSlidesPage() {
       <OwwPageHero
         eyebrow="Content"
         title="Hero slides"
-        description="Full-width sliders for the public home and each pathway. Edit kicker, headline, body, image, and optional button label/link per slide."
+        description="Full-width sliders for the public home and each pathway. Use the stock catalog (license-safe OWW images) or upload 16:9 photos at about 1920×1080."
         actions={
           <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
@@ -377,7 +405,35 @@ export default function AdminHomeSlidesPage() {
             </div>
             <div className="space-y-2">
               <Label className="text-base">Image</Label>
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-base text-sky-950">
+                <p className="font-semibold text-oww-navy">Recommended image specs</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed sm:text-base">
+                  <li>
+                    Aspect ratio <strong>{HERO_SLIDE_IMAGE_SPECS.aspectRatio}</strong> landscape (full-bleed slider)
+                  </li>
+                  <li>
+                    Size <strong>{HERO_SLIDE_IMAGE_SPECS.recommendedPx}</strong> preferred · minimum{' '}
+                    {HERO_SLIDE_IMAGE_SPECS.minimumPx}
+                  </li>
+                  <li>
+                    Format {HERO_SLIDE_IMAGE_SPECS.formats} · {HERO_SLIDE_IMAGE_SPECS.maxFileHint}
+                  </li>
+                  <li>{HERO_SLIDE_IMAGE_SPECS.composition}</li>
+                </ul>
+              </div>
               <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-[44px] text-base"
+                  onClick={() => {
+                    setStockFilter('');
+                    setStockOpen(true);
+                  }}
+                >
+                  <Images className="mr-2 h-4 w-4" />
+                  Stock catalog
+                </Button>
                 <Button type="button" variant="outline" className="min-h-[44px] text-base" onClick={() => setPickerOpen(true)}>
                   <ImagePlus className="mr-2 h-4 w-4" />
                   Media library
@@ -386,7 +442,7 @@ export default function AdminHomeSlidesPage() {
                   Upload file
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="sr-only"
                     onChange={e => {
                       const f = e.target.files?.[0];
@@ -399,7 +455,7 @@ export default function AdminHomeSlidesPage() {
                 className="min-h-[44px] text-base"
                 value={draft.image_url}
                 onChange={e => setDraft({ ...draft, image_url: e.target.value })}
-                placeholder="/pathways/stage/… or uploaded media URL"
+                placeholder="/stock/hero/… or uploaded media URL"
               />
               {draft.image_url ? (
                 <img src={draft.image_url} alt="" className="mt-2 h-36 w-full rounded-lg object-cover" />
@@ -447,11 +503,13 @@ export default function AdminHomeSlidesPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">Choose from media library</DialogTitle>
-            <DialogDescription className="text-base">Recent CMS uploads. Prefer landscape (16:9) images.</DialogDescription>
+            <DialogDescription className="text-base">
+              Recent CMS uploads. Prefer {HERO_SLIDE_IMAGE_SPECS.aspectRatio} at {HERO_SLIDE_IMAGE_SPECS.recommendedPx}.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid max-h-[50vh] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
             {media.length === 0 ? (
-              <p className="col-span-full text-base text-slate-600">No images in the library yet — upload above.</p>
+              <p className="col-span-full text-base text-slate-600">No images in the library yet — upload above or use Stock catalog.</p>
             ) : (
               media.map(m => {
                 return (
@@ -473,6 +531,45 @@ export default function AdminHomeSlidesPage() {
                   </button>
                 );
               })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={stockOpen} onOpenChange={setStockOpen}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">OWW stock catalog</DialogTitle>
+            <DialogDescription className="text-base">
+              License-safe, OWW-owned water workforce images ({HERO_SLIDE_IMAGE_SPECS.aspectRatio}). Suggested matches for{' '}
+              <strong>{scopeLabel}</strong> appear first. Selecting one fills the slide image and alt text.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            className="min-h-[44px] text-base"
+            value={stockFilter}
+            onChange={e => setStockFilter(e.target.value)}
+            placeholder="Filter by title, tag, or description…"
+            aria-label="Filter stock images"
+          />
+          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
+            {stockItems.length === 0 ? (
+              <p className="col-span-full text-base text-slate-600">No stock images match this filter.</p>
+            ) : (
+              stockItems.map(img => (
+                <button
+                  key={img.id}
+                  type="button"
+                  className="overflow-hidden rounded-lg border border-slate-200 text-left hover:border-oww-cyan"
+                  onClick={() => applyStockImage(img)}
+                >
+                  <img src={img.url} alt="" className="h-28 w-full object-cover" />
+                  <div className="space-y-1 p-2">
+                    <p className="font-semibold text-oww-navy text-base">{img.title}</p>
+                    <p className="line-clamp-2 text-sm text-slate-600">{img.alt}</p>
+                  </div>
+                </button>
+              ))
             )}
           </div>
         </DialogContent>
