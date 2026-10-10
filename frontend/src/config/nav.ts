@@ -339,6 +339,13 @@ export const roleNavGroups: NavGroup[] = [
             description: 'Per-jurisdiction regions (NY choropleth; NJ/CT lists)',
           },
           {
+            label: 'Jurisdictions',
+            path: '/admin/jurisdictions',
+            icon: Map,
+            roles: PLATFORM_ADMIN_ROLES,
+            description: 'Activate tenants, partners, regulators (NY live; scaffolds inactive)',
+          },
+          {
             label: 'Platform settings',
             path: '/admin/settings',
             icon: Settings,
@@ -431,7 +438,6 @@ export const roleNavGroups: NavGroup[] = [
             roles: PLATFORM_EDITOR_ROLES,
           },
           { label: 'Locations', path: '/admin/locations', icon: MapPin, roles: PLATFORM_EDITOR_ROLES },
-          { label: 'Jurisdictions', path: '/admin/jurisdictions', icon: Map, roles: PLATFORM_ADMIN_ROLES },
         ],
       },
     ],
