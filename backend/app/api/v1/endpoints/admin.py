@@ -32,8 +32,8 @@ from app.services import home_hero_slide_service as hero_slides
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-from app.services.role_catalog_service import (
 from app.core.scoping import coerce_state
+from app.services.role_catalog_service import (
     PLATFORM_EDITOR_ROLES,
     PLATFORM_OPS_ROLES,
     is_platform_staff,
