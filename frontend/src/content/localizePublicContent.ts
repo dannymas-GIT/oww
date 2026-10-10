@@ -107,7 +107,9 @@ export function localizeMission(j: JurisdictionConfig | null | undefined): Local
 
 export function localizeImpactStats(j: JurisdictionConfig | null | undefined) {
   const t = tokens(j);
-  if (t.code === 'ny') return [...owwImpactStats];
+  if (t.code === 'ny') {
+    return owwImpactStats.map(s => ({ ...s }));
+  }
   const training = j?.partner?.training;
   return [
     {
@@ -140,7 +142,14 @@ export function localizeTrainingCenter(j: JurisdictionConfig | null | undefined)
   const training = j?.partner?.training;
   if (!training) {
     if (t.code === 'ny') {
-      return { ...owwTrainingCenter, externalLinks: [...owwTrainingCenter.externalLinks] };
+      return {
+        title: owwTrainingCenter.title,
+        partner: owwTrainingCenter.partner,
+        summary: owwTrainingCenter.summary,
+        locations: [...owwTrainingCenter.locations],
+        offerings: [...owwTrainingCenter.offerings],
+        externalLinks: owwTrainingCenter.externalLinks.map(l => ({ ...l })),
+      };
     }
     // Partner-neutral training blurb from regulators
     const regs = j?.regulators || [];
