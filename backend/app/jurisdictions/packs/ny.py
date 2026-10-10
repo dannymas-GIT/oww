@@ -131,11 +131,13 @@ for i, level in enumerate(["1", "1A", "2", "2A", "3", "3A", "4", "4A"]):
     )
 
 PACK = JurisdictionPack(
-    pack_version="1.0.0",
+    pack_version="1.1.0",
     code="NY",
     name="New York",
     demonym="New Yorkers",
     geo_unit_label="County",
+    kind="state",
+    default_active=True,  # NYSAWWA contracted flagship — only live public tenant by default
     partner=Partner(
         lead_org="New York Section American Water Works Association (NYSAWWA)",
         short="NYSAWWA",

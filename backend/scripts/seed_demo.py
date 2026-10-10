@@ -120,7 +120,11 @@ def main():
     init_db()
     db = SessionLocal()
     try:
-        from app.jurisdictions.registry import all_packs, ensure_jurisdictions
+        from app.jurisdictions.registry import (
+            all_packs,
+            deactivate_scaffold_tenants,
+            ensure_jurisdictions,
+        )
         from app.services.cms_service import ensure_default_home_page
         from app.services.home_hero_slide_service import (
             ensure_default_slides,
@@ -129,6 +133,10 @@ def main():
         )
 
         ensure_jurisdictions(db)
+        # Course correction: only NY (contracted) is a live public microsite.
+        deactivated = deactivate_scaffold_tenants(db)
+        if deactivated:
+            print(f"Scaffold jurisdictions kept inactive (public): {', '.join(deactivated)}")
 
         ensure_default_plans(db)
         admin = upsert_user(db, "oww-admin", "admin@onewaterworkforce.org", ["platform_admin"], "OWW Platform Admin", PASSWORD)

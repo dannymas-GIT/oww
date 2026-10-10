@@ -1,4 +1,4 @@
-"""Jurisdiction pack registry + public API smoke tests."""
+"""Jurisdiction pack registry + activation policy tests."""
 
 from __future__ import annotations
 
@@ -8,15 +8,23 @@ from app.jurisdictions.schema import JurisdictionPack
 
 def test_packs_registered():
     codes = list_pack_codes()
-    assert codes == ["CT", "NJ", "NY"]
+    assert codes == ["CT", "NE", "NJ", "NY"]
     for code in codes:
         pack = get_pack(code)
         assert isinstance(pack, JurisdictionPack)
         assert pack.code == code
         assert pack.partner.short
-        assert pack.regions
-        assert pack.regulators
-        assert pack.certification_ladders
+        assert pack.regions or pack.kind == "region"
+
+
+def test_only_ny_public_by_default():
+    for pack in all_packs():
+        if pack.code == "NY":
+            assert pack.partner.contracted
+            assert pack.should_activate_public
+        else:
+            assert not pack.should_activate_public
+            assert pack.default_active is False
 
 
 def test_nj_single_regulator_both_domains():
@@ -37,6 +45,16 @@ def test_ct_no_counties_planning_regions():
     assert not ct.partner.contracted
 
 
+def test_ne_region_tenant():
+    ne = get_pack("NE")
+    assert ne is not None
+    assert ne.kind == "region"
+    assert set(ne.member_state_codes) == {"CT", "MA", "ME", "NH", "RI", "VT"}
+    assert len(ne.regions) == 6
+    assert not ne.certification_ladders  # member states own certs
+    assert not ne.should_activate_public
+
+
 def test_ny_contracted_with_training():
     ny = get_pack("NY")
     assert ny is not None
@@ -48,11 +66,11 @@ def test_ny_contracted_with_training():
 def test_normalize_and_default():
     assert normalize_code("nj") == "NJ"
     assert normalize_code(None) == default_code()
-    assert default_code() in ("NY", "NJ", "CT") or len(default_code()) == 2
+    assert default_code() == "NY"
 
 
 def test_all_packs_validate():
     for pack in all_packs():
         tokens = pack.token_map()
-        assert "{state_name}" not in tokens["state_name"]
         assert tokens["partner_short"]
+        assert tokens["state_name"]

@@ -2,7 +2,7 @@
 
 ## Goals
 
-Workforce engagement platform for NYSAWWA One Water Workforce: pathways navigation, interest capture, job board + matching, employer/educator dashboards, pipeline analytics, multi-state architecture.
+Workforce engagement platform for NYSAWWA One Water Workforce (New York flagship): pathways navigation, interest capture, job board + matching, employer/educator dashboards, pipeline analytics. Multi-tenant jurisdiction packs scaffold future section/collaborative adoption — not a national OWW brand (see docs/jurisdictions.md).
 
 ## Auth
 
@@ -20,4 +20,4 @@ Seventeen taxonomy categories (YAML) drive individual + employer questionnaires.
 
 ## Phase 2 included
 
-Regional category pages, favorites/follows, messaging/notes/interviews, educator courses/events, featured posting queue (stub adapters), multi-jurisdiction + national map, program submission approval, certifications & locations catalogs, CRM webhook export.
+Regional category pages, favorites/follows, messaging/notes/interviews, educator courses/events, featured posting queue (stub adapters), jurisdiction admin + national map (NY live; other packs inactive until MOU), program submission approval, certifications & locations catalogs, CRM webhook export.

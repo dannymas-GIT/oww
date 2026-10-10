@@ -75,14 +75,20 @@ class MapConfig(BaseModel):
 
 
 class JurisdictionPack(BaseModel):
-    """Versioned in-code defaults for a state microsite."""
+    """Versioned in-code defaults for a state or regional tenant microsite."""
 
     pack_version: str = "1.0.0"
-    code: str  # NY, NJ, CT
+    code: str  # NY, NJ, CT, NE, …
     name: str
     demonym: str  # New Yorkers, New Jerseyans, Connecticut residents
-    geo_unit_label: str  # County | Town
+    geo_unit_label: str  # County | Town | State
     partner: Partner
+    # state = single US state; region = multi-state collaborative (e.g. New England)
+    kind: Literal["state", "region"] = "state"
+    # Public microsite live only when True (or partner.contracted). Scaffold packs stay false.
+    default_active: bool = False
+    # For region tenants: constituent state codes (CT, MA, …) — not separate public sites.
+    member_state_codes: list[str] = Field(default_factory=list)
     regulators: list[Regulator] = Field(default_factory=list)
     certification_ladders: list[CertificationLevel] = Field(default_factory=list)
     regions: list[Region] = Field(default_factory=list)
@@ -96,6 +102,11 @@ class JurisdictionPack(BaseModel):
         default_factory=lambda: {"jobs": True, "matching": True, "workforce_stats": True}
     )
     hero_defaults: dict[str, str] = Field(default_factory=dict)
+
+    @property
+    def should_activate_public(self) -> bool:
+        """Live public microsite only for contracted flagship or explicitly active packs."""
+        return bool(self.partner.contracted or self.default_active)
 
     def token_map(self) -> dict[str, str]:
         """Flat token dict for string formatting."""

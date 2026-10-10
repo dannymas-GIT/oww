@@ -2,6 +2,7 @@
 
 from app.jurisdictions.registry import (
     all_packs,
+    deactivate_scaffold_tenants,
     default_code,
     effective,
     ensure_jurisdictions,
@@ -14,6 +15,7 @@ from app.jurisdictions.registry import (
 
 __all__ = [
     "all_packs",
+    "deactivate_scaffold_tenants",
     "default_code",
     "effective",
     "ensure_jurisdictions",

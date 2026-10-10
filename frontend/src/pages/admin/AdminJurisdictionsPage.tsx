@@ -83,7 +83,7 @@ export default function AdminJurisdictionsPage() {
       <OwwPageHero
         eyebrow="Administration"
         title="Jurisdictions"
-        description="State/territory tenants. Packs ship NY, NJ, and CT; admin edits override pack defaults without code changes."
+        description="Multi-tenant scaffolding: NY is the live NYSAWWA flagship. NJ, CT, and New England (NE) packs stay inactive until a partner MOU — flip Active only then."
         actions={
           <Link
             to="/admin/regions"
