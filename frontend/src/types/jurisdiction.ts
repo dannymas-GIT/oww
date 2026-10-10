@@ -48,6 +48,8 @@ export interface JurisdictionConfig {
   name: string;
   demonym: string;
   geo_unit_label: string;
+  kind?: 'state' | 'region';
+  member_state_codes?: string[];
   tagline?: string;
   is_active?: boolean;
   partner: JurisdictionPartner;

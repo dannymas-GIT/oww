@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.jurisdictions.packs import ct as pack_ct
+from app.jurisdictions.packs import ne as pack_ne
 from app.jurisdictions.packs import nj as pack_nj
 from app.jurisdictions.packs import ny as pack_ny
 from app.jurisdictions.schema import JurisdictionPack, render_tokens
@@ -16,6 +17,7 @@ _PACKS: dict[str, JurisdictionPack] = {
     "NY": pack_ny.PACK,
     "NJ": pack_nj.PACK,
     "CT": pack_ct.PACK,
+    "NE": pack_ne.PACK,  # New England region tenant (scaffold; not six thin state sites)
 }
 
 
@@ -79,6 +81,9 @@ def effective(db: Session, code: str) -> Optional[dict[str, Any]]:
             "name": row.name if row else state,
             "demonym": getattr(row, "demonym", None) or f"{row.name} residents" if row else state,
             "geo_unit_label": getattr(row, "geo_unit_label", None) or "County",
+            "kind": "state",
+            "default_active": False,
+            "member_state_codes": [],
             "partner": getattr(row, "partner", None)
             or {
                 "lead_org": (row.partner_name if row else None) or state,
@@ -170,12 +175,18 @@ def format_for_state(db: Session, state_code: Optional[str], text: str) -> str:
 
 
 def ensure_jurisdictions(db: Session) -> list[str]:
-    """Upsert pack rows into DB without clobbering admin-edited non-null fields."""
+    """Upsert pack rows into DB without clobbering admin-edited non-null fields.
+
+    Public activation: only packs with ``should_activate_public`` (contracted or
+    ``default_active``) are live. Scaffold packs (NJ, CT, NE, …) stay inactive
+    until a partner MOU — admin can flip ``is_active`` when ready.
+    """
     from app.models.jurisdiction import Jurisdiction
 
     created: list[str] = []
     for pack in all_packs():
         row = db.query(Jurisdiction).filter(Jurisdiction.state_code == pack.code).first()
+        activate = pack.should_activate_public
         if not row:
             row = Jurisdiction(
                 state_code=pack.code,
@@ -185,7 +196,7 @@ def ensure_jurisdictions(db: Session) -> list[str]:
                 branding=pack.branding or {"primary": "#07111f"},
                 enabled_features=pack.default_features or {"jobs": True, "matching": True},
                 regions=[r.model_dump() for r in pack.regions],
-                is_active=True,
+                is_active=activate,
                 demonym=pack.demonym,
                 geo_unit_label=pack.geo_unit_label,
                 regulators=[r.model_dump() for r in pack.regulators],
@@ -226,5 +237,29 @@ def ensure_jurisdictions(db: Session) -> list[str]:
         if not getattr(row, "partner", None):
             row.partner = pack.partner.model_dump()
 
+        # Course correction: deactivate scaffold packs that were briefly demo-activated.
+        # Never auto-deactivate a contracted flagship (NY). Never auto-activate scaffolds.
+        if not activate and row.is_active:
+            row.is_active = False
+        elif activate and not row.is_active and pack.partner.contracted:
+            row.is_active = True
+
     db.commit()
     return created
+
+
+def deactivate_scaffold_tenants(db: Session) -> list[str]:
+    """Force-inactivate non-contracted packs (idempotent seed helper)."""
+    from app.models.jurisdiction import Jurisdiction
+
+    changed: list[str] = []
+    for pack in all_packs():
+        if pack.should_activate_public:
+            continue
+        row = db.query(Jurisdiction).filter(Jurisdiction.state_code == pack.code).first()
+        if row and row.is_active:
+            row.is_active = False
+            changed.append(pack.code)
+    if changed:
+        db.commit()
+    return changed

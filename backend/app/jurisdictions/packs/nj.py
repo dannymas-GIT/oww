@@ -90,11 +90,13 @@ _certs.append(
 )
 
 PACK = JurisdictionPack(
-    pack_version="1.0.0",
+    pack_version="1.1.0",
     code="NJ",
     name="New Jersey",
     demonym="New Jerseyans",
     geo_unit_label="County",
+    kind="state",
+    default_active=False,  # Scaffold only until AWWA NJ (or peer) MOU
     partner=Partner(
         lead_org="AWWA New Jersey Section",
         short="AWWA NJ",
