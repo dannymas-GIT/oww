@@ -15,12 +15,7 @@ import { DEFAULT_STATE } from '@/lib/constants';
 import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
 import { getPublishedPage, listTestimonials } from '@/services/publicService';
 import type { ContentPage, Testimonial } from '@/types';
-import {
-  owwImpactStats,
-  owwMission,
-  owwTrainingCenter,
-  pathwayContent,
-} from '@/content/owwPublicContent';
+import { useJurisdiction } from '@/context/JurisdictionContext';
 
 const icons = {
   career: Users,
@@ -37,6 +32,8 @@ function SignedInHome({
   testimonials: Testimonial[];
 }) {
   const { user, userRoles, isUtilityAdmin, isEducator, isIndividual } = useAuth();
+  const { mission: owwMission, pathway } = useJurisdiction();
+  const pathwayContent = { hire: pathway('hire') };
   const displayName = user?.full_name?.trim() || user?.username || 'there';
   const hiring = isHiringRole(userRoles);
   const platform = isPlatformStaff(userRoles);
@@ -187,6 +184,13 @@ function SignedInHome({
 }
 
 function FallbackHome({ state, testimonials }: { state: string; testimonials: Testimonial[] }) {
+  const {
+    mission: owwMission,
+    impactStats: owwImpactStats,
+    trainingCenter: owwTrainingCenter,
+    pathway,
+    activeList,
+  } = useJurisdiction();
   return (
     <div className="space-y-10">
       <section data-tour="brand" className="-mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
@@ -203,13 +207,37 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
             </div>
           ))}
         </div>
+        {activeList.length > 1 ? (
+          <p className="mt-4 text-sm text-slate-600">
+            Jurisdiction{' '}
+            {activeList.map((j, i) => (
+              <span key={j.code}>
+                {i > 0 ? ' · ' : ''}
+                <Link
+                  className={
+                    j.code === state
+                      ? 'font-semibold text-oww-navy'
+                      : 'text-oww-cyan underline-offset-2 hover:underline'
+                  }
+                  to={`/${j.code}`}
+                >
+                  {j.code.toUpperCase()}
+                </Link>
+              </span>
+            ))}
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-slate-500">
+            {owwMission.leadOrg} · Jurisdiction {state.toUpperCase()}
+          </p>
+        )}
       </OwwSection>
 
       <OwwSection title="Choose your pathway" description="Four doors into water careers—each opens into tools, checklists, and next steps.">
         <div className="grid gap-4 sm:grid-cols-2" data-tour="pathways">
           {publicPathways.map(p => {
             const Icon = icons[p.slug];
-            const deep = pathwayContent[p.slug];
+            const deep = pathway(p.slug);
             return (
               <Card key={p.slug} className="border-slate-200 transition hover:border-oww-cyan/40 hover:shadow-md">
                 <CardHeader className="flex flex-row items-start gap-3 space-y-0">
@@ -244,9 +272,14 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
         </div>
       </OwwSection>
 
+      {owwTrainingCenter ? (
       <OwwSection
         title={owwTrainingCenter.title}
-        description={`In partnership with ${owwTrainingCenter.partner} · ${owwTrainingCenter.locations.join(' · ')}`}
+        description={
+          owwTrainingCenter.locations.length
+            ? `In partnership with ${owwTrainingCenter.partner} · ${owwTrainingCenter.locations.join(' · ')}`
+            : `With ${owwTrainingCenter.partner}`
+        }
       >
         <div className="rounded-xl border border-slate-200 bg-white p-6">
           <p className="text-lg leading-relaxed text-slate-700">{owwTrainingCenter.summary}</p>
@@ -259,6 +292,7 @@ function FallbackHome({ state, testimonials }: { state: string; testimonials: Te
           </ul>
         </div>
       </OwwSection>
+      ) : null}
 
       <OwwSection title="Voices from the field" description="Stories from operators, managers, and educators.">
         <div className="grid gap-4 md:grid-cols-2">

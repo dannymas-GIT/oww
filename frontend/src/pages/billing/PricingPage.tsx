@@ -79,7 +79,7 @@ export default function PricingPage() {
           <Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
           <p>
             <strong>Sample pricing.</strong> These amounts are placeholders for demonstration. Checkout runs in sample mode — no card is
-            charged. NYSAWWA sets live rates in the Stripe Dashboard when going into production.
+            charged. Live rates are set in the Stripe Dashboard when going into production.
           </p>
         </div>
       ) : null}

@@ -11,6 +11,7 @@ from app.models.engagement_event import EngagementEvent
 from app.models.interest_submission import InterestSubmission
 from app.models.resource_item import ResourceItem
 from app.models.user import User
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/ambassador", tags=["ambassador"])
 
@@ -84,7 +85,7 @@ def ambassador_desk(
     return {
         "full_name": user.full_name,
         "email": user.email,
-        "state_code": user.state_code or "NY",
+        "state_code": coerce_state(user.state_code),
         "interest_count": len(interests),
         "outreach_count": len(outreach),
         "toolkit_count": len(toolkits),

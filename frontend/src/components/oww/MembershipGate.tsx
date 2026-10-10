@@ -87,7 +87,7 @@ export function PaywallCard({
           </h2>
           <p className="text-lg leading-relaxed text-slate-700">
             {suspended
-              ? 'NYSAWWA has suspended this utility account. Hiring tools and Water Workforce 360 stay locked until the account is reinstated. Contact NYSAWWA for help.'
+              ? 'This utility account has been suspended. Hiring tools and Water Workforce 360 stay locked until the account is reinstated. Contact the platform team for your jurisdiction.'
               : expired
                 ? `Your ${membership?.plan_name} membership ended. Renew to keep posting jobs, searching the resume bank, and messaging candidates.`
                 : 'Employer and Utility memberships fund One Water Workforce and open job posting, candidate search, applicant tracking, and interview scheduling.'}

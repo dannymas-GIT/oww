@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.models.membership import Membership, MembershipPlan
 from app.models.user import User
 from app.services.membership_service import log_event, membership_to_dict
+from app.core.scoping import coerce_state
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def create_checkout(db: Session, user: User, plan: MembershipPlan, *, success_ur
     membership = Membership(
         user_id=user.id,
         org_id=org_id,
-        state_code=user.state_code or "NY",
+        state_code=coerce_state(user.state_code),
         plan_code=plan.code,
         status="pending",
         provider="sample" if sample_mode() else "stripe",

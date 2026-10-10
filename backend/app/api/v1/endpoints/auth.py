@@ -90,7 +90,9 @@ def register_utility_admin(
     email = str(body.email).strip().lower()
     if "@" not in email or "." not in email.split("@")[-1]:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Enter a valid work email")
-    state = (body.state_code or "NY").strip().upper()[:2]
+    from app.core.scoping import coerce_state
+
+    state = coerce_state(body.state_code)
     utility_name = body.utility_name.strip()
     full_name = body.full_name.strip()
     phone = (body.phone or "").strip() or None

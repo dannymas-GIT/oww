@@ -33,6 +33,7 @@ from app.services import home_hero_slide_service as hero_slides
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 from app.services.role_catalog_service import (
+from app.core.scoping import coerce_state
     PLATFORM_EDITOR_ROLES,
     PLATFORM_OPS_ROLES,
     is_platform_staff,
@@ -56,6 +57,16 @@ class JurisdictionIn(BaseModel):
     is_active: bool = True
     partner_name: str | None = None
     tagline: str | None = None
+    demonym: str | None = None
+    geo_unit_label: str | None = None
+    regions: list[Any] | None = None
+    regulators: list[Any] | None = None
+    certifications: list[Any] | None = None
+    copy_tokens: dict[str, Any] | None = None
+    map: dict[str, Any] | None = None
+    partner: dict[str, Any] | None = None
+    branding: dict[str, Any] | None = None
+    enabled_features: dict[str, Any] | None = None
 
 class CmsIn(BaseModel):
     id: int | None = None
@@ -157,24 +168,105 @@ def reset_password(user_id: int, body: PasswordReset, db: Session = Depends(get_
     db.commit()
     return {"ok": True}
 
+def _admin_jurisdiction_ser(j: Jurisdiction, cfg: dict | None = None) -> dict:
+    partner = getattr(j, "partner", None) or (cfg or {}).get("partner") or {}
+    regions = j.regions or (cfg or {}).get("regions") or []
+    return {
+        "id": j.id,
+        "code": j.state_code.lower(),
+        "name": j.name,
+        "is_active": j.is_active,
+        "partner_name": j.partner_name or partner.get("short"),
+        "tagline": j.tagline,
+        "demonym": getattr(j, "demonym", None) or (cfg or {}).get("demonym"),
+        "geo_unit_label": getattr(j, "geo_unit_label", None) or (cfg or {}).get("geo_unit_label"),
+        "regions": regions,
+        "regions_count": len(regions) if isinstance(regions, list) else 0,
+        "regulators": getattr(j, "regulators", None) or (cfg or {}).get("regulators") or [],
+        "certifications": getattr(j, "certifications", None) or (cfg or {}).get("certification_ladders") or [],
+        "copy_tokens": getattr(j, "copy_tokens", None) or (cfg or {}).get("copy_tokens") or {},
+        "map": getattr(j, "map", None) or (cfg or {}).get("map") or {},
+        "partner": partner,
+        "branding": j.branding or {},
+        "enabled_features": j.enabled_features or {},
+        "pack_version": (cfg or {}).get("pack_version"),
+    }
+
+
 @router.get("/jurisdictions")
 def admin_jurisdictions(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin", "state_admin"))):
-    return [{"id": j.id, "code": j.state_code.lower(), "name": j.name, "is_active": j.is_active} for j in db.query(Jurisdiction).all()]
+    from app.core.scoping import scope_state
+    from app.jurisdictions.registry import effective, ensure_jurisdictions
+
+    ensure_jurisdictions(db)
+    q = db.query(Jurisdiction)
+    scoped = scope_state(user)
+    if scoped:
+        q = q.filter(Jurisdiction.state_code == scoped)
+    rows = q.order_by(Jurisdiction.state_code).all()
+    return [_admin_jurisdiction_ser(j, effective(db, j.state_code)) for j in rows]
+
+
+@router.get("/jurisdictions/{code}")
+def admin_jurisdiction_detail(
+    code: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles("platform_admin", "state_admin")),
+):
+    from app.core.scoping import require_state_access
+    from app.jurisdictions.registry import effective, ensure_jurisdictions
+
+    ensure_jurisdictions(db)
+    state = require_state_access(user, code)
+    j = db.query(Jurisdiction).filter(Jurisdiction.state_code == state).first()
+    if not j:
+        raise HTTPException(404, "Not found")
+    return _admin_jurisdiction_ser(j, effective(db, state))
+
 
 @router.post("/jurisdictions")
 def upsert_jurisdiction(body: JurisdictionIn, db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin"))):
-    code = body.code.upper()
+    from app.jurisdictions.registry import ensure_jurisdictions, normalize_code
+
+    ensure_jurisdictions(db)
+    code = normalize_code(body.code)
     j = db.query(Jurisdiction).filter(Jurisdiction.state_code == code).first()
     if not j:
         j = Jurisdiction(state_code=code, name=body.name)
         db.add(j)
     j.name = body.name
     j.is_active = body.is_active
-    j.partner_name = body.partner_name
-    j.tagline = body.tagline
+    if body.partner_name is not None:
+        j.partner_name = body.partner_name
+    if body.tagline is not None:
+        j.tagline = body.tagline
+    if body.demonym is not None:
+        j.demonym = body.demonym
+    if body.geo_unit_label is not None:
+        j.geo_unit_label = body.geo_unit_label
+    if body.regions is not None:
+        j.regions = body.regions
+    if body.regulators is not None:
+        j.regulators = body.regulators
+    if body.certifications is not None:
+        j.certifications = body.certifications
+    if body.copy_tokens is not None:
+        j.copy_tokens = body.copy_tokens
+    if body.map is not None:
+        j.map = body.map
+    if body.partner is not None:
+        j.partner = body.partner
+        if body.partner.get("short") and not body.partner_name:
+            j.partner_name = body.partner.get("short")
+    if body.branding is not None:
+        j.branding = body.branding
+    if body.enabled_features is not None:
+        j.enabled_features = body.enabled_features
     db.commit()
     db.refresh(j)
-    return {"id": j.id, "code": j.state_code.lower(), "name": j.name, "is_active": j.is_active}
+    from app.jurisdictions.registry import effective
+
+    return _admin_jurisdiction_ser(j, effective(db, code))
 
 @router.get("/cms/catalog")
 def cms_catalog(user: User = Depends(require_roles(*CMS_ROLES))):
@@ -208,7 +300,7 @@ async def upload_cms_media(
         db,
         upload=file,
         uploaded_by=user.id,
-        state_code=state_code or user.state_code or "NY",
+        state_code=coerce_state(state_code or user.state_code),
     )
     return media_service.asset_to_dict(asset)
 
@@ -305,7 +397,7 @@ def create_cms(body: CmsIn, db: Session = Depends(get_db), user: User = Depends(
     if template not in cms_service.TEMPLATES:
         raise HTTPException(400, f"Unknown template: {template}")
     slug = (body.slug or cms_service.TEMPLATES[template]["suggested_slug"] or "page").strip().lower()
-    state = (body.state_code or user.state_code or "NY").upper()[:2]
+    state = coerce_state(body.state_code or user.state_code)
     if db.query(ContentPage).filter(ContentPage.state_code == state, ContentPage.slug == slug).first():
         raise HTTPException(409, "A page with this slug already exists for the state")
     sections = body.sections if body.sections is not None else cms_service.default_sections_for_template(template)
@@ -460,7 +552,7 @@ def list_certs(db: Session = Depends(get_db), user: User = Depends(require_roles
 
 @router.post("/certifications")
 def create_cert(body: CertIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
-    c = CertificationCatalog(name=body.name or "Certification", issuer=body.issuer, level=body.level or body.category, state_code=(body.state_code or "NY").upper())
+    c = CertificationCatalog(name=body.name or "Certification", issuer=body.issuer, level=body.level or body.category, state_code=coerce_state(body.state_code))
     db.add(c)
     db.commit()
     db.refresh(c)
@@ -483,7 +575,7 @@ def list_locations(db: Session = Depends(get_db), user: User = Depends(require_r
 
 @router.post("/locations")
 def create_location(body: LocIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
-    l = Location(state_code=(body.state_code or "NY").upper(), city=body.city or body.name, region=body.region, zip_code=body.zip_code, lat=body.latitude, lng=body.longitude)
+    l = Location(state_code=coerce_state(body.state_code), city=body.city or body.name, region=body.region, zip_code=body.zip_code, lat=body.latitude, lng=body.longitude)
     db.add(l)
     db.commit()
     db.refresh(l)
@@ -503,10 +595,22 @@ def patch_location(lid: int, body: LocIn, db: Session = Depends(get_db), user: U
 
 @router.get("/map")
 def national_map(db: Session = Depends(get_db), user: User = Depends(require_roles("platform_admin"))):
+    from app.jurisdictions.registry import ensure_jurisdictions
+
+    ensure_jurisdictions(db)
     juris = db.query(Jurisdiction).all()
     out = []
     for j in juris:
         individuals = db.query(IndividualProfile).filter(IndividualProfile.state_code == j.state_code).count()
         jobs = db.query(Job).filter(Job.state_code == j.state_code).count()
-        out.append({"code": j.state_code, "name": j.name, "individuals": individuals, "jobs": jobs})
+        orgs = db.query(Organization).filter(Organization.state_code == j.state_code).count()
+        out.append(
+            {
+                "code": j.state_code,
+                "name": j.name,
+                "individuals": individuals,
+                "jobs": jobs,
+                "orgs": orgs,
+            }
+        )
     return {"jurisdictions": out}

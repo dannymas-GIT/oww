@@ -79,7 +79,7 @@ export default function InterestFormPage() {
       <OwwPageHero
         eyebrow="Connect"
         title="Express interest"
-        description="Tell us how you want to engage. Fields mirror the NYSAWWA outreach intake so partners can follow up."
+        description="Tell us how you want to engage. Fields mirror the statewide outreach intake so partners can follow up."
       />
       <Card>
         <CardContent className="pt-6">

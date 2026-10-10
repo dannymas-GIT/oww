@@ -116,8 +116,9 @@ def compute_share_payload(db: Session, org: Organization) -> dict[str, Any] | No
     return payload
 
 
-def list_sharing_orgs(db: Session, *, state_code: str = "NY") -> list[Organization]:
-    state = (state_code or "NY").upper()[:2]
+def list_sharing_orgs(db: Session, *, state_code: str | None = None) -> list[Organization]:
+    from app.core.scoping import coerce_state
+    state = coerce_state(state_code)
     rows = (
         db.query(Organization)
         .filter(Organization.state_code == state, Organization.is_active.is_(True))
@@ -127,7 +128,8 @@ def list_sharing_orgs(db: Session, *, state_code: str = "NY") -> list[Organizati
     return [o for o in rows if has_any_share(o.public_share_prefs)]
 
 
-def statewide_workforce_stats(db: Session, *, state_code: str = "NY") -> dict[str, Any]:
+def statewide_workforce_stats(db: Session, *, state_code: str | None = None) -> dict[str, Any]:
+    from app.core.scoping import coerce_state
     orgs = list_sharing_orgs(db, state_code=state_code)
     contributors: list[dict[str, Any]] = []
     totals: dict[str, int] = {k: 0 for k in NUMERIC_SHARE_KEYS}
@@ -147,7 +149,7 @@ def statewide_workforce_stats(db: Session, *, state_code: str = "NY") -> dict[st
 
     summary = {k: totals[k] for k in NUMERIC_SHARE_KEYS if k in keys_present}
     return {
-        "state_code": (state_code or "NY").upper()[:2],
+        "state_code": coerce_state(state_code),
         "org_count": len(contributors),
         "summary": summary,
         "keys_present": sorted(keys_present),

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
 from app.services import otp_service
+from app.jurisdictions.registry import normalize_code
 
 
 def user_to_dict(user: User) -> dict[str, Any]:
@@ -20,7 +21,7 @@ def user_to_dict(user: User) -> dict[str, Any]:
         "full_name": user.full_name,
         "phone": user.phone,
         "roles": user.roles or [],
-        "jurisdiction_code": (user.state_code or "NY").lower(),
+        "jurisdiction_code": normalize_code(user.state_code).lower(),
         "is_active": user.is_active,
         "org_id": user.org_id,
     }

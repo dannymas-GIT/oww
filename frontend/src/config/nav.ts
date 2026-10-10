@@ -332,11 +332,11 @@ export const roleNavGroups: NavGroup[] = [
             description: 'Jurisdiction footprint across deployments',
           },
           {
-            label: 'NY regions map',
+            label: 'Regions map',
             path: '/admin/regions',
             icon: MapPin,
             roles: PLATFORM_OPS_ROLES,
-            description: 'NYSAWWA 10 economic regions choropleth',
+            description: 'Per-jurisdiction regions (NY choropleth; NJ/CT lists)',
           },
           {
             label: 'Platform settings',

@@ -56,4 +56,20 @@ def init_db() -> None:
             )
         )
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_home_hero_slides_scope ON home_hero_slides (scope)"))
+        # Multi-state jurisdiction packs (DB overrides of in-code packs)
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS demonym VARCHAR(120)"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS geo_unit_label VARCHAR(40)"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS regulators JSONB"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS certifications JSONB"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS copy_tokens JSONB"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS map JSONB"))
+        conn.execute(text("ALTER TABLE jurisdictions ADD COLUMN IF NOT EXISTS partner JSONB"))
+        conn.execute(text("ALTER TABLE certification_catalog ADD COLUMN IF NOT EXISTS category VARCHAR(40)"))
+        conn.execute(
+            text("ALTER TABLE certification_catalog ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0")
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_certification_catalog_category ON certification_catalog (category)"))
+        conn.execute(
+            text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS operating_states JSONB DEFAULT '[]'::jsonb")
+        )
 

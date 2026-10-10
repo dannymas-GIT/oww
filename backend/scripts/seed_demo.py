@@ -120,11 +120,15 @@ def main():
     init_db()
     db = SessionLocal()
     try:
-        j = db.query(Jurisdiction).filter(Jurisdiction.state_code == "NY").first()
-        if not j:
-            j = Jurisdiction(state_code="NY", name="New York", partner_name="NYSAWWA", tagline="One Water Workforce", regions=REGIONS, branding={"primary": "#07111f"}, enabled_features={"jobs": True, "matching": True})
-            db.add(j)
-            db.commit()
+        from app.jurisdictions.registry import all_packs, ensure_jurisdictions
+        from app.services.cms_service import ensure_default_home_page
+        from app.services.home_hero_slide_service import (
+            ensure_default_slides,
+            ensure_pathway_slides,
+            ensure_product_slides,
+        )
+
+        ensure_jurisdictions(db)
 
         ensure_default_plans(db)
         admin = upsert_user(db, "oww-admin", "admin@onewaterworkforce.org", ["platform_admin"], "OWW Platform Admin", PASSWORD)
@@ -167,6 +171,24 @@ def main():
             "NY State Admin (Demo)",
             PASSWORD,
             state="NY",
+        )
+        upsert_user(
+            db,
+            "state-admin-nj",
+            "state.admin.nj@example.org",
+            ["state_admin"],
+            "NJ State Admin (Demo)",
+            PASSWORD,
+            state="NJ",
+        )
+        upsert_user(
+            db,
+            "state-admin-ct",
+            "state.admin.ct@example.org",
+            ["state_admin"],
+            "CT State Admin (Demo)",
+            PASSWORD,
+            state="CT",
         )
 
         # Delegate-able platform staff (jenny/platform_admin can assign these)
@@ -364,22 +386,98 @@ def main():
                 ResourceItem(state_code="NY", pathway="educate", category="lesson_plan", title="Middle school water careers lesson", url="/ny/educate"),
                 ResourceItem(state_code="NY", pathway="ambassador", category="toolkit", title="Ambassador outreach toolkit", url="/ny/ambassador"),
             ])
-        from app.services.cms_service import ensure_default_home_page
-        from app.services.home_hero_slide_service import (
-            ensure_default_slides,
-            ensure_pathway_slides,
-            ensure_product_slides,
-        )
+        for pack in all_packs():
+            ensure_default_home_page(db, state_code=pack.code)
+            ensure_default_slides(db, state_code=pack.code)
+            ensure_product_slides(db, state_code=pack.code)
+            ensure_pathway_slides(db, state_code=pack.code)
 
-        ensure_default_home_page(db, state_code="NY")
-        ensure_default_slides(db, state_code="NY")
-        ensure_product_slides(db, state_code="NY")
-        ensure_pathway_slides(db, state_code="NY")
-        if db.query(CertificationCatalog).count() == 0:
-            db.add_all([
-                CertificationCatalog(state_code="NY", name="Grade 2A Water Treatment", level="2A", issuer="NYSDOH"),
-                CertificationCatalog(state_code="NY", name="Wastewater Operator Grade 2", level="2", issuer="NYSDEC"),
-            ])
+        # Certification ladders from jurisdiction packs (idempotent per state+level)
+        for pack in all_packs():
+            for cert in pack.certification_ladders:
+                exists = (
+                    db.query(CertificationCatalog)
+                    .filter(
+                        CertificationCatalog.state_code == pack.code,
+                        CertificationCatalog.level == cert.level,
+                        CertificationCatalog.issuer == cert.issuer,
+                    )
+                    .first()
+                )
+                if exists:
+                    exists.name = cert.name
+                    exists.category = cert.category
+                    exists.sort_order = cert.sort_order
+                    exists.description = cert.description
+                    continue
+                db.add(
+                    CertificationCatalog(
+                        state_code=pack.code,
+                        name=cert.name,
+                        level=cert.level,
+                        issuer=cert.issuer,
+                        description=cert.description,
+                        category=cert.category,
+                        sort_order=cert.sort_order,
+                    )
+                )
+
+        # NJ / CT sample utilities (multi-state demo)
+        nj_ct_orgs = [
+            ("Passaic Valley Water Commission", "NJ", "North", 40.86, -74.13),
+            ("New Jersey American Water — Coastal", "NJ", "Central", 40.22, -74.01),
+            ("Regional Water Authority (South Central CT)", "CT", "South Central Connecticut", 41.31, -72.92),
+            ("Metropolitan District Commission", "CT", "Capitol", 41.76, -72.68),
+        ]
+        for name, st, region, lat, lng in nj_ct_orgs:
+            org = db.query(Organization).filter(Organization.name == name).first()
+            if not org:
+                org = Organization(name=name, state_code=st)
+                db.add(org)
+            org.state_code = st
+            org.org_type = ["public_utility"]
+            org.region = region
+            org.city = name.split()[0]
+            org.latitude = lat
+            org.longitude = lng
+            org.description = f"{name} partners with One Water Workforce in {st}."
+            org.hiring_projections = {"next_12_months": 4}
+            org.statistics = {
+                "hires_12mo": 2,
+                "applicants_contacted": 8,
+                "workforce_size": 45,
+                "open_jobs": 2,
+            }
+            org.public_share_prefs = {
+                "open_jobs": True,
+                "workforce_size": True,
+                "hires_12mo": True,
+            }
+            org.is_active = True
+        db.commit()
+
+        for name, st, region, lat, lng in nj_ct_orgs:
+            org = db.query(Organization).filter(Organization.name == name).first()
+            if not org:
+                continue
+            if not db.query(Job).filter(Job.org_id == org.id).first():
+                db.add(
+                    Job(
+                        org_id=org.id,
+                        state_code=st,
+                        title=f"Water Treatment Operator — {region}",
+                        description=f"Demo opening for {name}.",
+                        opportunity_type="full_time",
+                        career_areas=["drinking_water_treatment"],
+                        primary_career_area="drinking_water_treatment",
+                        city=org.city,
+                        region=region,
+                        status="open",
+                        latitude=lat,
+                        longitude=lng,
+                    )
+                )
+        db.commit()
         if db.query(Location).count() == 0:
             for region, city, lat, lng in [
                 ("Capital Region", "Albany", 42.65, -73.75),
@@ -487,7 +585,7 @@ def main():
         persona_worlds = sample_data_service.ensure_all_persona_sample_worlds(db)
 
         print(f"Seed complete. Admin={admin.username} Jenny={jenny.username} matches_refreshed={n}")
-        print(f"Password for admin accounts (oww-admin, jenny, state-admin-ny, dmas, smosquea, jnolan, tmcknight, oww-editor, oww-ops, oww-manager): {PASSWORD}")
+        print(f"Password for admin accounts (oww-admin, jenny, state-admin-ny/nj/ct, dmas, smosquea, jnolan, tmcknight, oww-editor, oww-ops, oww-manager): {PASSWORD}")
         print("Pending review demos: utility-pending1 (paid), utility-pending2 (unpaid)")
         print(f"Persona sample worlds: { {k: v.get('ok') for k, v in persona_worlds.items()} }")
     finally:

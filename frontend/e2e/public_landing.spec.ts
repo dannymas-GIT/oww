@@ -18,4 +18,16 @@ test.describe('Public landing', () => {
     await page.goto('/ny/career');
     await expect(page.getByRole('link', { name: /Back to NY home/i })).toBeVisible();
   });
+
+  for (const state of ['nj', 'ct'] as const) {
+    test(`${state.toUpperCase()} home is partner-neutral (no NYSAWWA / New York leakage)`, async ({
+      page,
+    }) => {
+      await page.goto(`/${state}`);
+      await expect(page.locator('body')).not.toContainText('NYSAWWA');
+      await expect(page.locator('body')).not.toContainText('New Yorkers');
+      // Footer partner lockup should not claim NYSAWWA
+      await expect(page.locator('footer')).not.toContainText('NYSAWWA');
+    });
+  }
 });

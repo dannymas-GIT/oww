@@ -239,11 +239,35 @@ export interface OrgOption {
   region?: string | null;
 }
 
+export type {
+  JurisdictionConfig,
+  JurisdictionListItem,
+  JurisdictionMap,
+  JurisdictionPartner,
+  JurisdictionRegion,
+  JurisdictionRegulator,
+} from '@/types/jurisdiction';
+
+/** Admin / list row — extended fields optional for backwards compatibility. */
 export interface Jurisdiction {
   id: number;
   code: string;
   name: string;
   is_active: boolean;
+  partner_name?: string | null;
+  tagline?: string | null;
+  demonym?: string | null;
+  geo_unit_label?: string | null;
+  regions?: import('@/types/jurisdiction').JurisdictionRegion[];
+  regions_count?: number;
+  regulators?: import('@/types/jurisdiction').JurisdictionRegulator[];
+  certifications?: unknown[];
+  copy_tokens?: Record<string, string>;
+  map?: import('@/types/jurisdiction').JurisdictionMap;
+  partner?: import('@/types/jurisdiction').JurisdictionPartner;
+  branding?: Record<string, unknown>;
+  enabled_features?: Record<string, unknown>;
+  pack_version?: string;
 }
 
 export interface TaxonomyOption {
