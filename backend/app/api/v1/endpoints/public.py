@@ -18,6 +18,7 @@ from app.models.media_asset import MediaAsset
 from app.services.engagement_service import track
 from app.services import cms_service, media_service
 from app.services import home_hero_slide_service as hero_slides
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -93,7 +94,7 @@ def _org_ser(o: Organization, db: Session | None = None, *, include_public_stats
 @router.post("/interest")
 def submit_interest(body: InterestIn, db: Session = Depends(get_db)):
     row = InterestSubmission(
-        state_code=(body.state_code or "NY").upper(),
+        state_code=coerce_state(body.state_code),
         full_name=f"{body.first_name} {body.last_name}".strip(),
         email=body.email.lower(),
         phone=body.phone,
@@ -121,7 +122,7 @@ def submit_program(body: ProgramIn, db: Session = Depends(get_db)):
         program_type=body.program_type,
         description=body.description,
         tags=[body.program_type],
-        state_code=(body.state_code or "NY").upper(),
+        state_code=coerce_state(body.state_code),
         status="pending",
         payload={"website": body.website},
     )

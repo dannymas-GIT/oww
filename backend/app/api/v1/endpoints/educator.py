@@ -13,6 +13,7 @@ from app.models.course import Course
 from app.models.event import Event
 from app.models.program_submission import ProgramSubmission
 from app.models.user import User
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/educator", tags=["educator"])
 
@@ -71,7 +72,7 @@ def list_courses(db: Session = Depends(get_db), user: User = Depends(require_rol
 @router.post("/courses")
 def create_course(body: CourseIn, db: Session = Depends(get_db), user: User = Depends(require_roles("educator", "platform_admin"))):
     c = Course(
-        state_code=user.state_code or "NY",
+        state_code=coerce_state(user.state_code),
         educator_user_id=user.id,
         title=body.title,
         description=body.description,
@@ -95,7 +96,7 @@ def list_events(db: Session = Depends(get_db), user: User = Depends(require_role
 def create_event(body: EventIn, db: Session = Depends(get_db), user: User = Depends(require_roles("educator", "platform_admin"))):
     when = datetime.fromisoformat(body.starts_at.replace("Z", "+00:00")).replace(tzinfo=None)
     e = Event(
-        state_code=user.state_code or "NY",
+        state_code=coerce_state(user.state_code),
         organizer_user_id=user.id,
         title=body.title,
         description=body.description,

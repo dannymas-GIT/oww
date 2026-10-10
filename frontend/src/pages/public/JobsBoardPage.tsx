@@ -60,7 +60,7 @@ export default function JobsBoardPage() {
       <OwwPageHero
         eyebrow={`${state.toUpperCase()} jobs`}
         title="Jobs board"
-        description="Explore openings across the water sector. Sort and filter the table; markers show geocoded roles. Toggle NYSAWWA regions on the map when viewing New York."
+        description="Explore openings across the water sector. Sort and filter the table; markers show geocoded roles. Toggle region overlays on the map when available for this jurisdiction."
       />
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="h-72 md:h-96">

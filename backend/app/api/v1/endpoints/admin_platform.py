@@ -26,6 +26,7 @@ from app.services import role_catalog_service as roles
 from app.services.auth_service import user_to_dict
 from app.services.engagement_service import track
 from app.services.membership_service import effective_status, ensure_default_plans, expiring_within, log_event, membership_to_dict, plan_to_dict, summary
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/admin", tags=["admin-platform"])
 
@@ -36,10 +37,9 @@ PLATFORM_STAFF_CODES = roles.PLATFORM_STAFF_ROLES
 
 
 def _scope_state(user: User) -> Optional[str]:
-    # National platform staff see all states; state_admin stays in-state.
-    if user.has_any_role(*tuple(PLATFORM_STAFF_CODES)):
-        return None
-    return user.state_code
+    from app.core.scoping import scope_state
+
+    return scope_state(user)
 
 
 def _user_dict_with_sample(u: User, org_name: str | None = None) -> dict[str, Any]:
@@ -300,7 +300,7 @@ def send_comm(comm_id: int, db: Session = Depends(get_db), user: User = Depends(
     if c.status == "sent":
         raise HTTPException(400, "Already sent")
     c = comms.send(db, c, _scope_state(user))
-    track(db, event_type="communication_sent", pipeline_stage="engagement", actor_user_id=user.id, state_code=c.state_code or "NY")
+    track(db, event_type="communication_sent", pipeline_stage="engagement", actor_user_id=user.id, state_code=coerce_state(c.state_code))
     return comms.to_dict(c)
 
 
@@ -334,7 +334,7 @@ def create_user(body: UserCreate, db: Session = Depends(get_db), admin: User = D
         raise HTTPException(409, "Username or email already exists")
     org_id = body.org_id
     temp = body.temporary_password or secrets.token_urlsafe(10)
-    u = User(username=body.username, email=body.email.lower(), full_name=body.full_name, roles=body.roles, org_id=org_id, phone=body.phone, state_code=(body.state_code or admin.state_code or "NY").upper(), is_active=True, contact_prefs={"must_change_password": True})
+    u = User(username=body.username, email=body.email.lower(), full_name=body.full_name, roles=body.roles, org_id=org_id, phone=body.phone, state_code=coerce_state(body.state_code or admin.state_code), is_active=True, contact_prefs={"must_change_password": True})
     u.hashed_password = get_password_hash(temp)
     db.add(u)
     db.commit()

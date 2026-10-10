@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { JurisdictionProvider, useOptionalJurisdiction } from '@/context/JurisdictionContext';
 import { navForRoles, publicPathways, sectionNavEntries, sectionToDropdown } from '@/config/nav';
 import { Button } from '@/components/ui/button';
 import { OwwLogo } from '@/components/oww/OwwLogo';
@@ -85,10 +86,12 @@ function RoleNav() {
   );
 }
 
-export function AppShell() {
+function AppShellInner() {
   const { user, logout, userRoles, isAuthenticated } = useAuth();
   const params = useParams();
   const state = (params.state || DEFAULT_STATE).toLowerCase();
+  const jx = useOptionalJurisdiction();
+  const partnerShort = jx?.partnerShort || 'One Water Workforce';
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const groups = navForRoles(userRoles);
@@ -338,7 +341,7 @@ export function AppShell() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <OwwLogo to={isAuthenticated ? roleHome : `/${state}`} size="footer" />
             <p className="text-sm text-slate-600">
-              © {new Date().getFullYear()} One Water Workforce · NYSAWWA
+              © {new Date().getFullYear()} One Water Workforce · {partnerShort}
               <span className="mt-1 block text-oww-cyan">From GED to PhD: A Job for Everyone</span>
             </p>
           </div>
@@ -375,5 +378,15 @@ export function AppShell() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export function AppShell() {
+  const params = useParams();
+  const state = (params.state || DEFAULT_STATE).toLowerCase().slice(0, 2);
+  return (
+    <JurisdictionProvider code={state}>
+      <AppShellInner />
+    </JurisdictionProvider>
   );
 }

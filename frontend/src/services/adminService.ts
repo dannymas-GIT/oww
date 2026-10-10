@@ -268,6 +268,6 @@ export async function listAdminJurisdictions() {
 export async function nationalMapData() {
   const { data } = await api.get('/admin/map');
   return data as {
-    jurisdictions: Array<{ code: string; name: string; individuals: number; jobs: number }>;
+    jurisdictions: Array<{ code: string; name: string; individuals: number; jobs: number; orgs?: number }>;
   };
 }

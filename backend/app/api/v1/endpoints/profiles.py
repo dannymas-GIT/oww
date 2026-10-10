@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.individual_profile import IndividualProfile
 from app.services.matching_service import refresh_matches_for_profile
 from app.services.engagement_service import track
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
@@ -41,7 +42,7 @@ def _completeness(answers: dict) -> int:
 def get_me(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     p = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
     if not p:
-        p = IndividualProfile(user_id=user.id, state_code=user.state_code or "NY", answers={}, display_name=user.full_name)
+        p = IndividualProfile(user_id=user.id, state_code=coerce_state(user.state_code), answers={}, display_name=user.full_name)
         db.add(p)
         db.commit()
         db.refresh(p)
@@ -51,7 +52,7 @@ def get_me(db: Session = Depends(get_db), user: User = Depends(get_current_user)
 def put_me(body: ProfileIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     p = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
     if not p:
-        p = IndividualProfile(user_id=user.id, state_code=user.state_code or "NY", answers={})
+        p = IndividualProfile(user_id=user.id, state_code=coerce_state(user.state_code), answers={})
         db.add(p)
     p.answers = body.answers or {}
     if body.display_name is not None:

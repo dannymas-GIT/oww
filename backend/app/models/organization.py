@@ -13,6 +13,8 @@ class Organization(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     state_code = Column(String(2), nullable=False, default="NY", index=True)
+    # Additional states where this employer operates (multi-state utilities).
+    operating_states = Column(JSONB, nullable=False, default=list)
     name = Column(String(255), nullable=False, index=True)
     slug = Column(String(255), nullable=True, unique=True, index=True)
     org_type = Column(JSONB, nullable=False, default=list)

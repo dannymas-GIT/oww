@@ -37,7 +37,9 @@ def _ensure_org(db: Session, user: User) -> Organization:
         org = db.query(Organization).filter(Organization.id == user.org_id).first()
         if org:
             return org
-    org = Organization(name=f"{user.full_name or user.username} Organization", state_code=user.state_code or "NY", profile={})
+    from app.core.scoping import coerce_state
+
+    org = Organization(name=f"{user.full_name or user.username} Organization", state_code=coerce_state(user.state_code), profile={})
     db.add(org)
     db.commit()
     db.refresh(org)

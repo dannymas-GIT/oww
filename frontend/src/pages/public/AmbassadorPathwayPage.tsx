@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { PathwayPageShell } from '@/components/oww/PathwayPageShell';
 import { OwwSection } from '@/components/oww/OwwSection';
 import { useAuth } from '@/context/AuthContext';
+import { useJurisdiction } from '@/context/JurisdictionContext';
 import { DEFAULT_STATE } from '@/lib/constants';
-import { owwImpactStats, owwMission } from '@/content/owwPublicContent';
 
 const talkingPoints = [
   'Workforce development is a current operational necessity—not a future problem.',
@@ -17,10 +17,10 @@ export default function AmbassadorPathwayPage() {
   const params = useParams();
   const state = (params.state || DEFAULT_STATE).toLowerCase();
   const { user, isAuthenticated } = useAuth();
+  const { impactStats, mission, partnerShort, config } = useJurisdiction();
   const navigate = useNavigate();
   const isAmbassador = Boolean(user?.roles?.includes('ambassador'));
 
-  // Signed-in ambassadors (including View as role) land on the private desk, not this public page.
   useEffect(() => {
     if (isAuthenticated && isAmbassador) {
       navigate('/ambassador', { replace: true });
@@ -43,7 +43,7 @@ export default function AmbassadorPathwayPage() {
         <>
           <OwwSection
             title="Talking points you can use tomorrow"
-            description="Grounded in NYSAWWA leadership messaging and New York workforce context."
+            description={`Grounded in ${partnerShort} messaging and ${config?.name || state.toUpperCase()} workforce context.`}
           >
             <ul className="space-y-3">
               {talkingPoints.map(point => (
@@ -55,7 +55,7 @@ export default function AmbassadorPathwayPage() {
           </OwwSection>
           <OwwSection title="Shareable workforce facts" description="Use these figures when opening a classroom, board, or civic conversation.">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {owwImpactStats.map(stat => (
+              {impactStats.map(stat => (
                 <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-4">
                   <p className="font-display text-3xl font-semibold text-navy">{stat.value}</p>
                   <p className="mt-1 text-base font-semibold text-slate-800">{stat.label}</p>
@@ -64,9 +64,9 @@ export default function AmbassadorPathwayPage() {
               ))}
             </div>
             <p className="mt-4 text-base text-slate-600">
-              Partner inquiries: {owwMission.contact.partnerLabel} ·{' '}
-              <a className="text-sky-800 underline" href={`mailto:${owwMission.contact.partnerEmail}`}>
-                {owwMission.contact.partnerEmail}
+              Partner inquiries: {mission.contact.partnerLabel} ·{' '}
+              <a className="text-sky-800 underline" href={`mailto:${mission.contact.partnerEmail}`}>
+                {mission.contact.partnerEmail}
               </a>
             </p>
           </OwwSection>

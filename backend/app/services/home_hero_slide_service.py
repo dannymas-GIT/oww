@@ -6,6 +6,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.scoping import coerce_state
+from app.jurisdictions.registry import get_pack
+from app.jurisdictions.schema import render_tokens
 from app.models.home_hero_slide import HomeHeroSlide
 
 SLIDE_SCOPES = frozenset({"home", "career", "hire", "educate", "ambassador"})
@@ -18,7 +21,7 @@ DEFAULT_SLIDES: list[dict[str, Any]] = [
         "kicker": "One Water Workforce",
         "title": "From GED to PhD: careers that keep water safe",
         "body": (
-            "OWW connects seekers, educators, ambassadors, and hiring utilities so New York "
+            "OWW connects seekers, educators, ambassadors, and hiring utilities so {state_name} "
             "can recruit and train the next generation of water professionals."
         ),
         "image_url": "/home/stage/oww-careers.jpg",
@@ -310,16 +313,33 @@ def slide_to_dict(row: HomeHeroSlide) -> dict[str, Any]:
     }
 
 
+def _tokens_for_state(state: str) -> dict[str, str]:
+    pack = get_pack(state)
+    if pack:
+        return pack.token_map()
+    return {
+        "state_code": state,
+        "state_name": state,
+        "demonym": f"{state} residents",
+        "partner_short": "One Water Workforce",
+        "partner_lead": "One Water Workforce",
+        "partner_contact": "the platform team",
+        "geo_unit": "County",
+        "tagline": "One Water Workforce",
+    }
+
+
 def _row_from_spec(state: str, spec: dict[str, Any]) -> HomeHeroSlide:
+    tokens = _tokens_for_state(state)
     return HomeHeroSlide(
         state_code=state,
         scope=normalize_scope(spec.get("scope") or "home"),
-        kicker=spec["kicker"],
-        title=spec["title"],
-        body=spec["body"],
+        kicker=render_tokens(spec["kicker"], tokens),
+        title=render_tokens(spec["title"], tokens),
+        body=render_tokens(spec["body"], tokens),
         image_url=spec["image_url"],
-        image_alt=spec["image_alt"],
-        cta_label=spec.get("cta_label"),
+        image_alt=render_tokens(spec["image_alt"], tokens),
+        cta_label=render_tokens(spec["cta_label"], tokens) if spec.get("cta_label") else None,
         cta_href=spec.get("cta_href"),
         sort_order=spec["sort_order"],
         is_active=True,
@@ -329,7 +349,7 @@ def _row_from_spec(state: str, spec: dict[str, Any]) -> HomeHeroSlide:
 def list_public_slides(
     db: Session, *, state_code: str = "NY", scope: str = "home"
 ) -> list[dict[str, Any]]:
-    state = (state_code or "NY").upper()[:2]
+    state = coerce_state(state_code)
     sc = normalize_scope(scope)
     if sc == "home":
         ensure_default_slides(db, state_code=state)
@@ -374,7 +394,7 @@ def list_admin_slides(
 
 
 def ensure_default_slides(db: Session, *, state_code: str = "NY") -> None:
-    state = (state_code or "NY").upper()[:2]
+    state = coerce_state(state_code)
     existing = (
         db.query(HomeHeroSlide)
         .filter(HomeHeroSlide.state_code == state, HomeHeroSlide.scope == "home")
@@ -389,7 +409,7 @@ def ensure_default_slides(db: Session, *, state_code: str = "NY") -> None:
 
 def ensure_product_slides(db: Session, *, state_code: str = "NY") -> None:
     """Insert OWW + WW360 home slides if missing; promote to front; backfill empty CTAs."""
-    state = (state_code or "NY").upper()[:2]
+    state = coerce_state(state_code)
     product_specs = [s for s in DEFAULT_SLIDES if s["title"] in PRODUCT_SLIDE_TITLES]
     changed = False
     for spec in product_specs:
@@ -457,7 +477,7 @@ def ensure_pathway_slides(
     db: Session, *, state_code: str = "NY", scope: str | None = None
 ) -> None:
     """Insert pathway slides by (scope, title) when missing. Does not overwrite admin edits."""
-    state = (state_code or "NY").upper()[:2]
+    state = coerce_state(state_code)
     scopes = [normalize_scope(scope)] if scope else sorted(PATHWAY_SCOPES)
     added = False
     for sc in scopes:
@@ -483,7 +503,7 @@ def ensure_pathway_slides(
 
 def create_slide(db: Session, data: dict[str, Any]) -> HomeHeroSlide:
     row = HomeHeroSlide(
-        state_code=(data.get("state_code") or "NY").upper()[:2],
+        state_code=coerce_state(data.get("state_code")),
         scope=normalize_scope(data.get("scope") or "home"),
         kicker=(data.get("kicker") or "").strip()[:120],
         title=(data.get("title") or "").strip()[:200],

@@ -50,6 +50,8 @@ class Settings(BaseSettings):
 
     CRM_WEBHOOK_URL: str = ""
     OWW_SEED_ADMIN_PASSWORD: str = "ChangeMe-OWW!"
+    # Default state microsite when callers omit state_code (env OWW_DEFAULT_JURISDICTION).
+    DEFAULT_JURISDICTION: str = "NY"
 
     # Stripe — leave STRIPE_SECRET_KEY empty for in-app sample checkout
     STRIPE_SECRET_KEY: str = ""

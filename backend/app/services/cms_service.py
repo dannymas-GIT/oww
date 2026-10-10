@@ -448,7 +448,8 @@ def list_published_blog_posts(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[ContentPage], int]:
-    state = (state_code or "NY").upper()[:2]
+    from app.core.scoping import coerce_state
+    state = coerce_state(state_code)
     q = db.query(ContentPage).filter(
         ContentPage.state_code == state,
         ContentPage.template == BLOG_TEMPLATE,
@@ -482,7 +483,8 @@ def stamp_publish_dates(page: ContentPage, *, publishing: bool) -> None:
 
 
 def ensure_default_home_page(db: Session, *, state_code: str = "NY") -> ContentPage:
-    state = (state_code or "NY").upper()[:2]
+    from app.core.scoping import coerce_state
+    state = coerce_state(state_code)
     page = (
         db.query(ContentPage)
         .filter(ContentPage.state_code == state, ContentPage.slug == "home")

@@ -20,6 +20,7 @@ from app.models.match import Match
 from app.models.message import Message
 from app.models.organization import Organization
 from app.models.user import User
+from app.core.scoping import coerce_state
 
 SAMPLE_PACK = "utility_v1"
 SAMPLE_META = {"is_sample": True, "sample_pack": SAMPLE_PACK}
@@ -222,7 +223,7 @@ def _ensure_sample_profile(db: Session, user: User, *, headline: str, region: st
         return p
     p = IndividualProfile(
         user_id=user.id,
-        state_code=user.state_code or "NY",
+        state_code=coerce_state(user.state_code),
         display_name=user.full_name,
         headline=headline,
         bio="Sample candidate profile — illustrative only. Not a real job seeker.",
@@ -280,7 +281,7 @@ def ensure_utility_sample_pack(
     # so managers can see those sections — not duplicate sample job postings.
     create_sample_jobs = len(real_jobs) == 0
 
-    state = (org.state_code or "NY").upper()
+    state = coerce_state(org.state_code)
     employer = None
     if actor_user_id:
         employer = db.query(User).filter(User.id == actor_user_id).first()
@@ -528,7 +529,7 @@ def _ensure_engagement_samples(
     if not employer:
         return {"ok": False, "reason": "no_org_user"}
 
-    state = (org.state_code or "NY").upper()
+    state = coerce_state(org.state_code)
     profiles = _sample_candidate_profiles(db, org_id=org_id, state=state, limit=3)
 
     if not has_sample_apps:
@@ -728,7 +729,7 @@ def _ensure_candidate_profile(
 ) -> IndividualProfile:
     p = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
     if not p:
-        p = IndividualProfile(user_id=user.id, state_code=user.state_code or "NY")
+        p = IndividualProfile(user_id=user.id, state_code=coerce_state(user.state_code))
         db.add(p)
         db.flush()
     p.display_name = user.full_name or user.username
@@ -1160,7 +1161,7 @@ def _ensure_employer_paywall_world(db: Session) -> dict[str, Any]:
         return {"ok": False, "reason": "org_missing"}
 
     # Ensure sample jobs exist even when real seed jobs are present — teasers for the gate.
-    state = (org.state_code or "NY").upper()
+    state = coerce_state(org.state_code)
     existing_sample = db.query(Job).filter(Job.org_id == org.id, Job.is_sample.is_(True)).count()
     if not existing_sample:
         for spec in SAMPLE_JOBS:

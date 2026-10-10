@@ -16,6 +16,8 @@ from app.models.utility_registration import UtilityRegistration
 from app.services.engagement_service import track
 from app.services.membership_service import current_membership_for_user, effective_status
 from app.services.outbound_service import send_email
+from app.core.scoping import coerce_state
+from app.jurisdictions.registry import partner_short_for
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "utility_registration_review_required": True,
@@ -93,7 +95,7 @@ def create_utility_registration(
     reg = UtilityRegistration(
         org_id=org.id,
         user_id=user.id,
-        state_code=(user.state_code or org.state_code or "NY").upper()[:2],
+        state_code=coerce_state(user.state_code or org.state_code),
         utility_name=utility_name,
         contact_name=contact_name,
         contact_email=contact_email.lower(),
@@ -131,7 +133,8 @@ def create_utility_registration(
             f"Hi {contact_name},\n\nYour utility account for {utility_name} is set up. "
             f"Complete membership payment to unlock hiring tools and Water Workforce 360."
             + (
-                "\n\nNYSAWWA may review your registration; you can use the platform while that review is in progress."
+                f"\n\n{partner_short_for(db, reg.state_code)} may review your registration; "
+                "you can use the platform while that review is in progress."
                 if needs_review
                 else ""
             ),
@@ -215,7 +218,8 @@ def review(
                 user.email,
                 "Your One Water Workforce account was suspended",
                 f"Hi {reg.contact_name},\n\nYour utility account for {reg.utility_name} has been "
-                f"suspended by NYSAWWA.\n\nReason: {note.strip()}\n\nContact NYSAWWA if you have questions.",
+                f"suspended by {partner_short_for(db, reg.state_code)}.\n\nReason: {note.strip()}\n\n"
+                f"Contact {partner_short_for(db, reg.state_code)} if you have questions.",
             )
     else:  # reinstate
         if reg.status != "suspended":

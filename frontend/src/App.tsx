@@ -58,7 +58,7 @@ import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminCertificationsPage from '@/pages/admin/AdminCertificationsPage';
 import AdminLocationsPage from '@/pages/admin/AdminLocationsPage';
 import NationalMapPage from '@/pages/admin/NationalMapPage';
-import NyRegionsMapPage from '@/pages/admin/NyRegionsMapPage';
+import RegionsMapPage from '@/pages/admin/RegionsMapPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminLoginsPage from '@/pages/admin/AdminLoginsPage';
 import AdminMembershipsPage from '@/pages/admin/AdminMembershipsPage';
@@ -410,7 +410,7 @@ export default function App() {
           path="/admin/regions"
           element={
             <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
-              <NyRegionsMapPage />
+              <RegionsMapPage />
             </ProtectedRoute>
           }
         />
