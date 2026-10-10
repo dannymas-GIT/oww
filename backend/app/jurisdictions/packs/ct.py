@@ -90,11 +90,13 @@ for i, cls in enumerate(["I", "II", "III", "IV"]):
     )
 
 PACK = JurisdictionPack(
-    pack_version="1.0.0",
+    pack_version="1.1.0",
     code="CT",
     name="Connecticut",
     demonym="Connecticut residents",
     geo_unit_label="Town",
+    kind="state",
+    default_active=False,  # Prefer New England region tenant over thin CT-only site
     partner=Partner(
         lead_org="Connecticut Section American Water Works Association (CTAWWA)",
         short="CTAWWA",

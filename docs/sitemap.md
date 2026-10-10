@@ -1,6 +1,6 @@
 # OWW Sitemap
 
-Default jurisdiction: **NY** (`/` → `/ny`).
+Default / only live public jurisdiction: **NY** (`/` → `/ny`). Other packs (NJ, CT, NE) stay inactive until partner MOU — inactive routes redirect to `/ny`.
 
 ## Public
 

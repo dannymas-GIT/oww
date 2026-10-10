@@ -19,15 +19,12 @@ test.describe('Public landing', () => {
     await expect(page.getByRole('link', { name: /Back to NY home/i })).toBeVisible();
   });
 
-  for (const state of ['nj', 'ct'] as const) {
-    test(`${state.toUpperCase()} home is partner-neutral (no NYSAWWA / New York leakage)`, async ({
-      page,
-    }) => {
+  for (const state of ['nj', 'ct', 'ne'] as const) {
+    test(`inactive scaffold /${state} redirects to NY flagship`, async ({ page }) => {
       await page.goto(`/${state}`);
-      await expect(page.locator('body')).not.toContainText('NYSAWWA');
-      await expect(page.locator('body')).not.toContainText('New Yorkers');
-      // Footer partner lockup should not claim NYSAWWA
-      await expect(page.locator('footer')).not.toContainText('NYSAWWA');
+      await expect(page).toHaveURL(/\/ny\/?$/);
+      // Live public site remains NYSAWWA / NY
+      await expect(page.locator('footer')).toContainText(/NYSAWWA|One Water Workforce/);
     });
   }
 });

@@ -23,7 +23,7 @@ Brand tokens in app: navy `#002050`, accent `#005df8`, logo at `/brand/oww-logo.
 
 ## Site synopsis
 
-One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: public New York microsite, authenticated hiring and candidate workspaces, membership paywall (sample Stripe), and a platform administration suite. Brand lockup uses the official droplet logo, tagline “From GED to PhD: A Job for Everyone,” navy `#002050` and accent `#005df8`. Primary audiences: job seekers/students, employers/utilities, educators, ambassadors, state partners, and platform operators.
+One Water Workforce is a NYSAWWA-sponsored New York multi-pathway workforce platform: public NY microsite (`/ny`), authenticated hiring and candidate workspaces, membership paywall (sample Stripe), and a platform administration suite. Jurisdiction *packs* scaffold future multi-tenant adoption (inactive until partner MOU) — OWW is not positioned as a national Work for Water brand. Brand lockup: official droplet logo, tagline “From GED to PhD: A Job for Everyone,” navy `#002050` and accent `#005df8`. Primary audiences: job seekers/students, employers/utilities, educators, ambassadors, NY state partners, and platform operators.
 
 ### What visitors get
 
@@ -40,8 +40,9 @@ One Water Workforce is a NYSAWWA-branded multi-pathway workforce platform: publi
 - Memberships inventory + communications portal (audience by role + membership state)
 - Users & access with OWW marketplace roles (platform/state locked; plant/CEU roles in WW360)
 - View as role (preview / act-as) for support walkthroughs
-- Analytics, CMS, programs, featured posts, certifications, locations, national map
+- Analytics, CMS, programs, featured posts, certifications, locations, national map (NY live; other jurisdiction packs scaffold-only)
 - Employer/utility hiring workspace (jobs, candidates, team, billing)
+- See `docs/jurisdictions.md` and `docs/pilot-partners.md` for multi-tenant posture
 
 ## Evidence gallery (requirement → screenshot)
 
