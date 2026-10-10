@@ -14,7 +14,7 @@ def track(
     org_id: Optional[int] = None,
     region: Optional[str] = None,
     career_stage: Optional[str] = None,
-    state_code: str = "NY",
+    state_code: str | None = None,
     source: Optional[str] = None,
     meta: Optional[dict[str, Any]] = None,
 ) -> EngagementEvent:

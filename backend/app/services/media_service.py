@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.media_asset import MediaAsset
+from app.core.scoping import coerce_state
 
 ALLOWED_PREFIXES = (
     "image/",
@@ -90,7 +91,7 @@ async def save_upload(
         storage_path=str(path),
         public_url=f"{settings.API_V1_STR}/public/media/{stored}",
         uploaded_by=uploaded_by,
-        state_code=(state_code or "NY").upper()[:2] if state_code else None,
+        state_code=coerce_state(state_code) if state_code else None,
     )
     db.add(asset)
     db.commit()

@@ -89,5 +89,5 @@ def send(db: Session, comm: Communication, state: Optional[str] = None) -> Commu
 RENEWAL_TEMPLATE = (
     "Hi {{name}},\n\nYour One Water Workforce membership renews soon. "
     "Keep uninterrupted access to postings, matching, and reporting by confirming your renewal in Billing.\n\n"
-    "— NYSAWWA One Water Workforce"
+    "— {partner_short} One Water Workforce"
 )

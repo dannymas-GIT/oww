@@ -12,6 +12,7 @@ from app.core.security import create_access_token
 from app.models.impersonation import DemoPersona, ImpersonationEvent, ImpersonationSession
 from app.models.user import User
 from app.services.auth_service import user_to_dict
+from app.core.scoping import coerce_state
 
 IMPERSONATION_TTL_MINUTES = 60
 PREVIEW_ROLES = {"platform_admin", "state_admin"}
@@ -337,7 +338,7 @@ def ensure_default_personas(db: Session) -> None:
             "state-admin",
             "state-admin-ny",
             "state",
-            "State administrator",
+            "State administrator (NY)",
             "NY microsite + CMS (state scoped)",
             [
                 "Operations → memberships, pending utility registrations, pipeline KPIs",
@@ -345,6 +346,32 @@ def ensure_default_personas(db: Session) -> None:
                 "Platform/state roles stay locked; WW360 has its own district catalog",
             ],
             80,
+        ),
+        (
+            "state-admin-nj",
+            "state-admin-nj",
+            "state",
+            "State administrator (NJ)",
+            "NJ microsite + CMS (state scoped)",
+            [
+                "Same admin chrome scoped to New Jersey",
+                "NJDEP certification ladder and North/Central/South regions",
+                "Partner-neutral copy (AWWA NJ) — no NYSAWWA lockup",
+            ],
+            81,
+        ),
+        (
+            "state-admin-ct",
+            "state-admin-ct",
+            "state",
+            "State administrator (CT)",
+            "CT microsite + CMS (state scoped)",
+            [
+                "Same admin chrome scoped to Connecticut",
+                "CT DPH / DEEP regulators and nine COG planning regions",
+                "Partner-neutral copy (CTAWWA) — New England Work for Water affiliation",
+            ],
+            82,
         ),
     ]
     for key, username, tier, label, subtitle, bullets, order in specs:
@@ -361,6 +388,6 @@ def ensure_default_personas(db: Session) -> None:
         row.subtitle = subtitle
         row.narrative_bullets = bullets
         row.sort_order = order
-        row.state_code = user.state_code or "NY"
+        row.state_code = coerce_state(user.state_code)
         row.is_active = True
     db.commit()

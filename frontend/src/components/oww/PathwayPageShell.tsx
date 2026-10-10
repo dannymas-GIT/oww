@@ -8,11 +8,11 @@ import { OwwSection } from '@/components/oww/OwwSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { useJurisdiction } from '@/context/JurisdictionContext';
 import { usePublicSlides } from '@/hooks/usePublicSlides';
 import { homeForRoles, isHiringRole, isPlatformStaff } from '@/lib/roleHome';
 import { PATHWAY_HERO_SLIDES } from '@/content/pathwayHeroSlides';
 import {
-  pathwayContent,
   resolvePathwayPath,
   type PathwaySlug,
 } from '@/content/owwPublicContent';
@@ -42,7 +42,8 @@ export function PathwayPageShell({
   state: string;
   extra?: ReactNode;
 }) {
-  const content = pathwayContent[slug];
+  const { pathway } = useJurisdiction();
+  const content = pathway(slug);
   const { isAuthenticated, userRoles } = useAuth();
   const [cmsPage, setCmsPage] = useState<ContentPage | null | undefined>(undefined);
   const pathwaySlides = usePublicSlides(state, slug, PATHWAY_HERO_SLIDES[slug]);

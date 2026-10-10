@@ -58,7 +58,7 @@ export function Ww360LaunchButton({
           ? String((detail as { code: string }).code)
           : null;
       if (code === 'account_suspended') {
-        setError('Utility suspended — contact NYSAWWA.');
+        setError('Utility suspended — contact the platform team.');
       } else if (
         code === 'payment_required' ||
         (err as { response?: { status?: number } })?.response?.status === 403

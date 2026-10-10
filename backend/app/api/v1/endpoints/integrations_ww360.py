@@ -21,6 +21,7 @@ from app.models.membership import Membership
 from app.models.organization import Organization
 from app.models.user import User
 from app.services.membership_service import effective_status
+from app.core.scoping import coerce_state
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/integrations/ww360", tags=["integrations-ww360"])
@@ -144,7 +145,7 @@ def access_water_workforce_360(
                 "full_name": user.full_name or user.username,
                 "is_billing_admin": True,
                 "subscription_status": "active",
-                "state_code": (user.state_code or "NY")[:2].upper(),
+                "state_code": coerce_state(user.state_code),
                 "next": next_path or "/admin/users",
             }
         )
@@ -169,7 +170,10 @@ def access_water_workforce_360(
     if not org.is_active:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            detail={"code": "account_suspended", "message": "This utility account has been suspended. Contact NYSAWWA."},
+            detail={
+                "code": "account_suspended",
+                "message": "This utility account has been suspended. Contact the platform team for your jurisdiction.",
+            },
         )
 
     sub_status, stripe_cus = _subscription_status_for_org(db, org.id)
@@ -187,7 +191,7 @@ def access_water_workforce_360(
         "is_billing_admin": True,
         "subscription_status": sub_status,
         "stripe_customer_id": stripe_cus,
-        "state_code": (user.state_code or org.state_code or "NY")[:2].upper(),
+        "state_code": coerce_state(user.state_code or org.state_code),
         "next": next_path or "/dashboard",
     }
 

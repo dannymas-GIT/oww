@@ -73,7 +73,7 @@ export default function RegisterUtilityPage() {
       <OwwPageHero
         eyebrow="Utility administrators"
         title="Create your utility account"
-        description="Register your utility, choose the Utility membership, and pay with the sample checkout. You can open Water Workforce 360 after payment — NYSAWWA may review new accounts afterward."
+        description="Register your utility, choose the Utility membership, and pay with the sample checkout. You can open Water Workforce 360 after payment — your jurisdiction partner may review new accounts afterward."
       />
 
       <ol className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-2" aria-label="Registration steps">

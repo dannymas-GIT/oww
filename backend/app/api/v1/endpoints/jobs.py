@@ -17,6 +17,7 @@ from app.services.engagement_service import track
 from app.services.outbound_service import send_email
 from app.services.membership_service import require_membership
 from app.services.role_catalog_service import HIRING_ROLES, ORG_ADMIN_ROLES
+from app.core.scoping import coerce_state
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -82,7 +83,7 @@ def create_job(body: JobIn, db: Session = Depends(get_db), user: User = Depends(
         career_areas=[body.career_area] if body.career_area else [],
         city=body.city,
         region=body.region,
-        state_code=(body.state_code or user.state_code or "NY").upper(),
+        state_code=coerce_state(body.state_code or user.state_code),
         criteria=body.criteria or {},
         status=body.status or "open",
         is_sample=False,
@@ -193,7 +194,7 @@ def apply(job_id: int, body: ApplyIn, db: Session = Depends(get_db), user: User 
         raise HTTPException(404)
     profile = db.query(IndividualProfile).filter(IndividualProfile.user_id == user.id).first()
     if not profile:
-        profile = IndividualProfile(user_id=user.id, state_code=user.state_code or "NY", answers={}, display_name=user.full_name)
+        profile = IndividualProfile(user_id=user.id, state_code=coerce_state(user.state_code), answers={}, display_name=user.full_name)
         db.add(profile)
         db.commit()
         db.refresh(profile)
