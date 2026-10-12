@@ -188,7 +188,13 @@ export default function AdminCmsEditorPage() {
         published_at: page.published_at || undefined,
       });
       setPage({ ...saved, sections: saved.sections || [] });
-      setMessage(publish ? 'Published to the live site.' : 'Draft saved.');
+      if (publish && isBlog) {
+        setMessage(
+          'Published to the live site. Use Share to social to post to LinkedIn (auto-share may also run if enabled in Settings).'
+        );
+      } else {
+        setMessage(publish ? 'Published to the live site.' : 'Draft saved.');
+      }
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setError(typeof detail === 'string' ? detail : 'Save failed.');
@@ -257,6 +263,11 @@ export default function AdminCmsEditorPage() {
             <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" disabled={busy} onClick={() => void onSave(true)}>
               Publish
             </Button>
+            {page.published && isBlog && page.id ? (
+              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                <Link to={`/admin/social?page=${page.id}`}>Share to social</Link>
+              </Button>
+            ) : null}
             {page.published ? (
               <Button variant="outline" className="min-h-[44px] text-base" asChild>
                 <Link to={livePath} target="_blank">

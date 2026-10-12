@@ -271,3 +271,67 @@ export async function nationalMapData() {
     jurisdictions: Array<{ code: string; name: string; individuals: number; jobs: number; orgs?: number }>;
   };
 }
+
+// ---- Social syndication ----
+
+export async function fetchSocialStatus() {
+  const { data } = await api.get('/admin/social/status');
+  return data as import('@/types').SocialStatus;
+}
+
+export async function updateSocialSettings(body: {
+  social_default_platforms?: string[];
+  social_auto_share_on_publish?: boolean;
+}) {
+  const { data } = await api.put('/admin/social/settings', body);
+  return data as {
+    social_default_platforms: string[];
+    social_auto_share_on_publish: boolean;
+  };
+}
+
+export async function listSocialPosts(params?: { state_code?: string; status?: string; limit?: number }) {
+  const { data } = await api.get('/admin/social/posts', { params });
+  return data as { total: number; items: import('@/types').SocialPostRecord[] };
+}
+
+export async function composeSocialFromPage(contentPageId: number) {
+  const { data } = await api.get(`/admin/social/compose/${contentPageId}`);
+  return data as import('@/types').SocialCompose;
+}
+
+export async function createSocialPost(body: {
+  message: string;
+  platforms?: string[];
+  content_page_id?: number;
+  state_code?: string;
+  link_url?: string;
+  media_url?: string;
+  scheduled_at?: string;
+  publish?: boolean;
+}) {
+  const { data } = await api.post('/admin/social/posts', body);
+  return data as import('@/types').SocialPostRecord;
+}
+
+export async function publishSocialPost(postId: number) {
+  const { data } = await api.post(`/admin/social/posts/${postId}/publish`);
+  return data as import('@/types').SocialPostRecord;
+}
+
+export async function retrySocialPost(postId: number) {
+  const { data } = await api.post(`/admin/social/posts/${postId}/retry`);
+  return data as import('@/types').SocialPostRecord;
+}
+
+export async function deleteSocialPost(postId: number) {
+  const { data } = await api.delete(`/admin/social/posts/${postId}`);
+  return data as { ok: boolean };
+}
+
+export async function sharePageToSocial(contentPageId: number, platforms?: string[]) {
+  const { data } = await api.post(`/admin/social/from-page/${contentPageId}`, null, {
+    params: platforms?.length ? { platforms } : undefined,
+  });
+  return data as import('@/types').SocialPostRecord;
+}

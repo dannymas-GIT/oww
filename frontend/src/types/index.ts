@@ -187,9 +187,55 @@ export interface UtilityRegistration {
 export interface PlatformSettings {
   utility_registration_review_required: boolean;
   registration_notify_email: string;
+  social_default_platforms?: string[];
+  social_auto_share_on_publish?: boolean;
   updated_by?: number | null;
   updated_by_name?: string | null;
   updated_at?: string | null;
+}
+
+export interface SocialStatus {
+  provider: string;
+  configured: boolean;
+  live: boolean;
+  connected_platforms: string[];
+  default_platforms: string[];
+  auto_share_on_publish: boolean;
+  char_hints: Record<string, number>;
+  public_site_url: string;
+}
+
+export interface SocialPostRecord {
+  id: number;
+  content_page_id?: number | null;
+  state_code: string;
+  provider: string;
+  platforms: string[];
+  message: string;
+  link_url?: string | null;
+  media_url?: string | null;
+  status: string;
+  scheduled_at?: string | null;
+  posted_at?: string | null;
+  provider_post_id?: string | null;
+  provider_response?: Record<string, unknown>;
+  error?: string | null;
+  attempts: number;
+  created_by?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface SocialCompose {
+  content_page_id: number;
+  state_code: string;
+  message: string;
+  link_url: string;
+  media_url?: string | null;
+  title?: string;
+  slug?: string;
+  default_platforms: string[];
+  char_hints: Record<string, number>;
 }
 
 export interface RegisterUtilityResult {

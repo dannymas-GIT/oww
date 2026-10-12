@@ -43,6 +43,19 @@ def _run_digests() -> None:
     finally:
         db.close()
 
+
+def _run_social_due() -> None:
+    db = SessionLocal()
+    try:
+        from app.services.social_service import process_due
+        result = process_due(db)
+        if result.get("published") or result.get("retried"):
+            logger.info("Social due job: %s", result)
+    except Exception as exc:
+        logger.warning("Social due job failed: %s", exc)
+    finally:
+        db.close()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _scheduler
@@ -54,6 +67,7 @@ async def lifespan(app: FastAPI):
     _scheduler = BackgroundScheduler()
     _scheduler.add_job(_run_match_refresh, "cron", hour=2, minute=15, id="match_refresh")
     _scheduler.add_job(_run_digests, "cron", day_of_week="mon", hour=13, minute=0, id="weekly_digests")
+    _scheduler.add_job(_run_social_due, "interval", minutes=10, id="social_due")
     _scheduler.start()
     yield
     if _scheduler:

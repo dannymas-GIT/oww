@@ -72,6 +72,13 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "/app/media"
     MEDIA_MAX_BYTES: int = 80 * 1024 * 1024  # 80 MB
 
+    # Social syndication (Ayrshare-style aggregator). Leave AYRSHARE_API_KEY empty for stub.
+    SOCIAL_PROVIDER: str = "ayrshare"
+    AYRSHARE_API_KEY: str = ""
+    AYRSHARE_API_BASE: str = "https://app.ayrshare.com/api"
+    PUBLIC_SITE_URL: str = "https://onewaterworkforce.org"
+    SOCIAL_DEFAULT_PLATFORMS: str = "linkedin"
+
     @property
     def cors_origins(self) -> List[str]:
         base = [

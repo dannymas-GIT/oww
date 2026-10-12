@@ -1,10 +1,13 @@
 
 """Public microsite endpoints."""
 from __future__ import annotations
+from xml.sax.saxutils import escape as xml_escape
+
 from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.db.database import get_db
 from app.models.job import Job
 from app.models.organization import Organization
@@ -252,6 +255,52 @@ def list_blog_posts(
         "state_code": (state_code or "ny").upper()[:2],
         "tag": tag,
     }
+
+
+@router.get("/blog/{state_code}/feed.rss")
+def blog_rss_feed(state_code: str, limit: int = 20, db: Session = Depends(get_db)):
+    """RSS 2.0 feed of published blog posts (for aggregators / widgets)."""
+    pages, _total = cms_service.list_published_blog_posts(
+        db, state_code=state_code, limit=min(limit, 50), offset=0
+    )
+    state = (state_code or "ny").upper()[:2]
+    site = (settings.PUBLIC_SITE_URL or f"https://{settings.APP_DOMAIN}").rstrip("/")
+    channel_link = f"{site}/{state.lower()}/blog"
+    items_xml: list[str] = []
+    for page in pages:
+        card = cms_service.blog_card_dict(page)
+        title = xml_escape(str(card.get("title") or "Untitled"))
+        link = xml_escape(str(card.get("url") or channel_link))
+        desc = xml_escape(str(card.get("excerpt") or ""))
+        pub = card.get("published_at") or ""
+        author = xml_escape(str(card.get("author_name") or ""))
+        enclosure = ""
+        cover = card.get("cover_image_url")
+        if cover:
+            enclosure = f'<enclosure url="{xml_escape(str(cover))}" type="image/jpeg" />'
+        items_xml.append(
+            f"<item>"
+            f"<title>{title}</title>"
+            f"<link>{link}</link>"
+            f"<guid isPermaLink=\"true\">{link}</guid>"
+            f"<description>{desc}</description>"
+            f"<pubDate>{xml_escape(str(pub))}</pubDate>"
+            f"<author>{author}</author>"
+            f"{enclosure}"
+            f"</item>"
+        )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<rss version="2.0">'
+        "<channel>"
+        f"<title>{xml_escape(settings.PROJECT_NAME)} — {state} Blog</title>"
+        f"<link>{xml_escape(channel_link)}</link>"
+        f"<description>Published updates from One Water Workforce ({state}).</description>"
+        f"{''.join(items_xml)}"
+        "</channel>"
+        "</rss>"
+    )
+    return Response(content=body, media_type="application/rss+xml; charset=utf-8")
 
 
 @router.get("/blog/{state_code}/{slug}")

@@ -59,3 +59,37 @@ curl -sS http://127.0.0.1:8003/api/v1/billing/plans | head -c 200
 - Email verification of registrant address
 - Employer (non-utility) self-registration
 - WW360 repository changes
+
+---
+
+# Social syndication (blog → LinkedIn aggregator + widgets)
+
+Branch: `feature/social-syndication`
+
+## Scope
+
+- Admin **Social posts** (`/admin/social`): compose once, publish via Ayrshare (or stub when `AYRSHARE_API_KEY` empty)
+- Blog editor **Share to social** after publish; optional auto-share toggle in Platform settings
+- Public JSON blog list includes canonical `url`; RSS at `/api/v1/public/blog/{state}/feed.rss`
+- WW360 / AquaSafe dashboard widgets consume the public blog JSON (separate repos)
+
+## Manual checks
+
+1. Sign in as Jenny → Administration → **Social posts**.
+2. Status shows provider `stub` (or `ayrshare` live when key is set).
+3. Pick a published blog post (or free-form), confirm LinkedIn checked, **Publish now** → history shows `posted`.
+4. Open a blog post in the CMS editor → **Publish** → **Share to social** opens composer with message prefilled.
+5. Platform settings → enable **Auto-share blog posts on publish** → publish a new blog → confirm a social history row appears.
+6. `curl -sS http://127.0.0.1:8003/api/v1/public/blog/NY | head` — items include `url`.
+7. `curl -sS http://127.0.0.1:8003/api/v1/public/blog/NY/feed.rss | head` — RSS channel XML.
+
+## Automated
+
+```bash
+cd backend && pytest tests/test_social.py -q
+```
+
+## Notes
+
+- Real LinkedIn posting requires an Ayrshare account with the NYSAWWA/OWW LinkedIn page connected and `AYRSHARE_API_KEY` in host `.env`.
+- Default platform is LinkedIn; Jenny can toggle others that are connected on the provider.

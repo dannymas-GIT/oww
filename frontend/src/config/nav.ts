@@ -424,6 +424,13 @@ export const roleNavGroups: NavGroup[] = [
           },
           { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: PLATFORM_EDITOR_ROLES },
           { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: PLATFORM_EDITOR_ROLES },
+          {
+            label: 'Social posts',
+            path: '/admin/social',
+            icon: Megaphone,
+            roles: PLATFORM_EDITOR_ROLES,
+            description: 'Post once to LinkedIn and other connected networks',
+          },
         ],
       },
       {
