@@ -228,17 +228,37 @@ export default function AdminSocialPage() {
             Provider status
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3 text-base text-slate-700">
-          <Badge variant={status?.live ? 'default' : 'secondary'}>
-            {status?.provider || '…'} {status?.live ? '(live)' : '(stub)'}
-          </Badge>
-          <span>
-            Connected:{' '}
-            {(status?.connected_platforms || []).map(p => PLATFORM_LABELS[p] || p).join(', ') || 'none yet'}
-          </span>
-          <Button variant="outline" className="min-h-[44px] text-base" asChild>
-            <Link to="/admin/settings">Social settings</Link>
-          </Button>
+        <CardContent className="space-y-4 text-base text-slate-700">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant={status?.live ? 'default' : 'secondary'}>
+              {status?.provider || '…'} {status?.live ? '(live)' : '(stub — optional)'}
+            </Badge>
+            <span>
+              Connected:{' '}
+              {(status?.connected_platforms || []).map(p => PLATFORM_LABELS[p] || p).join(', ') ||
+                (status?.api_key_configured ? 'none yet' : 'API key not set')}
+            </span>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to="/admin/settings">Social settings</Link>
+            </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to="/admin/marketing">Marketing &amp; SEO</Link>
+            </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to="/admin/communications">Communications studio</Link>
+            </Button>
+          </div>
+          {status?.setup && !status.setup.ready ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+              <p className="font-semibold">Ayrshare API key is optional until you are ready to go live</p>
+              <p className="mt-1">{status.setup.message}</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-5">
+                {(status.setup.steps || []).map(step => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

@@ -55,6 +55,7 @@ import AdminHomeSlidesPage from '@/pages/admin/AdminHomeSlidesPage';
 import AdminProgramsPage from '@/pages/admin/AdminProgramsPage';
 import AdminFeaturedPostsPage from '@/pages/admin/AdminFeaturedPostsPage';
 import AdminSocialPage from '@/pages/admin/AdminSocialPage';
+import AdminMarketingPage from '@/pages/admin/AdminMarketingPage';
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminCertificationsPage from '@/pages/admin/AdminCertificationsPage';
 import AdminLocationsPage from '@/pages/admin/AdminLocationsPage';
@@ -268,6 +269,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={PLATFORM_OPS_ROLES}>
               <AdminCommunicationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/marketing"
+          element={
+            <ProtectedRoute roles={[...PLATFORM_OPS_ROLES, ...PLATFORM_EDITOR_ROLES]}>
+              <AdminMarketingPage />
             </ProtectedRoute>
           }
         />

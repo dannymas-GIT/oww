@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { BellRing, Send, Users } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { BellRing, LineChart, Megaphone, Send, Users } from 'lucide-react';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { RichTextEditor } from '@/components/oww/RichTextEditor';
 import { SortableTableHead } from '@/components/oww/SortableTableHead';
 import { TableSearchFilter } from '@/components/oww/TableSearchFilter';
 import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
@@ -12,6 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
+import {
+  COMMUNICATION_TEMPLATES,
+  findTemplate,
+  htmlToPlain,
+} from '@/config/communicationTemplates';
 import { createCommunication, fetchRoleCatalog, listCommunications, previewAudience, sendCommunication, sendRenewalNotices } from '@/services/adminService';
 import { formatDate, titleCase } from '@/lib/format';
 import type { Communication, CommunicationAudience, RoleCatalogEntry } from '@/types';
@@ -26,11 +32,13 @@ const MEMBERSHIP_FILTERS: Array<{ id: NonNullable<CommunicationAudience['members
 ];
 
 export default function AdminCommunicationsPage() {
+  const [searchParams] = useSearchParams();
   const [rows, setRows] = useState<Communication[]>([]);
   const [roles, setRoles] = useState<RoleCatalogEntry[]>([]);
   const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState('<p></p>');
   const [channel, setChannel] = useState<'email' | 'sms'>('email');
+  const [templateId, setTemplateId] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [membershipStatus, setMembershipStatus] = useState<NonNullable<CommunicationAudience['membership_status']>>('any');
   const [expiringDays, setExpiringDays] = useState('30');
@@ -38,6 +46,7 @@ export default function AdminCommunicationsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  void searchParams.get('tab');
 
   async function load() {
     try {
@@ -81,16 +90,33 @@ export default function AdminCommunicationsPage() {
     initialSortDir: 'desc',
   });
 
+  function applyTemplate(id: string) {
+    setTemplateId(id);
+    const t = findTemplate(id);
+    if (!t) return;
+    if (t.kind === 'sms') {
+      setChannel('sms');
+      setSubject(t.subject || t.label);
+      setBody(t.bodyText || htmlToPlain(t.bodyHtml));
+      return;
+    }
+    setChannel('email');
+    setSubject(t.subject || t.label);
+    setBody(t.bodyHtml);
+  }
+
   async function submit(sendNow: boolean) {
     setError(null);
     setMsg(null);
-    if (!subject.trim() || !body.trim()) {
+    const plainForSms = channel === 'sms' ? body.trim() : htmlToPlain(body);
+    const payloadBody = channel === 'sms' ? plainForSms : body;
+    if (!subject.trim() || !plainForSms.trim()) {
       setError('Subject and message are required.');
       return;
     }
     setBusy(sendNow ? 'send' : 'draft');
     try {
-      const c = await createCommunication({ subject, body, channel, audience });
+      const c = await createCommunication({ subject, body: payloadBody, channel, audience });
       if (sendNow) {
         const sent = await sendCommunication(c.id);
         setMsg(`Sent to ${sent.recipient_count} recipient${sent.recipient_count === 1 ? '' : 's'}.`);
@@ -98,7 +124,8 @@ export default function AdminCommunicationsPage() {
         setMsg('Draft saved.');
       }
       setSubject('');
-      setBody('');
+      setBody(channel === 'email' ? '<p></p>' : '');
+      setTemplateId('');
       await load();
     } catch {
       setError('Could not save the message.');
@@ -107,12 +134,14 @@ export default function AdminCommunicationsPage() {
     }
   }
 
+  const emailTemplates = COMMUNICATION_TEMPLATES.filter(t => t.kind === 'email' || t.kind === 'sms');
+
   return (
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Administration"
-        title="Communications portal"
-        description="Reach members by role and membership state — welcome new utilities, remind lapsing employers, brief ambassadors."
+        title="Communications studio"
+        description="Member email/SMS, marketing & SEO efforts, and social publishing — templates plus TipTap for richer messages."
         actions={
           <>
             <Button
@@ -142,12 +171,51 @@ export default function AdminCommunicationsPage() {
         }
       />
 
+      <div className="flex flex-wrap gap-2" role="navigation" aria-label="Communications areas">
+        <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
+          <Link to="/admin/communications">
+            <Send className="mr-2 h-4 w-4" />
+            Member messages
+          </Link>
+        </Button>
+        <Button variant="outline" className="min-h-[44px] text-base" asChild>
+          <Link to="/admin/marketing">
+            <LineChart className="mr-2 h-4 w-4" />
+            Marketing &amp; SEO
+          </Link>
+        </Button>
+        <Button variant="outline" className="min-h-[44px] text-base" asChild>
+          <Link to="/admin/social">
+            <Megaphone className="mr-2 h-4 w-4" />
+            Social posts
+          </Link>
+        </Button>
+        <Button variant="outline" className="min-h-[44px] text-base" asChild>
+          <Link to="/admin/cms?kind=blog">Blog</Link>
+        </Button>
+      </div>
+
       {msg ? <p className="rounded-lg bg-emerald-50 p-3 text-base text-emerald-900">{msg}</p> : null}
       {error ? <p className="rounded-lg bg-rose-50 p-3 text-base text-rose-800">{error}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <section className="min-w-0 space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-display text-xl font-semibold text-oww-navy">Compose</h2>
+          <div className="space-y-2">
+            <Label className="text-base">Template</Label>
+            <select
+              className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-base"
+              value={templateId}
+              onChange={e => applyTemplate(e.target.value)}
+            >
+              <option value="">Blank message</option>
+              {emailTemplates.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.label} ({t.sendMethod})
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2" role="radiogroup" aria-label="Channel">
             {(['email', 'sms'] as const).map(c => (
               <button
@@ -155,7 +223,11 @@ export default function AdminCommunicationsPage() {
                 type="button"
                 role="radio"
                 aria-checked={channel === c}
-                onClick={() => setChannel(c)}
+                onClick={() => {
+                  setChannel(c);
+                  if (c === 'sms' && body.startsWith('<')) setBody(htmlToPlain(body));
+                  if (c === 'email' && body && !body.includes('<')) setBody(`<p>${body}</p>`);
+                }}
                 className={cn('min-h-[44px] rounded-lg border px-4 text-base font-medium', channel === c ? 'border-oww-cyan bg-sky-50 text-oww-navy' : 'border-slate-200 text-slate-600')}
               >
                 {c === 'email' ? 'Email' : 'SMS'}
@@ -168,8 +240,17 @@ export default function AdminCommunicationsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="body" className="text-base">Message</Label>
-            <Textarea id="body" rows={7} className="text-base" value={body} onChange={e => setBody(e.target.value)} placeholder="Hi {{name}}, …" />
-            <p className="text-sm text-slate-500">Use {'{{name}}'} to personalize.</p>
+            {channel === 'email' ? (
+              <RichTextEditor
+                value={body}
+                onChange={setBody}
+                placeholder="Hi {{name}}, write your message…"
+                minHeightClass="min-h-[180px]"
+              />
+            ) : (
+              <Textarea id="body" rows={7} className="text-base" value={body} onChange={e => setBody(e.target.value)} placeholder="Short SMS (keep under ~160 chars)…" />
+            )}
+            <p className="text-sm text-slate-500">Use {'{{name}}'} to personalize. Email uses the TipTap editor; SMS stays plain text.</p>
           </div>
 
           <fieldset className="space-y-3">

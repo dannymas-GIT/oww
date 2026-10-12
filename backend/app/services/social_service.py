@@ -347,15 +347,34 @@ def list_posts(
 def provider_status(db: Session) -> dict[str, Any]:
     provider = get_provider()
     connected = provider.connected_platforms()
+    live = provider.name != "stub"
     return {
         "provider": provider.name,
         "configured": provider.is_configured() if hasattr(provider, "is_configured") else True,
-        "live": provider.name != "stub",
+        "live": live,
         "connected_platforms": connected,
         "default_platforms": default_platforms(db),
         "auto_share_on_publish": auto_share_on_publish(db),
         "char_hints": PLATFORM_CHAR_HINTS,
         "public_site_url": (settings.PUBLIC_SITE_URL or f"https://{settings.APP_DOMAIN}").rstrip("/"),
+        "api_key_configured": bool((settings.AYRSHARE_API_KEY or "").strip()),
+        "setup": {
+            "provider_label": "Ayrshare",
+            "docs_url": "https://www.ayrshare.com",
+            "env_var": "AYRSHARE_API_KEY",
+            "ready": live,
+            "message": (
+                "Live LinkedIn publishing is on."
+                if live
+                else "Optional: add AYRSHARE_API_KEY to the OWW host .env, connect the LinkedIn Page in Ayrshare, and restart the backend. Until then, Social posts run in stub mode (logged only)."
+            ),
+            "steps": [
+                "Create an Ayrshare account and connect the NYSAWWA / OWW LinkedIn Page",
+                "Copy the API key into the OWW host .env as AYRSHARE_API_KEY (never commit it)",
+                "Restart the OWW backend",
+                "Confirm status shows ayrshare (live) under Communications → Social or Platform settings",
+            ],
+        },
     }
 
 
