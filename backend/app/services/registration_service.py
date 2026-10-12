@@ -22,6 +22,8 @@ from app.jurisdictions.registry import partner_short_for
 DEFAULT_SETTINGS: dict[str, Any] = {
     "utility_registration_review_required": True,
     "registration_notify_email": "jenny@nysawwa.org",
+    "social_default_platforms": ["linkedin"],
+    "social_auto_share_on_publish": False,
 }
 
 KNOWN_SETTING_KEYS = set(DEFAULT_SETTINGS.keys())
@@ -62,6 +64,17 @@ def set_settings(db: Session, updates: dict[str, Any], admin: User) -> dict[str,
             val = str(val or "").strip().lower()
             if val and "@" not in val:
                 raise HTTPException(400, "registration_notify_email must be a valid email")
+        elif key == "social_auto_share_on_publish":
+            val = bool(val)
+        elif key == "social_default_platforms":
+            if isinstance(val, str):
+                val = [p.strip().lower() for p in val.split(",") if p.strip()]
+            elif isinstance(val, list):
+                val = [str(p).strip().lower() for p in val if str(p).strip()]
+            else:
+                val = ["linkedin"]
+            if not val:
+                val = ["linkedin"]
         row = db.query(PlatformSetting).filter(PlatformSetting.key == key).first()
         if not row:
             row = PlatformSetting(key=key)

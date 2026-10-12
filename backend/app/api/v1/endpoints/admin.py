@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from app.db.database import get_db
+from app.db.database import get_db, SessionLocal
 from app.api.deps import require_roles
 from app.models.user import User
 from app.models.jurisdiction import Jurisdiction
@@ -27,7 +27,7 @@ from app.services.analytics_service import summary, export_rows
 from app.services.outbound_service import post_webhook
 from app.services.auth_service import user_to_dict
 from app.services import featured_post_service
-from app.services import cms_service, media_service
+from app.services import cms_service, media_service, social_service
 from app.services import home_hero_slide_service as hero_slides
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -391,8 +391,25 @@ def get_cms(page_id: int, db: Session = Depends(get_db), user: User = Depends(re
     return cms_service.page_to_dict(p)
 
 
+def _auto_share_task(page_id: int, user_id: int | None) -> None:
+    db = SessionLocal()
+    try:
+        page = db.query(ContentPage).filter(ContentPage.id == page_id).first()
+        if page:
+            social_service.maybe_auto_share_blog(db, page, user_id=user_id)
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+
 @router.post("/cms")
-def create_cms(body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+def create_cms(
+    body: CmsIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
     template = body.template or "simple_page"
     if template not in cms_service.TEMPLATES:
         raise HTTPException(400, f"Unknown template: {template}")
@@ -426,11 +443,19 @@ def create_cms(body: CmsIn, db: Session = Depends(get_db), user: User = Depends(
     db.add(p)
     db.commit()
     db.refresh(p)
+    if published and template == cms_service.BLOG_TEMPLATE:
+        background_tasks.add_task(_auto_share_task, p.id, user.id)
     return cms_service.page_to_dict(p)
 
 
 @router.patch("/cms/{page_id}")
-def patch_cms(page_id: int, body: CmsIn, db: Session = Depends(get_db), user: User = Depends(require_roles(*CMS_ROLES))):
+def patch_cms(
+    page_id: int,
+    body: CmsIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*CMS_ROLES)),
+):
     p = db.query(ContentPage).filter(ContentPage.id == page_id).first()
     if not p:
         raise HTTPException(404)
@@ -469,9 +494,12 @@ def patch_cms(page_id: int, body: CmsIn, db: Session = Depends(get_db), user: Us
                 raise HTTPException(400, "published_at must be ISO datetime")
     if body.published is not None:
         p.is_published = body.published
-    cms_service.stamp_publish_dates(p, publishing=bool(p.is_published) and not was_published)
+    just_published = bool(p.is_published) and not was_published
+    cms_service.stamp_publish_dates(p, publishing=just_published)
     db.commit()
     db.refresh(p)
+    if just_published and p.template == cms_service.BLOG_TEMPLATE:
+        background_tasks.add_task(_auto_share_task, p.id, user.id)
     return cms_service.page_to_dict(p)
 
 
