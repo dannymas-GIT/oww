@@ -121,7 +121,7 @@ export default function DocumentStudioPage() {
           const created = await api.openFromCmsPage(Number(pageParam));
           await refreshDocs(ALL_DOCS);
           await openDoc(created.id);
-          setFlash('Opened CMS page body in Document Studio — edit in place, then Publish to site.');
+          setFlash('Opened page in Document Studio — edit in place, then Publish to site.');
           return;
         }
         if (templateParam || intent === 'social') {
@@ -185,7 +185,7 @@ export default function DocumentStudioPage() {
       await refreshFolders();
       const folds = await api.listFolders();
       const hintName = payload.folderHint ? FOLDER_HINTS[payload.folderHint] : undefined;
-      let folder =
+      const folder =
         (hintName ? folds.find(f => f.name === hintName) : undefined) ||
         (folderId && folderId !== ALL_DOCS && folderId !== UNFILED
           ? folds.find(f => f.id === folderId)
@@ -255,7 +255,7 @@ export default function DocumentStudioPage() {
       <OwwPageHero
         eyebrow="Administration"
         title="Document Studio"
-        description="Folders, in-place WYSIWYG editing, versions, media, and screen grab — for blogs, pages, social drafts, and docs."
+        description="Sole authoring surface for blogs, pages, social drafts, and docs — folders, WYSIWYG, versions, media, and screen grab."
         actions={
           <>
             <Button
@@ -312,7 +312,7 @@ export default function DocumentStudioPage() {
                 New document
               </Button>
               <Button variant="outline" className="min-h-[44px] text-base" asChild>
-                <Link to="/admin/cms">CMS pages &amp; blog list</Link>
+                <Link to="/admin/cms">Site page inventory</Link>
               </Button>
             </div>
           ) : (
@@ -408,7 +408,7 @@ export default function DocumentStudioPage() {
                 </div>
                 {doc.content_page_id ? (
                   <Button variant="outline" className="min-h-[44px] text-base" asChild>
-                    <Link to={`/admin/cms/${doc.content_page_id}`}>CMS layout</Link>
+                    <Link to="/admin/cms">Site inventory</Link>
                   </Button>
                 ) : null}
               </div>

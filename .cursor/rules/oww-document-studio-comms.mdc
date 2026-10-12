@@ -1,9 +1,10 @@
 ---
 description: >-
-  OWW communications, blog, CMS, and marketing editors must reuse Document
-  Studio patterns (TipTap + purpose templates + media assets + {{placeholders}}).
+  OWW authoring is Document Studio only — pages, blogs, social, docs.
+  Communications/marketing reuse Studio patterns; CMS routes are inventory.
 globs:
   - "**/AdminCms*.tsx"
+  - "**/DocumentStudio*.tsx"
   - "**/AdminCommunications*.tsx"
   - "**/AdminMarketing*.tsx"
   - "**/AdminSocial*.tsx"
@@ -18,28 +19,31 @@ alwaysApply: false
 
 # OWW × Document Studio (durable design memory)
 
-When designing or extending **Communications**, **Marketing & SEO**, **Social**, or **CMS/blog** editors in OWW, treat **Document Studio** as the product pattern — do not invent a thinner one-off editor.
+**Document Studio (`/admin/studio`) is the sole authoring surface** for pages, blogs, social drafts, and documents. Do not revive the CMS TipTap editor or a second compose form as an edit step.
 
 ## Source of truth
 
 - Agent / rule: `saas-document-studio` (WW360 donor: `StudioEditor`, `studioTemplates.ts`, `studioTemplateFill.ts`)
 - OWW catalog: `frontend/src/config/owwStudioTemplates.ts` (audiences + categories + purpose layouts)
 - Placeholder helper: `frontend/src/lib/studioTemplateFill.ts`
-- TipTap surface: `/admin/studio` Document Studio (`StudioEditor` + folders + versions + screen grab)
-- Deep links: `/admin/studio?content_page=`, `?intent=social`, `?template=`
+- TipTap surface: `/admin/studio` (`StudioEditor` + folders + versions + screen grab + Publish to site / social)
+- Deep links: `/admin/studio?content_page=`, `?intent=social`, `?template=`, `?doc=`
+- Legacy `/admin/cms/:id` redirects to Studio; `/admin/cms` is **site inventory** only (list / create shell / live link)
 
 ## Required on every design/change
 
-1. **Purpose templates** — new post/email/social types go in `owwStudioTemplates` (category + audience + preview + body/sections). Prefer porting WW360 `studioTemplates` outreach/brief content over rewriting from scratch.
-2. **TipTap** — body editing uses RichTextEditor (image/video upload, links, headings). Do not regress to bare `<textarea>` for HTML bodies.
-3. **Media** — uploads go through existing CMS media / asset APIs (UUID/unguessable URLs). Hero + media_gallery remain valid section types; inline media uses TipTap.
-4. **`{{placeholders}}`** — templates keep tokens (`{{contact_name}}`, `{{state_code}}`, …); fill via `applyStudioPlaceholders` when context is known; leave unknown tokens visible.
-5. **Type scale** — body `text-lg` / controls ≥ `text-base` / captions ≥ `text-sm` / touch ≥44px (WW360 accessible type).
-6. **Hero outline buttons** — on `OwwPageHero` (navy), never use bare `variant="outline"` alone: inherit of `text-white` + white `bg-background` makes labels invisible. Use `OWW_HERO_OUTLINE_BTN` or rely on the hero actions glass override.
+1. **Author in Studio** — New/Edit for pages, blogs, social, and docs go to `/admin/studio` (or create a CMS shell then immediately open Studio). Inventory lists do not embed body editors.
+2. **Purpose templates** — new post/email/social types go in `owwStudioTemplates`. Prefer porting WW360 `studioTemplates` over rewriting from scratch.
+3. **TipTap** — body editing uses StudioEditor / RichTextEditor. Do not regress to bare `<textarea>` for HTML bodies.
+4. **Media** — uploads via CMS media / Studio asset APIs (UUID/unguessable URLs).
+5. **`{{placeholders}}`** — templates keep tokens; fill via `applyStudioPlaceholders` when context is known.
+6. **Type scale** — body `text-lg` / controls ≥ `text-base` / captions ≥ `text-sm` / touch ≥44px.
+7. **Hero outline buttons** — on `OwwPageHero` (navy), never bare `variant="outline"` alone (white-on-white). Use glass override / `OWW_HERO_OUTLINE_BTN`.
 
 ## Do not
 
+- Route edits through `/admin/cms/:id` or rebuild AdminCmsEditorPage as a live editor.
+- Add a second social/page compose form outside Studio.
 - Fork a second rich-text stack or paste raw HTML textareas for new compose UIs.
 - Hard-code one-off blog section stacks outside the Studio catalog.
 - Invent UEI/secrets into placeholder autofill.
-- Drop Document Studio ownership/versioning requirements into OWW CMS unless product asks for a full Studio module — reuse **editor + templates + media + fill** first.
