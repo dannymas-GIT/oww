@@ -55,10 +55,9 @@ def get_access(pair=Depends(_scope), db: Session = Depends(get_db)):
 
 @router.get("/folders", response_model=list[DocFolderRead])
 def list_folders(pair=Depends(_scope), db: Session = Depends(get_db)):
-    user, scope = pair
-    svc = DocStudioService(db)
-    svc.provision(scope, user.id)
-    return svc.list_folders(scope)
+    """List folders. Provisioning runs on /access only to avoid duplicate seeds."""
+    _, scope = pair
+    return DocStudioService(db).list_folders(scope)
 
 
 @router.post("/folders", response_model=DocFolderRead, status_code=201)
@@ -96,10 +95,8 @@ def list_documents(
     pair=Depends(_scope),
     db: Session = Depends(get_db),
 ):
-    user, scope = pair
-    svc = DocStudioService(db)
-    svc.provision(scope, user.id)
-    return svc.list_documents(scope, folder_id=folder_id, q=q, status=status)
+    _, scope = pair
+    return DocStudioService(db).list_documents(scope, folder_id=folder_id, q=q, status=status)
 
 
 @router.post("/documents", response_model=DocDocumentDetail, status_code=201)

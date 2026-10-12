@@ -112,12 +112,46 @@ class DocStudioService:
         if not self.access(user, scope).can_author:
             raise HTTPException(403, "Authoring requires an editor or ops role")
 
+    def _dedupe_folders(self, scope: str) -> bool:
+        """Keep one folder per (scope, name); merge docs onto the keeper. Returns True if changed."""
+        rows = (
+            self.db.query(DocFolder)
+            .filter(DocFolder.scope == scope)
+            .order_by(DocFolder.created_at.asc().nullsfirst(), DocFolder.id.asc())
+            .all()
+        )
+        by_name: dict[str, list[DocFolder]] = {}
+        for folder in rows:
+            by_name.setdefault(folder.name, []).append(folder)
+        changed = False
+        for _name, group in by_name.items():
+            if len(group) < 2:
+                continue
+            keeper = group[0]
+            for dup in group[1:]:
+                self.db.query(DocDocument).filter(DocDocument.folder_id == dup.id).update(
+                    {"folder_id": keeper.id}, synchronize_session=False
+                )
+                self.db.delete(dup)
+                changed = True
+        return changed
+
     def ensure_default_folders(self, scope: str, user_id: int | None) -> None:
+        """Idempotent system-folder seed (safe under concurrent access)."""
+        # Serialize concurrent first-load seeds for this scope (Postgres).
+        try:
+            from sqlalchemy import text
+
+            lock_key = abs(hash(f"oww-doc-studio:{scope}")) % (2**31)
+            self.db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": lock_key})
+        except Exception:
+            logger.debug("advisory lock unavailable; continuing with dedupe", exc_info=True)
+
+        changed = self._dedupe_folders(scope)
         existing = {
             name
             for (name,) in self.db.query(DocFolder.name).filter(DocFolder.scope == scope).all()
         }
-        added = False
         for idx, (name, desc) in enumerate(SYSTEM_FOLDERS):
             if name in existing:
                 continue
@@ -131,8 +165,9 @@ class DocStudioService:
                     created_by=user_id,
                 )
             )
-            added = True
-        if added:
+            existing.add(name)
+            changed = True
+        if changed:
             self.db.commit()
 
     def provision(self, scope: str, user_id: int | None) -> None:
@@ -167,9 +202,21 @@ class DocStudioService:
         return [self._folder_read(f) for f in rows]
 
     def create_folder(self, scope: str, body: DocFolderCreate, user_id: int | None) -> DocFolderRead:
+        name = body.name.strip()
+        dup = (
+            self.db.query(DocFolder)
+            .filter(
+                DocFolder.scope == scope,
+                DocFolder.name == name,
+                DocFolder.parent_id == body.parent_id if body.parent_id else DocFolder.parent_id.is_(None),
+            )
+            .first()
+        )
+        if dup:
+            raise HTTPException(400, f'Folder "{name}" already exists')
         folder = DocFolder(
             scope=scope,
-            name=body.name.strip(),
+            name=name,
             description=body.description,
             parent_id=body.parent_id,
             created_by=user_id,
