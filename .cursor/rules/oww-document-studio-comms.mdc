@@ -35,6 +35,7 @@ When designing or extending **Communications**, **Marketing & SEO**, **Social**,
 3. **Media** — uploads go through existing CMS media / asset APIs (UUID/unguessable URLs). Hero + media_gallery remain valid section types; inline media uses TipTap.
 4. **`{{placeholders}}`** — templates keep tokens (`{{contact_name}}`, `{{state_code}}`, …); fill via `applyStudioPlaceholders` when context is known; leave unknown tokens visible.
 5. **Type scale** — body `text-lg` / controls ≥ `text-base` / captions ≥ `text-sm` / touch ≥44px (WW360 accessible type).
+6. **Hero outline buttons** — on `OwwPageHero` (navy), never use bare `variant="outline"` alone: inherit of `text-white` + white `bg-background` makes labels invisible. Use `OWW_HERO_OUTLINE_BTN` or rely on the hero actions glass override.
 
 ## Do not
 

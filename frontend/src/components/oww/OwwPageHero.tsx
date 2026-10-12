@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
+/** Use on outline/ghost buttons inside OwwPageHero actions (navy background). */
+export const OWW_HERO_OUTLINE_BTN =
+  'min-h-[44px] border-white/40 bg-white/10 text-base text-white shadow-none hover:bg-white/20 hover:text-white';
+
 export interface OwwPageHeroProps {
   eyebrow?: string;
   title: string;
@@ -53,7 +57,21 @@ export function OwwPageHero({
           ) : null}
           {badges ? <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">{badges}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? (
+          <div
+            className={cn(
+              'flex flex-wrap items-center gap-2',
+              // Outline buttons use bg-background (white) but inherit hero text-white → invisible.
+              // Force glass + white label for any bordered control in the actions slot.
+              '[&_a.border]:border-white/40 [&_a.border]:bg-white/10 [&_a.border]:text-white [&_a.border]:shadow-none',
+              '[&_a.border]:hover:bg-white/20 [&_a.border]:hover:text-white',
+              '[&_button.border]:border-white/40 [&_button.border]:bg-white/10 [&_button.border]:text-white [&_button.border]:shadow-none',
+              '[&_button.border]:hover:bg-white/20 [&_button.border]:hover:text-white'
+            )}
+          >
+            {actions}
+          </div>
+        ) : null}
       </div>
     </header>
   );
