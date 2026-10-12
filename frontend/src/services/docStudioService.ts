@@ -237,3 +237,124 @@ export async function publishToSocial(
 export function assetFileUrl(assetId: string): string {
   return `/api/v1/doc-studio/assets/${assetId}/file`;
 }
+
+/** Seeded library samples are read-only originals — Save As only. */
+export const LIBRARY_SEED_TAG = 'library_seed';
+export const LEGACY_SAMPLE_TAG = 'sample';
+export const SAMPLE_TITLE_PREFIX = 'Sample —';
+
+export function isLibrarySampleDocument(
+  doc: Pick<DocSummary, 'tags' | 'title'> | null | undefined
+): boolean {
+  if (!doc) return false;
+  const tags = Array.isArray(doc.tags) ? doc.tags : [];
+  if (tags.includes(LIBRARY_SEED_TAG) || tags.includes(LEGACY_SAMPLE_TAG)) return true;
+  return /^Sample\s*[—–−-]\s*/i.test(doc.title ?? '');
+}
+
+export function sampleSaveAsTitle(title: string): string {
+  const base = title
+    .replace(/^Sample\s*[\u2014\u2013\u2212-]\s*/i, '')
+    .replace(/\s*\(copy\)\s*$/i, '')
+    .trim();
+  return `${base || title} (copy)`;
+}
+
+function stripSampleMarkers(tags?: string[] | null): string[] {
+  const skip = new Set([LIBRARY_SEED_TAG, LEGACY_SAMPLE_TAG]);
+  return (tags || []).filter(t => !skip.has(t));
+}
+
+export async function duplicateDocument(
+  id: string,
+  opts?: { title?: string; folder_id?: string | null; scope?: string }
+) {
+  const { scope, ...body } = opts || {};
+  const { data } = await api.post(`${BASE}/documents/${id}/duplicate`, body, {
+    params: scope ? { scope } : undefined,
+  });
+  return data as DocDetail;
+}
+
+export async function saveAsDocument(
+  id: string,
+  opts?: { title?: string; folder_id?: string | null; scope?: string }
+): Promise<DocDetail> {
+  const desiredTitle = opts?.title?.trim() || undefined;
+  const copy = await duplicateDocument(id, {
+    ...(desiredTitle ? { title: desiredTitle } : {}),
+    ...(opts?.folder_id !== undefined ? { folder_id: opts.folder_id } : {}),
+    scope: opts?.scope,
+  });
+  const nextTitle = desiredTitle || sampleSaveAsTitle(copy.title || 'Document');
+  const nextTags = stripSampleMarkers(copy.tags);
+  if (!isLibrarySampleDocument(copy) && nextTitle === copy.title) {
+    return copy;
+  }
+  try {
+    return await updateDocument(
+      copy.id,
+      { title: nextTitle, tags: nextTags, ...(opts?.folder_id !== undefined ? { folder_id: opts.folder_id } : {}) },
+      opts?.scope
+    );
+  } catch {
+    const full = await getDocument(id, opts?.scope);
+    return createDocument(
+      {
+        title: nextTitle,
+        folder_id: opts?.folder_id !== undefined ? opts.folder_id : full.folder_id,
+        template_id: full.template_id || undefined,
+        content_markdown: full.content_markdown || '',
+        summary: full.summary || undefined,
+        tags: nextTags,
+      },
+      opts?.scope
+    );
+  }
+}
+
+export interface DataCatalogItem {
+  key: string;
+  label: string;
+  description?: string;
+  value?: string | number | null;
+  html?: string | null;
+  kind?: 'scalar' | 'table' | 'list';
+}
+
+export interface DataCatalogGroup {
+  id: string;
+  label: string;
+  items: DataCatalogItem[];
+}
+
+export interface DataCatalogChart {
+  id: string;
+  label: string;
+  chart_type: 'bar' | 'line';
+  labels: string[];
+  values: number[];
+}
+
+export interface DataCatalogResponse {
+  groups: DataCatalogGroup[];
+  charts: DataCatalogChart[];
+  vars: Record<string, string | number>;
+}
+
+export async function fetchDataCatalog(stateCode = 'NY', scope?: string) {
+  const { data } = await api.get(`${BASE}/data-catalog`, {
+    params: { state_code: stateCode, ...(scope ? { scope } : {}) },
+  });
+  return data as DataCatalogResponse;
+}
+
+export async function resolvePlaceholders(
+  body: { markdown?: string; state_code?: string },
+  scope?: string
+) {
+  const { data } = await api.post(`${BASE}/resolve-placeholders`, body, {
+    params: scope ? { scope } : undefined,
+  });
+  return data as { markdown?: string; vars: Record<string, string | number> };
+}
