@@ -9,11 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  COMMUNICATION_TEMPLATES,
-  findTemplate,
-  type CommTemplateKind,
-} from '@/config/communicationTemplates';
+import { findOwwStudioTemplate, OWW_STUDIO_TEMPLATES } from '@/config/owwStudioTemplates';
 import {
   createMarketingEffort,
   deleteMarketingEffort,
@@ -69,16 +65,21 @@ export default function AdminMarketingPage() {
 
   function applyTemplate(id: string) {
     setTemplateId(id);
-    const t = findTemplate(id);
+    const t = findOwwStudioTemplate(id);
     if (!t) return;
-    setTitle(t.subject || t.label);
+    setTitle(t.subject || t.name);
     setDescription(t.bodyHtml);
-    setKind(t.kind === 'seo' ? 'seo' : t.kind === 'social' ? 'social' : t.kind === 'blog' ? 'content' : 'campaign');
-    setSendMethod(t.sendMethod);
+    setKind(
+      t.category === 'seo'
+        ? 'seo'
+        : t.category === 'social'
+          ? 'social'
+          : t.category === 'blog'
+            ? 'content'
+            : 'campaign'
+    );
+    setSendMethod(t.sendMethod || 'manual');
     if (t.seoKeywords?.length) setKeywords(t.seoKeywords.join(', '));
-    if (t.tags?.length && !keywords) {
-      /* keep SEO keywords separate */
-    }
   }
 
   async function onCreate(e: React.FormEvent) {
@@ -144,8 +145,8 @@ export default function AdminMarketingPage() {
     }
   }
 
-  const seoTemplates = COMMUNICATION_TEMPLATES.filter(t =>
-    (['seo', 'blog', 'social', 'email'] as CommTemplateKind[]).includes(t.kind)
+  const seoTemplates = OWW_STUDIO_TEMPLATES.filter(t =>
+    ['seo', 'blog', 'social', 'email', 'outreach', 'brief'].includes(t.category)
   );
 
   return (
@@ -189,7 +190,7 @@ export default function AdminMarketingPage() {
           <CardContent>
             <form onSubmit={onCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-base">Start from template</Label>
+                <Label className="text-base">Document Studio template</Label>
                 <select
                   className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-base"
                   value={templateId}
@@ -198,7 +199,8 @@ export default function AdminMarketingPage() {
                   <option value="">Blank</option>
                   {seoTemplates.map(t => (
                     <option key={t.id} value={t.id}>
-                      {t.label}
+                      {t.name}
+                      {t.sourceStudioId ? ' · Studio' : ''} — {t.preview}
                     </option>
                   ))}
                 </select>
