@@ -25,7 +25,8 @@ When designing or extending **Communications**, **Marketing & SEO**, **Social**,
 - Agent / rule: `saas-document-studio` (WW360 donor: `StudioEditor`, `studioTemplates.ts`, `studioTemplateFill.ts`)
 - OWW catalog: `frontend/src/config/owwStudioTemplates.ts` (audiences + categories + purpose layouts)
 - Placeholder helper: `frontend/src/lib/studioTemplateFill.ts`
-- TipTap surface: `frontend/src/components/oww/RichTextEditor.tsx` (Studio-aligned toolbar + media)
+- TipTap surface: `/admin/studio` Document Studio (`StudioEditor` + folders + versions + screen grab)
+- Deep links: `/admin/studio?content_page=`, `?intent=social`, `?template=`
 
 ## Required on every design/change
 

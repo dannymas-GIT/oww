@@ -56,6 +56,7 @@ import AdminProgramsPage from '@/pages/admin/AdminProgramsPage';
 import AdminFeaturedPostsPage from '@/pages/admin/AdminFeaturedPostsPage';
 import AdminSocialPage from '@/pages/admin/AdminSocialPage';
 import AdminMarketingPage from '@/pages/admin/AdminMarketingPage';
+import DocumentStudioPage from '@/pages/admin/DocumentStudioPage';
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminCertificationsPage from '@/pages/admin/AdminCertificationsPage';
 import AdminLocationsPage from '@/pages/admin/AdminLocationsPage';
@@ -341,6 +342,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={PLATFORM_ADMIN_ROLES}>
               <AdminJurisdictionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/studio"
+          element={
+            <ProtectedRoute roles={[...PLATFORM_EDITOR_ROLES, ...PLATFORM_OPS_ROLES]}>
+              <DocumentStudioPage />
             </ProtectedRoute>
           }
         />
