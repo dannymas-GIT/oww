@@ -210,15 +210,23 @@ export default function AdminSocialPage() {
         title="Social posts"
         description="Compose once and publish to LinkedIn (and other connected networks) via the aggregator. Stub mode logs posts until an API key is configured."
         actions={
-          <Button
-            variant="outline"
-            className="min-h-[44px] border-white/40 bg-white/10 text-base text-white hover:bg-white/20"
-            onClick={() => void refresh()}
-            disabled={busy}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
+          <>
+            <Button
+              className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
+              asChild
+            >
+              <Link to="/admin/studio?intent=social">Compose in Document Studio</Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="min-h-[44px] border-white/40 bg-white/10 text-base text-white hover:bg-white/20"
+              onClick={() => void refresh()}
+              disabled={busy}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </>
         }
       />
 

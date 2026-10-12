@@ -416,6 +416,13 @@ export const roleNavGroups: NavGroup[] = [
         icon: FileText,
         items: [
           {
+            label: 'Document Studio',
+            path: '/admin/studio',
+            icon: FileText,
+            roles: [...PLATFORM_EDITOR_ROLES, ...PLATFORM_OPS_ROLES],
+            description: 'Folders, WYSIWYG, versions, screen grab — blogs, pages, social, docs',
+          },
+          {
             label: 'Pages & blog',
             path: '/admin/cms',
             icon: FileText,

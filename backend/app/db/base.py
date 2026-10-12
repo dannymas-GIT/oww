@@ -44,3 +44,4 @@ def import_models() -> None:
     import app.models.home_hero_slide  # noqa: F401
     import app.models.social_post  # noqa: F401
     import app.models.marketing_effort  # noqa: F401
+    import app.models.doc_studio  # noqa: F401
