@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { CmsSectionView } from '@/components/oww/CmsPageRenderer';
-import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { OWW_HERO_OUTLINE_BTN, OwwPageHero } from '@/components/oww/OwwPageHero';
 import { RichTextEditor } from '@/components/oww/RichTextEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -268,17 +268,17 @@ export default function AdminCmsEditorPage() {
               Publish
             </Button>
             {page.id ? (
-              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Button variant="outline" className={OWW_HERO_OUTLINE_BTN} asChild>
                 <Link to={`/admin/studio?content_page=${page.id}`}>Edit body in Studio</Link>
               </Button>
             ) : null}
             {page.published && isBlog && page.id ? (
-              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Button variant="outline" className={OWW_HERO_OUTLINE_BTN} asChild>
                 <Link to={`/admin/social?page=${page.id}`}>Share to social</Link>
               </Button>
             ) : null}
             {page.published ? (
-              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Button variant="outline" className={OWW_HERO_OUTLINE_BTN} asChild>
                 <Link to={livePath} target="_blank">
                   View live
                 </Link>
