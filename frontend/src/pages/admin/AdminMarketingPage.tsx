@@ -424,6 +424,9 @@ export default function AdminMarketingPage() {
           <Button variant="outline" className="min-h-[44px] text-base" asChild>
             <Link to="/admin/settings">Social API setup</Link>
           </Button>
+          <Button variant="outline" className="min-h-[44px] text-base" asChild>
+            <Link to="/admin/studio">Document Studio</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

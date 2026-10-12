@@ -198,6 +198,9 @@ export default function AdminCommunicationsPage() {
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
           <Link to="/admin/cms?kind=blog">Blog</Link>
         </Button>
+        <Button variant="outline" className="min-h-[44px] text-base" asChild>
+          <Link to="/admin/studio">Document Studio</Link>
+        </Button>
       </div>
 
       {msg ? <p className="rounded-lg bg-emerald-50 p-3 text-base text-emerald-900">{msg}</p> : null}

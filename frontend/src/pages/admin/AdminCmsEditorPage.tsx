@@ -267,6 +267,11 @@ export default function AdminCmsEditorPage() {
             <Button className="min-h-[44px] bg-oww-cyan text-base hover:bg-sky-700" disabled={busy} onClick={() => void onSave(true)}>
               Publish
             </Button>
+            {page.id ? (
+              <Button variant="outline" className="min-h-[44px] text-base" asChild>
+                <Link to={`/admin/studio?content_page=${page.id}`}>Edit body in Studio</Link>
+              </Button>
+            ) : null}
             {page.published && isBlog && page.id ? (
               <Button variant="outline" className="min-h-[44px] text-base" asChild>
                 <Link to={`/admin/social?page=${page.id}`}>Share to social</Link>
