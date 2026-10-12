@@ -1,0 +1,43 @@
+---
+description: >-
+  OWW communications, blog, CMS, and marketing editors must reuse Document
+  Studio patterns (TipTap + purpose templates + media assets + {{placeholders}}).
+globs:
+  - "**/AdminCms*.tsx"
+  - "**/AdminCommunications*.tsx"
+  - "**/AdminMarketing*.tsx"
+  - "**/AdminSocial*.tsx"
+  - "**/RichTextEditor.tsx"
+  - "**/blogLayoutTemplates.ts"
+  - "**/owwStudioTemplates.ts"
+  - "**/communicationTemplates.ts"
+  - "**/studioTemplateFill.ts"
+  - "**/tiptap*.ts"
+alwaysApply: false
+---
+
+# OWW × Document Studio (durable design memory)
+
+When designing or extending **Communications**, **Marketing & SEO**, **Social**, or **CMS/blog** editors in OWW, treat **Document Studio** as the product pattern — do not invent a thinner one-off editor.
+
+## Source of truth
+
+- Agent / rule: `saas-document-studio` (WW360 donor: `StudioEditor`, `studioTemplates.ts`, `studioTemplateFill.ts`)
+- OWW catalog: `frontend/src/config/owwStudioTemplates.ts` (audiences + categories + purpose layouts)
+- Placeholder helper: `frontend/src/lib/studioTemplateFill.ts`
+- TipTap surface: `frontend/src/components/oww/RichTextEditor.tsx` (Studio-aligned toolbar + media)
+
+## Required on every design/change
+
+1. **Purpose templates** — new post/email/social types go in `owwStudioTemplates` (category + audience + preview + body/sections). Prefer porting WW360 `studioTemplates` outreach/brief content over rewriting from scratch.
+2. **TipTap** — body editing uses RichTextEditor (image/video upload, links, headings). Do not regress to bare `<textarea>` for HTML bodies.
+3. **Media** — uploads go through existing CMS media / asset APIs (UUID/unguessable URLs). Hero + media_gallery remain valid section types; inline media uses TipTap.
+4. **`{{placeholders}}`** — templates keep tokens (`{{contact_name}}`, `{{state_code}}`, …); fill via `applyStudioPlaceholders` when context is known; leave unknown tokens visible.
+5. **Type scale** — body `text-lg` / controls ≥ `text-base` / captions ≥ `text-sm` / touch ≥44px (WW360 accessible type).
+
+## Do not
+
+- Fork a second rich-text stack or paste raw HTML textareas for new compose UIs.
+- Hard-code one-off blog section stacks outside the Studio catalog.
+- Invent UEI/secrets into placeholder autofill.
+- Drop Document Studio ownership/versioning requirements into OWW CMS unless product asks for a full Studio module — reuse **editor + templates + media + fill** first.

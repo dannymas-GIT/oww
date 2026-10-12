@@ -114,3 +114,41 @@ Branch: `feature/comms-marketing-studio`
 2. Admin → Marketing & SEO → create an SEO brief from template → Activate.
 3. Admin → Pages & blog → open a blog post → apply blog template → TipTap body → Publish / Share to social.
 4. Platform settings → Social publishing shows optional Ayrshare setup card while stub.
+
+---
+
+# Document Studio patterns in Communications / blog
+
+Branch: `feature/blog-media-templates`
+
+## Durable memory
+
+- Rule: `.cursor/rules/oww-document-studio-comms.mdc` (+ expanded `saas-document-studio.mdc` globs)
+- Catalog: `frontend/src/config/owwStudioTemplates.ts` (audiences/categories; ports WW360 Studio outreach)
+- Fill: `frontend/src/lib/studioTemplateFill.ts`
+- TipTap: image/video upload + insert-from-template
+
+## Manual checks
+
+1. Blog CMS → Document Studio layout picker applies full section stacks.
+2. TipTap toolbar uploads image/video; Insert template inserts Studio body HTML.
+3. Communications → Document Studio templates include Partner newsletter / Utility invitation.
+4. `npm run typecheck` passes.
+
+---
+
+# Blog TipTap media + purpose layouts
+
+Branch: `feature/blog-media-templates`
+
+## Scope
+
+- TipTap image/video upload (and URL fallback) in CMS rich-text
+- Purpose-built blog layouts: workforce tip, event recap, partner spotlight, hiring update, training announce, news brief, photo essay, video feature
+
+## Manual checks
+
+1. Edit a blog post → TipTap toolbar Image / Video uploads into body.
+2. Apply “Event recap” layout → hero + body + gallery + quote + CTA appear.
+3. Apply “Video feature” → hero media_type video; upload cover on hero.
+4. Publish and confirm public page shows image/video.

@@ -13,11 +13,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/useTableControls';
 import { rowValue } from '@/lib/tableControls';
-import {
-  COMMUNICATION_TEMPLATES,
-  findTemplate,
-  htmlToPlain,
-} from '@/config/communicationTemplates';
+import { htmlToPlain } from '@/config/communicationTemplates';
+import { findOwwStudioTemplate, templatesForCategory } from '@/config/owwStudioTemplates';
+import { applyStudioPlaceholdersHtml } from '@/lib/studioTemplateFill';
 import { createCommunication, fetchRoleCatalog, listCommunications, previewAudience, sendCommunication, sendRenewalNotices } from '@/services/adminService';
 import { formatDate, titleCase } from '@/lib/format';
 import type { Communication, CommunicationAudience, RoleCatalogEntry } from '@/types';
@@ -92,17 +90,20 @@ export default function AdminCommunicationsPage() {
 
   function applyTemplate(id: string) {
     setTemplateId(id);
-    const t = findTemplate(id);
+    const t = findOwwStudioTemplate(id);
     if (!t) return;
-    if (t.kind === 'sms') {
+    const filledHtml = applyStudioPlaceholdersHtml(t.bodyHtml, {
+      state_code: 'NY',
+    });
+    if (t.category === 'sms' || t.sendMethod === 'sms') {
       setChannel('sms');
-      setSubject(t.subject || t.label);
-      setBody(t.bodyText || htmlToPlain(t.bodyHtml));
+      setSubject(t.subject || t.name);
+      setBody(t.bodyText || htmlToPlain(filledHtml));
       return;
     }
     setChannel('email');
-    setSubject(t.subject || t.label);
-    setBody(t.bodyHtml);
+    setSubject(t.subject || t.name);
+    setBody(filledHtml);
   }
 
   async function submit(sendNow: boolean) {
@@ -134,7 +135,11 @@ export default function AdminCommunicationsPage() {
     }
   }
 
-  const emailTemplates = COMMUNICATION_TEMPLATES.filter(t => t.kind === 'email' || t.kind === 'sms');
+  const emailTemplates = [
+    ...templatesForCategory('email'),
+    ...templatesForCategory('sms'),
+    ...templatesForCategory('outreach'),
+  ];
 
   return (
     <div className="space-y-6">
@@ -202,7 +207,7 @@ export default function AdminCommunicationsPage() {
         <section className="min-w-0 space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-display text-xl font-semibold text-oww-navy">Compose</h2>
           <div className="space-y-2">
-            <Label className="text-base">Template</Label>
+            <Label className="text-base">Document Studio template</Label>
             <select
               className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-base"
               value={templateId}
@@ -211,7 +216,8 @@ export default function AdminCommunicationsPage() {
               <option value="">Blank message</option>
               {emailTemplates.map(t => (
                 <option key={t.id} value={t.id}>
-                  {t.label} ({t.sendMethod})
+                  {t.name}
+                  {t.sourceStudioId ? ` · Studio` : ''} — {t.preview}
                 </option>
               ))}
             </select>
@@ -244,8 +250,11 @@ export default function AdminCommunicationsPage() {
               <RichTextEditor
                 value={body}
                 onChange={setBody}
-                placeholder="Hi {{name}}, write your message…"
+                placeholder="Start writing, or pick a Document Studio template above…"
                 minHeightClass="min-h-[180px]"
+                insertTemplates={emailTemplates
+                  .filter(t => t.category !== 'sms')
+                  .map(t => ({ id: t.id, label: t.name, bodyHtml: t.bodyHtml }))}
               />
             ) : (
               <Textarea id="body" rows={7} className="text-base" value={body} onChange={e => setBody(e.target.value)} placeholder="Short SMS (keep under ~160 chars)…" />

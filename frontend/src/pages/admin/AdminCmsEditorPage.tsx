@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { findTemplate, templatesForKind } from '@/config/communicationTemplates';
+import { blogStudioTemplates, findOwwStudioTemplate } from '@/config/owwStudioTemplates';
 import {
   deleteCmsPage,
   fetchCmsCatalog,
@@ -205,7 +205,7 @@ export default function AdminCmsEditorPage() {
     }
   }
 
-  async function onUpload(file: File, sectionIndex?: number, itemIndex?: number) {
+  async function onUpload(file: File, sectionIndex?: number, itemIndex?: number): Promise<MediaAsset> {
     setBusy(true);
     setError(null);
     try {
@@ -220,8 +220,10 @@ export default function AdminCmsEditorPage() {
         }
       }
       setMessage(`Uploaded ${asset.original_name}`);
-    } catch {
+      return asset;
+    } catch (err) {
       setError('Upload failed. Check file type and size (max 80 MB).');
+      throw err;
     } finally {
       setBusy(false);
     }
@@ -309,39 +311,53 @@ export default function AdminCmsEditorPage() {
           {isBlog ? (
             <>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-base">Start from communication template</Label>
+                <Label className="text-base">Document Studio layout</Label>
                 <select
                   className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-base"
                   defaultValue=""
                   onChange={e => {
-                    const t = findTemplate(e.target.value);
-                    if (!t || !page) return;
-                    const rich: CmsSection = {
-                      type: 'rich_text',
-                      title: t.subject || t.label,
-                      html: t.bodyHtml,
-                    };
+                    const tpl = findOwwStudioTemplate(e.target.value);
+                    if (!tpl?.sections?.length || !page) return;
+                    const stateToken = (page.state_code || 'NY').toLowerCase();
+                    const sections = JSON.parse(JSON.stringify(tpl.sections)) as CmsSection[];
+                    for (const sec of sections) {
+                      if (sec.cta_href && typeof sec.cta_href === 'string') {
+                        sec.cta_href = sec.cta_href.replace('{state}', stateToken);
+                      }
+                    }
                     setPage({
                       ...page,
-                      title: t.subject || page.title,
-                      summary: page.summary || '',
-                      tags: t.tags?.length ? t.tags : page.tags,
-                      sections: [rich, ...(page.sections || []).filter(s => s.type !== 'rich_text')],
+                      title: tpl.subject || page.title,
+                      summary: tpl.excerpt || page.summary,
+                      excerpt: tpl.excerpt || page.excerpt,
+                      tags: tpl.tags?.length ? tpl.tags : page.tags,
+                      sections,
                     });
                     setSelectedIndex(0);
-                    setMessage(`Applied template “${t.label}”. Edit the TipTap body below, then publish or share to social.`);
+                    setMessage(
+                      `Applied Document Studio layout “${tpl.name}”${
+                        tpl.sourceStudioId ? ` (from WW360 template ${tpl.sourceStudioId})` : ''
+                      }. Upload cover media on the hero; use TipTap image/video for inline media.`
+                    );
                   }}
                 >
-                  <option value="">Choose a blog template…</option>
-                  {templatesForKind('blog').map(t => (
+                  <option value="">Choose a Studio purpose layout…</option>
+                  {blogStudioTemplates().map(t => (
                     <option key={t.id} value={t.id}>
-                      {t.label}
+                      {t.name} — {t.preview}
                     </option>
                   ))}
                 </select>
-                <p className="text-sm text-slate-600">
-                  Templates fill a rich-text section with the TipTap editor. Publish method: blog on the public site; use Share to social for LinkedIn.
-                </p>
+                <ul className="grid gap-1 text-sm text-slate-600 sm:grid-cols-2">
+                  {blogStudioTemplates().map(t => (
+                    <li key={t.id}>
+                      <span className="font-medium text-oww-navy">{t.name}:</span> {t.preview}
+                      {t.sourceStudioId ? (
+                        <span className="text-slate-500"> · Studio:{t.sourceStudioId}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-base">Excerpt</Label>
@@ -605,7 +621,7 @@ function SectionFields({
   index: number;
   updateSection: (index: number, patch: Partial<CmsSection>) => void;
   updateItem: (sectionIndex: number, itemIndex: number, patch: Record<string, string>) => void;
-  onUpload: (file: File, sectionIndex?: number, itemIndex?: number) => Promise<void>;
+  onUpload: (file: File, sectionIndex?: number, itemIndex?: number) => Promise<MediaAsset>;
 }) {
   if (section.type === 'hero') {
     return (
@@ -662,10 +678,21 @@ function SectionFields({
           <RichTextEditor
             value={section.html || '<p></p>'}
             onChange={html => updateSection(index, { html })}
-            placeholder="Write this section…"
+            placeholder="Start writing, or insert a Document Studio section…"
             minHeightClass="min-h-[160px]"
+            onUploadMedia={async file => {
+              const asset = await onUpload(file);
+              return { url: asset.url, kind: asset.kind };
+            }}
+            insertTemplates={blogStudioTemplates().map(t => ({
+              id: t.id,
+              label: t.name,
+              bodyHtml: t.bodyHtml,
+            }))}
           />
-          <p className="text-sm text-slate-600">TipTap editor — headings, lists, links, and formatting. Scripts are stripped on save.</p>
+          <p className="text-sm text-slate-600">
+            Document Studio TipTap — formatting, insert template, upload image/video. Hero and Media gallery handle cover and multi-item media. Scripts are stripped on save.
+          </p>
         </div>
       </>
     );

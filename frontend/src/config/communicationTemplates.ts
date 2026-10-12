@@ -83,7 +83,7 @@ export const COMMUNICATION_TEMPLATES: CommunicationTemplate[] = [
     kind: 'blog',
     sendMethod: 'blog_publish',
     label: 'Blog — workforce tip',
-    description: 'Dated blog post with tip structure for the public site.',
+    description: 'Use CMS layout “Workforce tip” (hero + TipTap + CTA). Media via TipTap or gallery.',
     subject: 'Workforce tip: building your operator pipeline',
     bodyHtml: `<p>Attracting and retaining operators starts with a clear pathway from interest to certification.</p>
 <h2>What works</h2>
@@ -100,7 +100,7 @@ export const COMMUNICATION_TEMPLATES: CommunicationTemplate[] = [
     kind: 'blog',
     sendMethod: 'blog_publish',
     label: 'Blog — event recap',
-    description: 'Recap a training day, conference, or partner event.',
+    description: 'Use CMS layout “Event recap” (hero + story + gallery + quote).',
     subject: 'Event recap: connecting New York water careers',
     bodyHtml: `<p>Thank you to everyone who joined us.</p>
 <h2>Highlights</h2>

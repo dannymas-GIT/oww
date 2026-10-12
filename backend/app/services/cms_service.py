@@ -290,6 +290,8 @@ def default_sections_for_template(template_id: str) -> list[dict[str, Any]]:
             {"type": "cta_band", "title": "Learn more", "body": "", "cta_label": "Contact us", "cta_href": "/{state}/interest"},
         ]
     if template_id == BLOG_TEMPLATE:
+        # Default starter; CMS UI also offers purpose-built layouts
+        # (workforce tip, event recap, video feature, etc.).
         return [
             {
                 "type": "hero",
@@ -306,12 +308,18 @@ def default_sections_for_template(template_id: str) -> list[dict[str, Any]]:
             {
                 "type": "rich_text",
                 "title": "",
-                "html": "<p>Write your update here. Keep topics running over time—hiring tips, training news, partner spotlights, and more.</p>",
+                "html": (
+                    "<p>Write your update here. Use the editor toolbar to insert "
+                    "images or video inline. Prefer a purpose-built layout "
+                    "(workforce tip, event recap, hiring update, video feature) "
+                    "from <strong>Start from layout template</strong> when you "
+                    "know the post type.</p>"
+                ),
             },
             {
                 "type": "media_gallery",
                 "title": "Photos & media",
-                "description": "Optional images, video, or documents for this post.",
+                "description": "Optional multi-item images, video, or documents for this post.",
                 "items": [{"url": "", "caption": "", "media_type": "image"}],
             },
             {
