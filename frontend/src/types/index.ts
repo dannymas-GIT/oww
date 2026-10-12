@@ -202,6 +202,8 @@ export interface SocialStatus {
   default_platforms: string[];
   auto_share_on_publish: boolean;
   char_hints: Record<string, number>;
+  composable_destinations?: string[];
+  internal_destinations?: string[];
   public_site_url: string;
   api_key_configured?: boolean;
   setup?: {

@@ -54,6 +54,14 @@ def test_blog_card_dict_includes_canonical_url():
     assert card["title"] == "Workforce Update"
 
 
+def test_split_platforms_separates_internal_destinations():
+    external, internal = social_service.split_platforms(
+        ["linkedin", "oww_blog", "WW360", "facebook"]
+    )
+    assert external == ["linkedin", "facebook"]
+    assert internal == ["oww_blog", "ww360"]
+
+
 def test_stub_provider_publish():
     provider = StubProvider()
     assert provider.is_configured()
