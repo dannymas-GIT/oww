@@ -170,16 +170,43 @@ export default function AdminSettingsPage() {
         <CardContent className="space-y-6">
           <div className="flex flex-wrap items-center gap-3 text-base text-slate-700">
             <Badge variant={socialStatus?.live ? 'default' : 'secondary'}>
-              {socialStatus?.provider || 'ayrshare'} {socialStatus?.live ? '(live)' : '(stub)'}
+              {socialStatus?.provider || 'ayrshare'} {socialStatus?.live ? '(live)' : '(stub — optional)'}
             </Badge>
             <span>
               Connected:{' '}
-              {(socialStatus?.connected_platforms || []).join(', ') || 'configure AYRSHARE_API_KEY to see live accounts'}
+              {(socialStatus?.connected_platforms || []).join(', ') ||
+                (socialStatus?.api_key_configured ? 'none yet' : 'API key not set yet')}
             </span>
             <Button variant="outline" className="min-h-[44px] text-base" asChild>
               <Link to="/admin/social">Open Social posts</Link>
             </Button>
+            <Button variant="outline" className="min-h-[44px] text-base" asChild>
+              <Link to="/admin/marketing">Marketing &amp; SEO</Link>
+            </Button>
           </div>
+
+          {socialStatus?.setup && !socialStatus.setup.ready ? (
+            <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-base text-amber-950">
+              <p className="font-semibold">Connect {socialStatus.setup.provider_label} when ready</p>
+              <p>{socialStatus.setup.message}</p>
+              <ol className="list-decimal space-y-1 pl-5">
+                {(socialStatus.setup.steps || []).map(step => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              <p className="text-sm">
+                Env var: <code className="rounded bg-white px-1">{socialStatus.setup.env_var}</code> ·{' '}
+                <a
+                  href={socialStatus.setup.docs_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-800 underline"
+                >
+                  Ayrshare docs
+                </a>
+              </p>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label className="text-base font-semibold text-oww-navy">Default platforms</Label>

@@ -3,11 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { CmsSectionView } from '@/components/oww/CmsPageRenderer';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
+import { RichTextEditor } from '@/components/oww/RichTextEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { findTemplate, templatesForKind } from '@/config/communicationTemplates';
 import {
   deleteCmsPage,
   fetchCmsCatalog,
@@ -306,6 +308,41 @@ export default function AdminCmsEditorPage() {
           </div>
           {isBlog ? (
             <>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="text-base">Start from communication template</Label>
+                <select
+                  className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-base"
+                  defaultValue=""
+                  onChange={e => {
+                    const t = findTemplate(e.target.value);
+                    if (!t || !page) return;
+                    const rich: CmsSection = {
+                      type: 'rich_text',
+                      title: t.subject || t.label,
+                      html: t.bodyHtml,
+                    };
+                    setPage({
+                      ...page,
+                      title: t.subject || page.title,
+                      summary: page.summary || '',
+                      tags: t.tags?.length ? t.tags : page.tags,
+                      sections: [rich, ...(page.sections || []).filter(s => s.type !== 'rich_text')],
+                    });
+                    setSelectedIndex(0);
+                    setMessage(`Applied template “${t.label}”. Edit the TipTap body below, then publish or share to social.`);
+                  }}
+                >
+                  <option value="">Choose a blog template…</option>
+                  {templatesForKind('blog').map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-slate-600">
+                  Templates fill a rich-text section with the TipTap editor. Publish method: blog on the public site; use Share to social for LinkedIn.
+                </p>
+              </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-base">Excerpt</Label>
                 <Input
@@ -621,13 +658,14 @@ function SectionFields({
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-base">HTML body</Label>
-          <textarea
-            className="min-h-[160px] w-full rounded-md border border-slate-300 p-3 text-base"
-            value={section.html || ''}
-            onChange={e => updateSection(index, { html: e.target.value })}
+          <Label className="text-base">Body</Label>
+          <RichTextEditor
+            value={section.html || '<p></p>'}
+            onChange={html => updateSection(index, { html })}
+            placeholder="Write this section…"
+            minHeightClass="min-h-[160px]"
           />
-          <p className="text-sm text-slate-600">Use simple HTML: &lt;p&gt;, &lt;ul&gt;, &lt;a href&gt;, &lt;strong&gt;. Scripts are stripped.</p>
+          <p className="text-sm text-slate-600">TipTap editor — headings, lists, links, and formatting. Scripts are stripped on save.</p>
         </div>
       </>
     );

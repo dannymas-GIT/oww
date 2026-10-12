@@ -335,3 +335,39 @@ export async function sharePageToSocial(contentPageId: number, platforms?: strin
   });
   return data as import('@/types').SocialPostRecord;
 }
+
+// ---- Marketing / SEO efforts ----
+
+export async function fetchMarketingCatalog() {
+  const { data } = await api.get('/admin/marketing/catalog');
+  return data as {
+    kinds: Array<{ id: string; label: string }>;
+    statuses: string[];
+    send_methods: Array<{ id: string; label: string }>;
+  };
+}
+
+export async function listMarketingEfforts(params?: {
+  kind?: string;
+  status?: string;
+  state_code?: string;
+  limit?: number;
+}) {
+  const { data } = await api.get('/admin/marketing/efforts', { params });
+  return data as { total: number; items: import('@/types').MarketingEffort[] };
+}
+
+export async function createMarketingEffort(body: Partial<import('@/types').MarketingEffort>) {
+  const { data } = await api.post('/admin/marketing/efforts', body);
+  return data as import('@/types').MarketingEffort;
+}
+
+export async function updateMarketingEffort(id: number, body: Partial<import('@/types').MarketingEffort>) {
+  const { data } = await api.patch(`/admin/marketing/efforts/${id}`, body);
+  return data as import('@/types').MarketingEffort;
+}
+
+export async function deleteMarketingEffort(id: number) {
+  const { data } = await api.delete(`/admin/marketing/efforts/${id}`);
+  return data as { ok: boolean };
+}

@@ -203,6 +203,38 @@ export interface SocialStatus {
   auto_share_on_publish: boolean;
   char_hints: Record<string, number>;
   public_site_url: string;
+  api_key_configured?: boolean;
+  setup?: {
+    provider_label: string;
+    docs_url: string;
+    env_var: string;
+    ready: boolean;
+    message: string;
+    steps: string[];
+  };
+}
+
+export interface MarketingEffort {
+  id: number;
+  state_code: string;
+  title: string;
+  kind: string;
+  status: string;
+  channel?: string | null;
+  description?: string | null;
+  seo_keywords?: string[];
+  target_url?: string | null;
+  template_id?: string | null;
+  send_method?: string | null;
+  content_page_id?: number | null;
+  communication_id?: number | null;
+  social_post_id?: number | null;
+  metrics?: Record<string, unknown>;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  created_by?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface SocialPostRecord {

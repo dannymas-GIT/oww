@@ -308,7 +308,14 @@ export const roleNavGroups: NavGroup[] = [
             path: '/admin/communications',
             icon: Mail,
             roles: PLATFORM_OPS_ROLES,
-            description: 'Email and SMS by audience',
+            description: 'Email/SMS, marketing & SEO, social',
+          },
+          {
+            label: 'Marketing & SEO',
+            path: '/admin/marketing',
+            icon: Megaphone,
+            roles: [...PLATFORM_OPS_ROLES, ...PLATFORM_EDITOR_ROLES],
+            description: 'Campaigns, SEO briefs, content efforts',
           },
           {
             label: 'Login activity',

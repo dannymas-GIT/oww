@@ -93,3 +93,24 @@ cd backend && pytest tests/test_social.py -q
 
 - Real LinkedIn posting requires an Ayrshare account with the NYSAWWA/OWW LinkedIn page connected and `AYRSHARE_API_KEY` in host `.env`.
 - Default platform is LinkedIn; Jenny can toggle others that are connected on the provider.
+- Config UI: **Platform settings → Social publishing** and **Communications → Social posts** show stub vs live and setup steps when the key is missing.
+
+---
+
+# Communications studio — marketing, TipTap, templates
+
+Branch: `feature/comms-marketing-studio`
+
+## Scope
+
+- Communications hub links: Member messages, Marketing & SEO, Social, Blog
+- TipTap editor for email bodies and CMS rich-text / blog sections
+- Templates for email, SMS, blog, social, SEO briefs
+- Marketing efforts board (SEO keywords, channel, send method, status)
+
+## Manual checks
+
+1. Admin → Communications → compose with TipTap; apply “Welcome — new utility” template → Send/draft.
+2. Admin → Marketing & SEO → create an SEO brief from template → Activate.
+3. Admin → Pages & blog → open a blog post → apply blog template → TipTap body → Publish / Share to social.
+4. Platform settings → Social publishing shows optional Ayrshare setup card while stub.
