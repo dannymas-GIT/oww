@@ -4,6 +4,11 @@ globs:
   - "**/doc-studio/**"
   - "**/doc_studio*"
   - "**/routes/studio/**"
+  - "**/AdminCms*.tsx"
+  - "**/AdminCommunications*.tsx"
+  - "**/AdminMarketing*.tsx"
+  - "**/owwStudioTemplates.ts"
+  - "**/RichTextEditor.tsx"
 alwaysApply: false
 ---
 
@@ -32,3 +37,7 @@ User-owned libraries (not tenant scope strings). Reference: Author2Publish `/stu
 ## Scaffold
 
 `templates/saas-skeleton-overlay/modules/doc-studio/` + `--with-doc-studio` in `skills/saas-scaffold/scripts/scaffold.py`.
+
+## OWW note
+
+OWW does not yet ship a full Studio module (folders / versions / owner libraries). For Communications, Marketing, Social, and CMS/blog, still apply Studio **editor + purpose templates + media + `{{placeholder}}` fill** via `owwStudioTemplates.ts`, `RichTextEditor`, and `studioTemplateFill.ts`. See `oww-document-studio-comms.mdc`.
