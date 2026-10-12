@@ -28,7 +28,7 @@ function templateToMarkdown(t: OwwStudioTemplate): string {
 }
 
 export function NewDocumentDialog({ open, onClose, onCreate }: NewDocumentDialogProps) {
-  const [category, setCategory] = useState<OwwStudioCategory | 'all'>('blog');
+  const [category, setCategory] = useState<OwwStudioCategory | 'all'>('all');
   const [selected, setSelected] = useState<string | null>(null);
   const [title, setTitle] = useState('');
 
@@ -47,7 +47,8 @@ export function NewDocumentDialog({ open, onClose, onCreate }: NewDocumentDialog
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="font-display text-xl text-oww-navy">New document</h2>
           <p className="text-base text-slate-600">
-            Pick a Document Studio starter — you edit it in place in the WYSIWYG editor.
+            Pick a scenario starter (blog, landing page, social, email, outreach, SEO, or brief) —
+            then edit in place in the WYSIWYG editor.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-3">
@@ -103,6 +104,7 @@ export function NewDocumentDialog({ open, onClose, onCreate }: NewDocumentDialog
                   }}
                 >
                   <span className="font-semibold text-oww-navy">{t.name}</span>
+                  <span className="text-sm text-slate-500">{OWW_STUDIO_CATEGORIES[t.category]}</span>
                   <span className="text-sm text-slate-600">{t.preview}</span>
                 </button>
               </li>
