@@ -34,7 +34,27 @@ PLATFORM_CHAR_HINTS = {
     "x": 280,
     "bluesky": 300,
     "youtube": 5000,
+    "oww_blog": 20000,
+    "ww360": 5000,
 }
+
+# First-party destinations (not sent to Ayrshare)
+INTERNAL_PLATFORMS = frozenset({"oww_blog", "ww360"})
+COMPOSABLE_SOCIAL = ("linkedin", "facebook", "instagram", "twitter")
+COMPOSABLE_DESTINATIONS = (*COMPOSABLE_SOCIAL, "oww_blog", "ww360")
+
+
+def split_platforms(platforms: list[str] | None) -> tuple[list[str], list[str]]:
+    """Return (external_social, internal_destinations)."""
+    raw = [str(p).strip().lower() for p in (platforms or []) if str(p).strip()]
+    external = [p for p in raw if p not in INTERNAL_PLATFORMS]
+    internal = [p for p in raw if p in INTERNAL_PLATFORMS]
+    return external, internal
+
+
+def _slugify(text: str) -> str:
+    s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return (s[:80] or "update")
 
 
 def get_provider() -> SocialProvider:
@@ -246,20 +266,208 @@ def _apply_result(post: SocialPost, result: PublishResult) -> None:
     post.updated_at = datetime.utcnow()
 
 
+def _publish_oww_blog(db: Session, post: SocialPost) -> dict[str, Any]:
+    """Publish (or create+publish) an OWW blog page for this social post."""
+    page: ContentPage | None = None
+    if post.content_page_id:
+        page = db.query(ContentPage).filter(ContentPage.id == post.content_page_id).first()
+    if page:
+        if page.template != cms_service.BLOG_TEMPLATE:
+            page.template = cms_service.BLOG_TEMPLATE
+        if not page.is_published:
+            page.is_published = True
+            cms_service.stamp_publish_dates(page, publishing=True)
+            db.commit()
+            db.refresh(page)
+        post.link_url = post.link_url or public_blog_url(page)
+        return {
+            "status": "success",
+            "id": str(page.id),
+            "url": public_blog_url(page),
+            "detail": "Published on OWW Blog",
+        }
+
+    # Free-form → create a published blog post from the message
+    lines = [ln.strip() for ln in (post.message or "").splitlines() if ln.strip()]
+    title = (lines[0] if lines else "Workforce update")[:200]
+    body_html = "".join(f"<p>{ln}</p>" for ln in (lines[1:] or lines[:1] or ["Update"]))
+    base_slug = _slugify(title)
+    slug = base_slug
+    n = 2
+    state = (post.state_code or "NY").upper()[:2]
+    while (
+        db.query(ContentPage)
+        .filter(ContentPage.state_code == state, ContentPage.slug == slug)
+        .first()
+    ):
+        slug = f"{base_slug}-{n}"
+        n += 1
+    page = ContentPage(
+        state_code=state,
+        slug=slug,
+        title=title,
+        template=cms_service.BLOG_TEMPLATE,
+        summary=(lines[1] if len(lines) > 1 else title)[:400],
+        body_html=body_html,
+        body_json={
+            "sections": [
+                {"type": "rich_text", "title": title, "html": body_html},
+            ]
+        },
+        is_published=True,
+        tags=["social", "syndication"],
+        author_name="OWW",
+    )
+    cms_service.stamp_publish_dates(page, publishing=True)
+    db.add(page)
+    db.commit()
+    db.refresh(page)
+    post.content_page_id = page.id
+    post.link_url = public_blog_url(page)
+    return {
+        "status": "success",
+        "id": str(page.id),
+        "url": public_blog_url(page),
+        "detail": "Created and published on OWW Blog",
+    }
+
+
+def _publish_ww360(db: Session, post: SocialPost) -> dict[str, Any]:
+    """
+    Make content available to WW360.
+
+    WW360 embeds the OWW public blog feed — ensure a blog URL exists, then record
+    the destination. Optional push to WW360 when service URL/token are configured.
+    """
+    # Prefer an existing OWW blog URL so WW360 widgets can pick it up
+    blog_url = post.link_url
+    if post.content_page_id:
+        page = db.query(ContentPage).filter(ContentPage.id == post.content_page_id).first()
+        if page:
+            if not page.is_published:
+                # Ensure blog is live for the feed
+                _publish_oww_blog(db, post)
+                page = db.query(ContentPage).filter(ContentPage.id == post.content_page_id).first()
+            blog_url = public_blog_url(page) if page else blog_url
+
+    detail = "Available via OWW blog feed widgets in WW360"
+    pushed = False
+    base = (settings.WW360_BASE_URL or "").rstrip("/")
+    token = (settings.WW360_SERVICE_TOKEN or "").strip()
+    if base and token and (post.message or "").strip():
+        try:
+            import httpx
+
+            payload = {
+                "title": (post.message or "").splitlines()[0][:120],
+                "body": (post.message or "")[:2000],
+                "url": blog_url,
+                "source": "oww_social",
+                "social_post_id": post.id,
+            }
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(
+                    f"{base}/api/v1/integrations/oww/announcements",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+            if resp.status_code < 400:
+                pushed = True
+                detail = "Pushed announcement to WW360"
+            else:
+                detail = f"WW360 announce skipped ({resp.status_code}); feed widgets still apply"
+        except Exception as exc:
+            logger.info("WW360 announce optional push failed: %s", exc)
+            detail = "WW360 push unavailable; content still via OWW blog feed"
+
+    return {
+        "status": "success",
+        "id": f"ww360-{post.id}",
+        "url": blog_url,
+        "pushed": pushed,
+        "detail": detail,
+    }
+
+
 def publish_now(db: Session, post: SocialPost) -> SocialPost:
     provider = get_provider()
     post.provider = provider.name
     post.status = "queued"
     db.commit()
 
-    result = provider.publish(
-        message=post.message or "",
-        platforms=list(post.platforms or ["linkedin"]),
-        link_url=post.link_url,
-        media_url=post.media_url,
-        scheduled_at=None,
+    external, internal = split_platforms(list(post.platforms or ["linkedin"]))
+    platform_map: dict[str, Any] = {}
+    errors: list[str] = []
+    provider_post_id: str | None = None
+    raw: dict[str, Any] = {"internal": {}, "external": {}}
+
+    if external:
+        result = provider.publish(
+            message=post.message or "",
+            platforms=external,
+            link_url=post.link_url,
+            media_url=post.media_url,
+            scheduled_at=None,
+        )
+        platform_map.update(result.platforms or {})
+        provider_post_id = result.provider_post_id
+        raw["external"] = result.raw or {}
+        if result.error:
+            errors.append(result.error)
+        if not result.ok and result.status == "failed" and not internal:
+            _apply_result(post, result)
+            db.commit()
+            db.refresh(post)
+            return post
+
+    if "oww_blog" in internal:
+        try:
+            platform_map["oww_blog"] = _publish_oww_blog(db, post)
+            raw["internal"]["oww_blog"] = platform_map["oww_blog"]
+        except Exception as exc:
+            logger.exception("oww_blog publish failed")
+            platform_map["oww_blog"] = {"status": "error", "message": str(exc)}
+            errors.append(f"oww_blog: {exc}")
+
+    if "ww360" in internal:
+        try:
+            platform_map["ww360"] = _publish_ww360(db, post)
+            raw["internal"]["ww360"] = platform_map["ww360"]
+        except Exception as exc:
+            logger.exception("ww360 publish failed")
+            platform_map["ww360"] = {"status": "error", "message": str(exc)}
+            errors.append(f"ww360: {exc}")
+
+    successes = [
+        k
+        for k, v in platform_map.items()
+        if isinstance(v, dict) and str(v.get("status", "")).lower() in ("success", "posted")
+    ]
+    failures = [k for k in platform_map if k not in successes]
+    if successes and not failures:
+        status = "posted"
+        ok = True
+    elif successes and failures:
+        status = "partial"
+        ok = True
+    else:
+        status = "failed"
+        ok = False
+
+    _apply_result(
+        post,
+        PublishResult(
+            ok=ok,
+            provider_post_id=provider_post_id,
+            status=status,
+            platforms=platform_map,
+            raw=raw,
+            error="; ".join(errors) if errors else None,
+        ),
     )
-    _apply_result(post, result)
     db.commit()
     db.refresh(post)
     return post
@@ -270,11 +478,12 @@ def schedule_post(db: Session, post: SocialPost, when: datetime) -> SocialPost:
     provider = get_provider()
     post.provider = provider.name
     post.scheduled_at = when
-    # Prefer provider-side scheduling when live key is present
-    if isinstance(provider, AyrshareProvider) and provider.is_configured():
+    external, internal = split_platforms(list(post.platforms or ["linkedin"]))
+    # Prefer provider-side scheduling for external networks when live key is present
+    if external and isinstance(provider, AyrshareProvider) and provider.is_configured() and not internal:
         result = provider.publish(
             message=post.message or "",
-            platforms=list(post.platforms or ["linkedin"]),
+            platforms=external,
             link_url=post.link_url,
             media_url=post.media_url,
             scheduled_at=when,
@@ -283,6 +492,7 @@ def schedule_post(db: Session, post: SocialPost, when: datetime) -> SocialPost:
         if result.ok:
             post.status = "scheduled"
     else:
+        # Local schedule (covers internal destinations + stub)
         post.status = "scheduled"
     post.updated_at = datetime.utcnow()
     db.commit()
@@ -356,6 +566,8 @@ def provider_status(db: Session) -> dict[str, Any]:
         "default_platforms": default_platforms(db),
         "auto_share_on_publish": auto_share_on_publish(db),
         "char_hints": PLATFORM_CHAR_HINTS,
+        "composable_destinations": list(COMPOSABLE_DESTINATIONS),
+        "internal_destinations": sorted(INTERNAL_PLATFORMS),
         "public_site_url": (settings.PUBLIC_SITE_URL or f"https://{settings.APP_DOMAIN}").rstrip("/"),
         "api_key_configured": bool((settings.AYRSHARE_API_KEY or "").strip()),
         "setup": {

@@ -22,6 +22,8 @@ const PLATFORM_OPTIONS = [
   { id: 'facebook', label: 'Facebook' },
   { id: 'instagram', label: 'Instagram' },
   { id: 'twitter', label: 'X / Twitter' },
+  { id: 'oww_blog', label: 'OWW Blog' },
+  { id: 'ww360', label: 'WW360' },
 ];
 
 export default function AdminSettingsPage() {

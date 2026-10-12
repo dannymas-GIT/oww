@@ -30,7 +30,11 @@ const PLATFORM_LABELS: Record<string, string> = {
   x: 'X / Twitter',
   bluesky: 'Bluesky',
   youtube: 'YouTube',
+  oww_blog: 'OWW Blog',
+  ww360: 'WW360',
 };
+
+const DEFAULT_DESTINATIONS = ['linkedin', 'facebook', 'instagram', 'twitter', 'oww_blog', 'ww360'];
 
 function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (status === 'posted') return 'default';
@@ -195,9 +199,9 @@ export default function AdminSocialPage() {
     }
   }
 
-  const availablePlatforms = status?.connected_platforms?.length
-    ? status.connected_platforms
-    : ['linkedin', 'facebook', 'instagram', 'twitter'];
+  const availablePlatforms = status?.composable_destinations?.length
+    ? status.composable_destinations
+    : DEFAULT_DESTINATIONS;
 
   return (
     <div className="space-y-6">
@@ -320,6 +324,10 @@ export default function AdminSocialPage() {
                 </label>
               ))}
             </div>
+            <p className="text-sm text-slate-600">
+              LinkedIn / Meta / X go through the social aggregator. <strong>OWW Blog</strong> publishes on the public
+              site; <strong>WW360</strong> surfaces the same content in Water Workforce 360 (blog widgets / optional push).
+            </p>
           </div>
 
           <div className="space-y-2 max-w-sm">
