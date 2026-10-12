@@ -16,6 +16,7 @@ from app.schemas.doc_studio import (
     DocDocumentDetail,
     DocDocumentRead,
     DocDocumentUpdate,
+    DocDuplicateRequest,
     DocFolderCreate,
     DocFolderRead,
     DocFolderUpdate,
@@ -24,9 +25,12 @@ from app.schemas.doc_studio import (
     DocVersionRead,
     PublishToCmsRequest,
     PublishToSocialRequest,
+    ResolvePlaceholdersRequest,
 )
+from app.services.doc_studio_data import build_data_catalog, resolve_placeholder_vars
 from app.services.doc_studio_service import AUTHOR_ROLES, DocStudioService, resolve_scope
 from app.services.role_catalog_service import PLATFORM_EDITOR_ROLES, PLATFORM_OPS_ROLES
+from app.lib.studio_placeholders import apply_placeholders
 
 router = APIRouter(prefix="/doc-studio", tags=["doc-studio"])
 
@@ -141,6 +145,51 @@ def delete_document(doc_id: str, pair=Depends(_scope), db: Session = Depends(get
     svc.require_author(user, scope)
     svc.delete_document(scope, doc_id)
     return {"ok": True}
+
+
+@router.post("/documents/{doc_id}/duplicate", response_model=DocDocumentDetail, status_code=201)
+def duplicate_document(
+    doc_id: str,
+    body: DocDuplicateRequest | None = None,
+    pair=Depends(_scope),
+    db: Session = Depends(get_db),
+):
+    user, scope = pair
+    svc = DocStudioService(db)
+    svc.require_author(user, scope)
+    payload = body or DocDuplicateRequest()
+    return svc.duplicate_document(
+        scope,
+        doc_id,
+        user.id,
+        title=payload.title,
+        folder_id=payload.folder_id,
+        folder_id_set="folder_id" in (payload.model_dump(exclude_unset=True) if body else {}),
+    )
+
+
+@router.get("/data-catalog")
+def data_catalog(
+    state_code: str = Query("NY"),
+    pair=Depends(_scope),
+    db: Session = Depends(get_db),
+):
+    _ = pair
+    return build_data_catalog(db, state_code=state_code)
+
+
+@router.post("/resolve-placeholders")
+def resolve_placeholders(
+    body: ResolvePlaceholdersRequest,
+    pair=Depends(_scope),
+    db: Session = Depends(get_db),
+):
+    _ = pair
+    vars_map = resolve_placeholder_vars(db, state_code=body.state_code or "NY")
+    markdown = body.markdown
+    if markdown:
+        markdown = apply_placeholders(markdown, vars_map)
+    return {"markdown": markdown, "vars": vars_map}
 
 
 @router.get("/documents/{doc_id}/versions", response_model=list[DocVersionRead])

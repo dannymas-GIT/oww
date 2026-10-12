@@ -1,6 +1,6 @@
 /**
- * OWW Document Studio TipTap editor — WYSIWYG with slash-ish toolbar,
- * image upload, and screen grab (WW360 ScreenshotCaptureTool).
+ * OWW Document Studio TipTap editor — professional layouts, resizable images,
+ * columns, data insert, and chart snapshots.
  */
 import {
   forwardRef,
@@ -15,8 +15,10 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { Table } from '@tiptap/extension-table';
@@ -26,11 +28,19 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Markdown } from 'tiptap-markdown';
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
   Camera,
+  Columns2,
+  Columns3,
+  Database,
   Heading2,
+  Highlighter,
   ImagePlus,
   Italic,
+  LineChart,
   Link2,
   List,
   ListOrdered,
@@ -46,6 +56,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { uploadAsset } from '@/services/docStudioService';
 import { ScreenshotCaptureTool } from '@/components/doc-studio/ScreenshotCaptureTool';
+import { DocResizableImage } from '@/components/doc-studio/DocResizableImage';
+import { StudioColumn, StudioColumns } from '@/components/doc-studio/StudioColumns';
+import { DataInsertPanel } from '@/components/doc-studio/DataInsertPanel';
+import { ChartInsertDialog } from '@/components/doc-studio/ChartInsertDialog';
 import { VideoEmbed } from '@/components/oww/tiptapVideo';
 import './docStudio.css';
 
@@ -54,6 +68,8 @@ export interface StudioEditorHandle {
   setMarkdown: (markdown: string) => void;
   focus: () => void;
   isEmpty: () => boolean;
+  insertText: (text: string) => void;
+  insertHtml: (html: string) => void;
 }
 
 export interface StudioEditorProps {
@@ -70,11 +86,13 @@ function ToolbarBtn({
   label,
   onClick,
   active,
+  disabled,
   children,
 }: {
   label: string;
   onClick: () => void;
   active?: boolean;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -84,6 +102,7 @@ function ToolbarBtn({
       className={cn('min-h-[44px] min-w-[44px] px-2', active && 'bg-oww-cyan text-white hover:bg-sky-700')}
       aria-label={label}
       title={label}
+      disabled={disabled}
       onClick={onClick}
     >
       {children}
@@ -105,6 +124,8 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
 ) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [shotOpen, setShotOpen] = useState(false);
+  const [dataOpen, setDataOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -112,13 +133,13 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
     editable: !readOnly,
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: true }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Image.configure({
-        allowBase64: false,
-        HTMLAttributes: { class: 'rounded-xl max-w-full h-auto my-3' },
-      }),
+      DocResizableImage.configure({ allowBase64: false }),
       VideoEmbed,
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -126,6 +147,8 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
       TableRow,
       TableHeader,
       TableCell,
+      StudioColumn,
+      StudioColumns,
       CharacterCount,
       Markdown.configure({
         html: true,
@@ -134,7 +157,9 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
         breaks: false,
       }),
       Placeholder.configure({
-        placeholder: placeholder || 'Start writing — use the toolbar for media, tables, and screen grab…',
+        placeholder:
+          placeholder ||
+          'Start writing — use columns, tables, data insert, and charts for professional layouts…',
       }),
     ],
     content: initialMarkdown || '',
@@ -165,6 +190,12 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
       },
       focus: () => editor?.commands.focus(),
       isEmpty: () => !editor || editor.isEmpty,
+      insertText: (text: string) => {
+        editor?.chain().focus().insertContent(text).run();
+      },
+      insertHtml: (html: string) => {
+        editor?.chain().focus().insertContent(html).run();
+      },
     }),
     [editor, getMarkdown]
   );
@@ -185,7 +216,7 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
   if (!editor) return null;
 
   return (
-    <div className={cn('overflow-hidden rounded-xl border border-slate-300 bg-white', className)}>
+    <div className={cn('studio-editor overflow-hidden rounded-xl border border-slate-300 bg-white', className)}>
       {!readOnly ? (
         <div className="sticky top-0 z-10 flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2">
           <ToolbarBtn label="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
@@ -200,8 +231,24 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
           <ToolbarBtn label="Strike" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
             <Strikethrough className="h-4 w-4" />
           </ToolbarBtn>
+          <ToolbarBtn
+            label="Highlight"
+            active={editor.isActive('highlight')}
+            onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
+          >
+            <Highlighter className="h-4 w-4" />
+          </ToolbarBtn>
           <ToolbarBtn label="Heading" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
             <Heading2 className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="Align left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}>
+            <AlignLeft className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="Align center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}>
+            <AlignCenter className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="Align right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()}>
+            <AlignRight className="h-4 w-4" />
           </ToolbarBtn>
           <ToolbarBtn label="Bullets" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
             <List className="h-4 w-4" />
@@ -212,7 +259,7 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
           <ToolbarBtn label="Checklist" active={editor.isActive('taskList')} onClick={() => editor.chain().focus().toggleTaskList().run()}>
             <ListTodo className="h-4 w-4" />
           </ToolbarBtn>
-          <ToolbarBtn label="Quote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+          <ToolbarBtn label="Callout / quote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
             <Quote className="h-4 w-4" />
           </ToolbarBtn>
           <ToolbarBtn
@@ -220,6 +267,12 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
             onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
           >
             <Table2 className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="2 columns" onClick={() => editor.chain().focus().insertColumns(2).run()}>
+            <Columns2 className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="3 columns" onClick={() => editor.chain().focus().insertColumns(3).run()}>
+            <Columns3 className="h-4 w-4" />
           </ToolbarBtn>
           <ToolbarBtn
             label="Link"
@@ -243,6 +296,12 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
           <ToolbarBtn label="Screen grab" onClick={() => setShotOpen(true)}>
             <Camera className="h-4 w-4" />
           </ToolbarBtn>
+          <ToolbarBtn label="Insert data" onClick={() => setDataOpen(true)}>
+            <Database className="h-4 w-4" />
+          </ToolbarBtn>
+          <ToolbarBtn label="Insert chart" onClick={() => setChartOpen(true)}>
+            <LineChart className="h-4 w-4" />
+          </ToolbarBtn>
           <ToolbarBtn label="Undo" onClick={() => editor.chain().focus().undo().run()}>
             <Undo2 className="h-4 w-4" />
           </ToolbarBtn>
@@ -262,10 +321,7 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
           />
         </div>
       ) : null}
-      <EditorContent
-        editor={editor}
-        className="prose prose-slate max-w-none min-h-[320px] px-4 py-3 text-lg focus-within:outline-none"
-      />
+      <EditorContent editor={editor} className="studio-editor-content" />
       <ScreenshotCaptureTool
         isOpen={shotOpen}
         onClose={() => setShotOpen(false)}
@@ -279,6 +335,35 @@ export const StudioEditor = forwardRef<StudioEditorHandle, StudioEditorProps>(fu
           const asset = await uploadAsset(file, documentId);
           return { url: asset.url, filename: asset.filename };
         }}
+      />
+      <DataInsertPanel
+        open={dataOpen}
+        onClose={() => setDataOpen(false)}
+        onInsertValue={text => {
+          editor.chain().focus().insertContent(text).run();
+          setDataOpen(false);
+        }}
+        onInsertHtml={html => {
+          editor.chain().focus().insertContent(html).run();
+          setDataOpen(false);
+        }}
+        onFillDocument={async vars => {
+          const { applyStudioPlaceholders } = await import('@/lib/studioTemplateFill');
+          const md = getMarkdown();
+          const filled = applyStudioPlaceholders(md, vars);
+          editor.commands.setContent(filled, { emitUpdate: true });
+          setDataOpen(false);
+        }}
+      />
+      <ChartInsertDialog
+        open={chartOpen}
+        onClose={() => setChartOpen(false)}
+        documentId={documentId}
+        onInserted={url => {
+          editor.chain().focus().setImage({ src: url, alt: 'Chart snapshot' }).run();
+          setChartOpen(false);
+        }}
+        onError={msg => onUploadError?.(msg)}
       />
     </div>
   );

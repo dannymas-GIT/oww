@@ -50,6 +50,7 @@ AUTHOR_ROLES = set(PLATFORM_EDITOR_ROLES) | set(PLATFORM_OPS_ROLES) | {
     "platform_manager",
 }
 ASSET_URL_PREFIX = "/api/v1/doc-studio/assets"
+LIBRARY_SEED_TAG = "library_seed"
 _WORD_RE = re.compile(r"[A-Za-z0-9’'-]+")
 
 SYSTEM_FOLDERS: list[tuple[str, str]] = [
@@ -179,7 +180,7 @@ class DocStudioService:
             f.name: f
             for f in self.db.query(DocFolder).filter(DocFolder.scope == scope).all()
         }
-        # Only treat docs tagged "sample" as already seeded (user copies share template_id).
+        # Seed markers: library_seed or legacy sample tag.
         existing_sample_ids: set[str] = set()
         for doc in (
             self.db.query(DocDocument)
@@ -190,22 +191,25 @@ class DocStudioService:
             )
             .all()
         ):
-            tags = doc.tags or []
-            if isinstance(tags, list) and "sample" in tags and doc.template_id:
+            tags = doc.tags if isinstance(doc.tags, list) else []
+            if doc.template_id and (
+                LIBRARY_SEED_TAG in tags or "sample" in tags
+            ):
                 existing_sample_ids.add(doc.template_id)
         created = False
         for template_id, folder_name, title, summary, body in SAMPLE_DOCUMENTS:
             if template_id in existing_sample_ids:
                 continue
             folder = folders.get(folder_name)
+            seed_title = title if title.startswith("Sample") else f"Sample — {title}"
             doc = DocDocument(
                 scope=scope,
-                title=title,
+                title=seed_title,
                 folder_id=folder.id if folder else None,
                 doc_type="document",
                 status="draft",
-                summary=summary,
-                tags=["sample", template_id],
+                summary=(summary or "") + " — Save As to edit (original is read-only).",
+                tags=[LIBRARY_SEED_TAG, "sample", f"template:{template_id}"],
                 content_markdown=body,
                 template_id=template_id,
                 word_count=_word_count(body),
@@ -221,6 +225,62 @@ class DocStudioService:
     def provision(self, scope: str, user_id: int | None) -> None:
         self.ensure_default_folders(scope, user_id)
         self.ensure_sample_documents(scope, user_id)
+
+    def _assert_mutable(self, d: DocDocument) -> None:
+        """Library seed samples are read-only — use Save As / duplicate."""
+        tags = d.tags if isinstance(d.tags, list) else []
+        title = (d.title or "").strip()
+        is_sample = (
+            LIBRARY_SEED_TAG in tags
+            or "sample" in tags
+            or title.startswith("Sample —")
+            or title.startswith("Sample:")
+        )
+        if is_sample:
+            raise HTTPException(
+                403,
+                "Sample documents are read-only. Use Save As to create an editable copy.",
+            )
+
+    def duplicate_document(
+        self,
+        scope: str,
+        doc_id: str,
+        user_id: int | None,
+        *,
+        title: str | None = None,
+        folder_id: str | None = None,
+        folder_id_set: bool = False,
+    ) -> DocDocumentDetail:
+        src = self._get_doc(scope, doc_id)
+        target_folder = folder_id if folder_id_set else src.folder_id
+        if folder_id_set and folder_id:
+            self._get_folder(scope, folder_id)
+        src_tags = src.tags if isinstance(src.tags, list) else []
+        skip = {LIBRARY_SEED_TAG, "sample"}
+        copy_tags = [t for t in src_tags if t not in skip and not str(t).startswith("template:")]
+        if title and title.strip():
+            new_title = title.strip()
+        else:
+            base = re.sub(r"^Sample\s*[—–−:-]\s*", "", src.title or "").strip() or (
+                src.title or "Document"
+            )
+            base = re.sub(r"\s*\(copy\)\s*$", "", base).strip()
+            new_title = f"{base} (copy)"
+        return self.create_document(
+            scope,
+            DocDocumentCreate(
+                title=new_title,
+                folder_id=target_folder,
+                doc_type=src.doc_type or "document",
+                template_id=src.template_id,
+                content_markdown=src.content_markdown or "",
+                content_json=src.content_json,
+                summary=src.summary,
+                tags=copy_tags or None,
+            ),
+            user_id,
+        )
 
     def _folder_read(self, folder: DocFolder) -> DocFolderRead:
         count = (
@@ -379,6 +439,7 @@ class DocStudioService:
         self, scope: str, doc_id: str, body: DocDocumentUpdate, user_id: int | None
     ) -> DocDocumentDetail:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         data = body.model_dump(exclude_unset=True)
         for key, val in data.items():
             setattr(doc, key, val)
@@ -392,6 +453,7 @@ class DocStudioService:
         self, scope: str, doc_id: str, body: DocContentSave, user_id: int | None
     ) -> DocDocumentDetail:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         if body.title is not None:
             doc.title = body.title.strip() or doc.title
         if body.content_markdown is not None:
@@ -483,6 +545,7 @@ class DocStudioService:
         self, scope: str, doc_id: str, version_id: str, user_id: int | None
     ) -> DocDocumentDetail:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         ver = (
             self.db.query(DocVersion)
             .filter(DocVersion.id == version_id, DocVersion.document_id == doc_id)
@@ -504,6 +567,7 @@ class DocStudioService:
 
     def delete_document(self, scope: str, doc_id: str) -> None:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         doc.status = "archived"
         doc.updated_at = datetime.utcnow()
         self.db.commit()
@@ -632,6 +696,7 @@ class DocStudioService:
         user_id: int | None,
     ) -> dict[str, Any]:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         page: ContentPage | None = None
         pid = content_page_id or doc.content_page_id
         if pid:
@@ -730,6 +795,7 @@ class DocStudioService:
         user_id: int | None,
     ) -> dict[str, Any]:
         doc = self._get_doc(scope, doc_id)
+        self._assert_mutable(doc)
         message = (doc.content_markdown or "").strip()
         # Strip simple markdown markers for social plain text
         plain = re.sub(r"[#>*_`]", "", message)

@@ -833,6 +833,168 @@ Start on the One Water Workforce pathway that fits you.
 <h2>Outcomes we’ll report</h2>
 <p>Completion rate, exam pass rate, placements within 90 days, CE hours issued.</p>`,
   },
+
+  // ── Layout-grade (columns / KPI / visual) ───────────────────────────────
+  {
+    id: 'layout-blog-feature',
+    name: 'Blog feature (2-col story)',
+    description: 'Professional blog body with floated image cue, two-column story/quote, and CTA.',
+    category: 'blog',
+    audiences: ['program', 'editor'],
+    preview: 'Lead → 2-col story/quote → CTA',
+    sendMethod: 'blog_publish',
+    subject: 'Feature: {{title}}',
+    tags: ['layout', 'blog', 'columns', 'sample'],
+    bodyHtml: `<h2>{{title}}</h2>
+<p><em>Add a cover photo (toolbar → image) and float it left at ~40% width.</em></p>
+<p>Opening paragraph that hooks the reader — why this story matters for New York’s water workforce.</p>
+<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column">
+<h3>The story</h3>
+<p>Two or three paragraphs of narrative. Use <strong>Insert data</strong> for live metrics like {{metric_open_jobs}} open roles.</p>
+</div>
+<div class="studio-column">
+<blockquote><p>“Pull quote that captures the human stakes.”</p><p>— {{person_name}}</p></blockquote>
+<p><strong>Quick facts</strong></p>
+<ul>
+<li>Region: {{state_code}}</li>
+<li>Pathway: Career / Hire / Educate</li>
+</ul>
+</div>
+</div>
+<hr/>
+<p><a href="{{cta_url}}"><strong>Take the next step →</strong></a></p>`,
+  },
+  {
+    id: 'layout-stats-story',
+    name: 'Stats story (KPI strip)',
+    description: 'KPI row from live data, narrative, and source table — ideal for funder or board posts.',
+    category: 'blog',
+    audiences: ['program', 'ops'],
+    preview: 'KPI strip → narrative → table',
+    sendMethod: 'blog_publish',
+    subject: 'By the numbers: {{state_code}} workforce',
+    tags: ['layout', 'stats', 'sample'],
+    bodyHtml: `<h2>By the numbers</h2>
+<div class="studio-kpi-row">
+<div class="studio-kpi"><strong>{{metric_open_jobs}}</strong><span>Jobs</span></div>
+<div class="studio-kpi"><strong>{{metric_individuals}}</strong><span>Candidates</span></div>
+<div class="studio-kpi"><strong>{{metric_employers}}</strong><span>Employers</span></div>
+</div>
+<p>Use <strong>Insert chart</strong> for an engagement or funnel snapshot under this paragraph.</p>
+<h2>What it means</h2>
+<p>Interpret the numbers for readers — where gaps are, what training is filling, and the ask.</p>
+<blockquote><p><strong>Ask:</strong> the single decision or resource this update needs.</p></blockquote>`,
+  },
+  {
+    id: 'layout-event-training',
+    name: 'Event / training (2-col agenda)',
+    description: 'Two-column agenda and logistics with RSVP CTA.',
+    category: 'blog',
+    audiences: ['program', 'editor'],
+    preview: 'Agenda | logistics → RSVP',
+    sendMethod: 'blog_publish',
+    subject: 'Event: {{event_name}}',
+    tags: ['layout', 'events', 'sample'],
+    bodyHtml: `<h2>{{event_name}}</h2>
+<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column">
+<h3>Agenda</h3>
+<ul>
+<li><strong>9:00</strong> — Welcome</li>
+<li><strong>9:30</strong> — Pathway overview</li>
+<li><strong>10:30</strong> — Employer panel</li>
+<li><strong>11:30</strong> — Next steps</li>
+</ul>
+</div>
+<div class="studio-column">
+<h3>Logistics</h3>
+<p><strong>When:</strong> {{event_date}}<br/><strong>Where:</strong> {{event_location}}<br/><strong>Who:</strong> Students, career changers, early-career operators</p>
+<p>Add a flyer image or screen grab of the registration page.</p>
+</div>
+</div>
+<p><a href="{{url}}"><strong>RSVP / details →</strong></a></p>`,
+  },
+  {
+    id: 'layout-hiring-social',
+    name: 'Hiring pack (social + facts)',
+    description: 'LinkedIn-ready post beside a two-column role facts block.',
+    category: 'social',
+    audiences: ['program', 'editor'],
+    preview: 'Social copy | role facts',
+    sendMethod: 'social_share',
+    subject: 'Hiring pack',
+    tags: ['layout', 'hiring', 'sample'],
+    bodyHtml: `<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column">
+<h3>Social post</h3>
+<p>New York utilities are hiring — {{metric_open_jobs}} roles in the catalog.</p>
+<p>If you care about public health and steady careers, explore openings on One Water Workforce.</p>
+<p>{{url}}</p>
+<p>#WaterJobs #NYSAWWA #OneWater</p>
+</div>
+<div class="studio-column">
+<h3>Role facts</h3>
+<p><strong>Title:</strong> {{role_title}}<br/><strong>Utility:</strong> {{utility_name}}<br/><strong>Grade:</strong><br/><strong>Region:</strong> {{state_code}}</p>
+<p>Insert the open-jobs table from <strong>Insert data</strong> when you want a list.</p>
+</div>
+</div>`,
+  },
+  {
+    id: 'layout-pathway-landing',
+    name: 'Pathway landing (3 columns)',
+    description: 'Three benefit columns, numbered steps, and FAQ for doorway pages.',
+    category: 'page',
+    audiences: ['program', 'editor'],
+    preview: '3 benefits → steps → FAQ',
+    sendMethod: 'blog_publish',
+    subject: 'Pathway: {{pathway_name}}',
+    tags: ['layout', 'pathway', 'sample'],
+    bodyHtml: `<h2>{{pathway_name}} pathway</h2>
+<p>One sentence on the outcome for the reader in {{state_code}}.</p>
+<div class="studio-columns studio-columns-3" data-cols="3">
+<div class="studio-column"><h3>Clarity</h3><p>Know which certifications and steps get you hired.</p></div>
+<div class="studio-column"><h3>Support</h3><p>Training partners, ambassadors, and mentors in your region.</p></div>
+<div class="studio-column"><h3>Jobs</h3><p>See live openings — currently {{metric_open_jobs}} in the catalog.</p></div>
+</div>
+<h2>How it works</h2>
+<ol>
+<li>Create or update your profile</li>
+<li>Explore training and certifications</li>
+<li>Apply to matched roles</li>
+</ol>
+<h2>FAQ</h2>
+<p><strong>Is it free to explore?</strong> Public pathways and the jobs board are open.</p>
+<p><a href="{{pathway_url}}"><strong>Start here →</strong></a></p>`,
+  },
+  {
+    id: 'layout-newsletter-pro',
+    name: 'Newsletter (calendar table)',
+    description: 'Lead story, training calendar table, and partner spotlight — WW360-style.',
+    category: 'email',
+    audiences: ['program', 'ops'],
+    preview: 'Lead → calendar table → spotlight',
+    sendMethod: 'email',
+    subject: 'One Water Workforce — this month',
+    tags: ['layout', 'newsletter', 'sample'],
+    bodyHtml: `<h2>This month</h2>
+<p>Lead story in two short paragraphs. Drop {{metric_interest}} interest submissions or other KPIs from Insert data.</p>
+<h2>Training calendar</h2>
+<table>
+<thead><tr><th>Date</th><th>Course</th><th>Region</th></tr></thead>
+<tbody>
+<tr><td></td><td></td><td></td></tr>
+<tr><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+<h2>Utility spotlight</h2>
+<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column"><p>What the partner is doing well.</p></div>
+<div class="studio-column"><blockquote><p>Partner quote.</p></blockquote></div>
+</div>
+<h2>Dates to know</h2>
+<ul><li></li></ul>`,
+  },
 ];
 
 const fromLayouts = BLOG_LAYOUT_TEMPLATES.map(fromBlogLayout);
