@@ -29,6 +29,7 @@ const AUTOSAVE_MS = 2500;
 
 const FOLDER_HINTS: Partial<Record<OwwStudioCategory, string>> = {
   blog: 'Blog drafts',
+  page: 'Landing pages',
   email: 'Email and outreach',
   outreach: 'Email and outreach',
   social: 'Social posts',

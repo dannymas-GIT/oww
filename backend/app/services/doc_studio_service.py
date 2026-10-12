@@ -39,6 +39,7 @@ from app.schemas.doc_studio import (
     DocVersionRead,
 )
 from app.services import cms_service, social_service
+from app.services.doc_studio_samples import SAMPLE_DOCUMENTS
 from app.services.role_catalog_service import PLATFORM_EDITOR_ROLES, PLATFORM_OPS_ROLES
 
 logger = logging.getLogger(__name__)
@@ -170,8 +171,56 @@ class DocStudioService:
         if changed:
             self.db.commit()
 
+    def ensure_sample_documents(self, scope: str, user_id: int | None) -> None:
+        """Seed scenario sample docs into system folders (idempotent by template_id)."""
+        if not SAMPLE_DOCUMENTS:
+            return
+        folders = {
+            f.name: f
+            for f in self.db.query(DocFolder).filter(DocFolder.scope == scope).all()
+        }
+        # Only treat docs tagged "sample" as already seeded (user copies share template_id).
+        existing_sample_ids: set[str] = set()
+        for doc in (
+            self.db.query(DocDocument)
+            .filter(
+                DocDocument.scope == scope,
+                DocDocument.template_id.isnot(None),
+                DocDocument.status != "archived",
+            )
+            .all()
+        ):
+            tags = doc.tags or []
+            if isinstance(tags, list) and "sample" in tags and doc.template_id:
+                existing_sample_ids.add(doc.template_id)
+        created = False
+        for template_id, folder_name, title, summary, body in SAMPLE_DOCUMENTS:
+            if template_id in existing_sample_ids:
+                continue
+            folder = folders.get(folder_name)
+            doc = DocDocument(
+                scope=scope,
+                title=title,
+                folder_id=folder.id if folder else None,
+                doc_type="document",
+                status="draft",
+                summary=summary,
+                tags=["sample", template_id],
+                content_markdown=body,
+                template_id=template_id,
+                word_count=_word_count(body),
+                created_by=user_id,
+                updated_by=user_id,
+            )
+            self.db.add(doc)
+            existing_sample_ids.add(template_id)
+            created = True
+        if created:
+            self.db.commit()
+
     def provision(self, scope: str, user_id: int | None) -> None:
         self.ensure_default_folders(scope, user_id)
+        self.ensure_sample_documents(scope, user_id)
 
     def _folder_read(self, folder: DocFolder) -> DocFolderRead:
         count = (
