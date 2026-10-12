@@ -309,12 +309,12 @@ export default function AdminMarketingPage() {
                 ) : null}
                 {sendMethod === 'blog_publish' ? (
                   <Button type="button" variant="outline" className="min-h-[44px] text-base" asChild>
-                    <Link to="/admin/cms?kind=blog">Open blog</Link>
+                    <Link to="/admin/studio">Open Document Studio</Link>
                   </Button>
                 ) : null}
                 {sendMethod === 'social_share' ? (
                   <Button type="button" variant="outline" className="min-h-[44px] text-base" asChild>
-                    <Link to="/admin/social">Open social posts</Link>
+                    <Link to="/admin/studio?intent=social">Open Document Studio</Link>
                   </Button>
                 ) : null}
               </div>
@@ -415,17 +415,17 @@ export default function AdminMarketingPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" className="min-h-[44px] text-base" asChild>
-            <Link to="/admin/cms?kind=blog">Blog posts</Link>
+          <Button className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700" asChild>
+            <Link to="/admin/studio">Document Studio</Link>
           </Button>
           <Button variant="outline" className="min-h-[44px] text-base" asChild>
-            <Link to="/admin/social">Social posts</Link>
+            <Link to="/admin/cms?kind=blog">Blog inventory</Link>
+          </Button>
+          <Button variant="outline" className="min-h-[44px] text-base" asChild>
+            <Link to="/admin/social">Social history</Link>
           </Button>
           <Button variant="outline" className="min-h-[44px] text-base" asChild>
             <Link to="/admin/settings">Social API setup</Link>
-          </Button>
-          <Button variant="outline" className="min-h-[44px] text-base" asChild>
-            <Link to="/admin/studio">Document Studio</Link>
           </Button>
         </CardContent>
       </Card>
