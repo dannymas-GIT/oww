@@ -31,6 +31,42 @@ def init_db() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS ww360_user_id VARCHAR(64)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_organizations_ww360_org_id ON organizations (ww360_org_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_users_ww360_user_id ON users (ww360_user_id)"))
+        # Document Studio: collapse duplicate root folders before unique index
+        conn.execute(
+            text(
+                """
+                DO $$
+                DECLARE r RECORD;
+                BEGIN
+                  IF to_regclass('public.doc_folders') IS NULL THEN
+                    RETURN;
+                  END IF;
+                  FOR r IN
+                    SELECT scope, name, MIN(id::text) AS keep_id
+                    FROM doc_folders
+                    WHERE parent_id IS NULL
+                    GROUP BY scope, name
+                    HAVING COUNT(*) > 1
+                  LOOP
+                    UPDATE doc_documents d
+                    SET folder_id = r.keep_id
+                    WHERE d.folder_id IN (
+                      SELECT id FROM doc_folders
+                      WHERE scope = r.scope AND name = r.name AND parent_id IS NULL AND id::text <> r.keep_id
+                    );
+                    DELETE FROM doc_folders
+                    WHERE scope = r.scope AND name = r.name AND parent_id IS NULL AND id::text <> r.keep_id;
+                  END LOOP;
+                END $$;
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_doc_folders_scope_name_root "
+                "ON doc_folders (scope, name) WHERE parent_id IS NULL"
+            )
+        )
         # Granular public workforce-stats opt-in (district / utility sharing)
         conn.execute(
             text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS public_share_prefs JSONB DEFAULT '{}'::jsonb")

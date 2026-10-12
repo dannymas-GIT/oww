@@ -100,17 +100,10 @@ export default function DocumentStudioPage() {
     }
   }, [setSearchParams]);
 
-  useEffect(() => {
-    void refreshFolders().catch(() => setError('Could not load Document Studio.'));
-  }, [refreshFolders]);
-
-  useEffect(() => {
-    void refreshDocs(folderId).catch(() => setError('Could not list documents.'));
-  }, [folderId, refreshDocs]);
-
-  // Deep links: ?doc= ?content_page= ?template= ?intent=
+  // Single bootstrap: provision via /access once, then folders/docs + deep links
   useEffect(() => {
     if (bootstrapped.current) return;
+    bootstrapped.current = true;
     const docParam = searchParams.get('doc');
     const pageParam = searchParams.get('content_page');
     const templateParam = searchParams.get('template');
@@ -119,13 +112,12 @@ export default function DocumentStudioPage() {
     void (async () => {
       try {
         await refreshFolders();
+        await refreshDocs(folderId);
         if (docParam) {
-          bootstrapped.current = true;
           await openDoc(docParam);
           return;
         }
         if (pageParam) {
-          bootstrapped.current = true;
           const created = await api.openFromCmsPage(Number(pageParam));
           await refreshDocs(ALL_DOCS);
           await openDoc(created.id);
@@ -133,19 +125,23 @@ export default function DocumentStudioPage() {
           return;
         }
         if (templateParam || intent === 'social') {
-          bootstrapped.current = true;
           setNewOpen(true);
           if (intent === 'social') {
             const socialFolder = (await api.listFolders()).find(f => f.name === 'Social posts');
             if (socialFolder) setFolderId(socialFolder.id);
           }
         }
-        bootstrapped.current = true;
       } catch {
-        bootstrapped.current = true;
+        setError('Could not load Document Studio.');
       }
     })();
-  }, [searchParams, openDoc, refreshFolders, refreshDocs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot bootstrap
+  }, []);
+
+  useEffect(() => {
+    if (!bootstrapped.current) return;
+    void refreshDocs(folderId).catch(() => setError('Could not list documents.'));
+  }, [folderId, refreshDocs]);
 
   function scheduleAutosave() {
     setSaveState('dirty');
