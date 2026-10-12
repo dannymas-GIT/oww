@@ -196,10 +196,10 @@ export default function AdminCommunicationsPage() {
           </Link>
         </Button>
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
-          <Link to="/admin/cms?kind=blog">Blog</Link>
+          <Link to="/admin/studio">Document Studio</Link>
         </Button>
         <Button variant="outline" className="min-h-[44px] text-base" asChild>
-          <Link to="/admin/studio">Document Studio</Link>
+          <Link to="/admin/cms?kind=blog">Blog inventory</Link>
         </Button>
       </div>
 

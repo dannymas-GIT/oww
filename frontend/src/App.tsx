@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppShell } from '@/components/oww/AppShell';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { DEFAULT_STATE } from '@/lib/constants';
@@ -50,7 +50,6 @@ import AmbassadorDashboard from '@/pages/ambassador/AmbassadorDashboard';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminJurisdictionsPage from '@/pages/admin/AdminJurisdictionsPage';
 import AdminCmsPage from '@/pages/admin/AdminCmsPage';
-import AdminCmsEditorPage from '@/pages/admin/AdminCmsEditorPage';
 import AdminHomeSlidesPage from '@/pages/admin/AdminHomeSlidesPage';
 import AdminProgramsPage from '@/pages/admin/AdminProgramsPage';
 import AdminFeaturedPostsPage from '@/pages/admin/AdminFeaturedPostsPage';
@@ -74,6 +73,15 @@ import PricingPage from '@/pages/billing/PricingPage';
 import BillingPage from '@/pages/billing/BillingPage';
 import SampleCheckoutPage from '@/pages/billing/SampleCheckoutPage';
 import BillingSuccessPage from '@/pages/billing/BillingSuccessPage';
+
+/** Legacy CMS editor URLs redirect to Document Studio (sole authoring surface). */
+function CmsEditorToStudioRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const target = id
+    ? `/admin/studio?content_page=${encodeURIComponent(id)}`
+    : '/admin/studio';
+  return <Navigate to={target} replace />;
+}
 
 export default function App() {
   return (
@@ -365,7 +373,7 @@ export default function App() {
           path="/admin/cms/:id"
           element={
             <ProtectedRoute roles={PLATFORM_EDITOR_ROLES}>
-              <AdminCmsEditorPage />
+              <CmsEditorToStudioRedirect />
             </ProtectedRoute>
           }
         />

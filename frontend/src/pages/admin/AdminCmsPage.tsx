@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { CircleHelp } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { CircleHelp, FileText } from 'lucide-react';
 import { OwwPageHero } from '@/components/oww/OwwPageHero';
 import { OwwEmptyState } from '@/components/oww/OwwEmptyState';
 import {
@@ -103,9 +103,13 @@ function enrichTemplate(t: CmsTemplateMeta): CmsTemplateMeta {
 }
 
 export default function AdminCmsPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [pages, setPages] = useState<ContentPage[]>([]);
   const [templates, setTemplates] = useState<CmsTemplateMeta[]>([]);
-  const [kind, setKind] = useState<CmsKind>('page');
+  const [kind, setKind] = useState<CmsKind>(
+    searchParams.get('kind') === 'blog' ? 'blog' : 'page'
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,14 +180,23 @@ export default function AdminCmsPage() {
     <div className="space-y-6">
       <OwwPageHero
         eyebrow="Administration"
-        title={kind === 'blog' ? 'Blog posts' : 'Landing pages'}
+        title={kind === 'blog' ? 'Blog inventory' : 'Page inventory'}
         description={
           kind === 'blog'
-            ? 'Running topics and updates — published posts appear on the public /blog index.'
-            : 'Choose a layout template, drop in copy and media, and publish to the OWW public site.'
+            ? 'Public blog posts on the site. Create and edit all copy in Document Studio — this list is inventory and live links only.'
+            : 'Published landing pages on the site. Authoring happens in Document Studio; use this list to open a page or start a new shell.'
         }
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button
+              className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
+              asChild
+            >
+              <Link to="/admin/studio">
+                <FileText className="mr-2 h-4 w-4" />
+                Open Document Studio
+              </Link>
+            </Button>
             <Button
               variant="outline"
               className="min-h-[44px] border-white/40 bg-white/10 text-base text-white hover:bg-white/20 hover:text-white"
@@ -225,8 +238,8 @@ export default function AdminCmsPage() {
           title={kind === 'blog' ? 'No blog posts yet' : 'No landing pages yet'}
           description={
             kind === 'blog'
-              ? 'Create a post to keep a running topic or update on the public site.'
-              : 'Create a home or pathway page from a template.'
+              ? 'Create a post shell here, then write and publish in Document Studio.'
+              : 'Create a home or pathway shell here, then write and publish in Document Studio.'
           }
         />
       ) : (
@@ -263,7 +276,7 @@ export default function AdminCmsPage() {
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   <Button className="min-h-[44px] text-base" asChild>
-                    <Link to={`/admin/cms/${p.id}`}>Edit</Link>
+                    <Link to={`/admin/studio?content_page=${p.id}`}>Edit in Studio</Link>
                   </Button>
                   {p.published ? (
                     <Button variant="outline" className="min-h-[44px] text-base" asChild>
@@ -287,8 +300,8 @@ export default function AdminCmsPage() {
             </DialogTitle>
             <DialogDescription className="text-base">
               {kind === 'blog'
-                ? 'Blog posts are dated running topics. They appear on /ny/blog with author and tags. Hover a layout thumbnail for a larger sample.'
-                : 'Hover a layout thumbnail for a larger sample of the public page structure, then pick the template that fits.'}
+                ? 'Pick a layout shell. After create you land in Document Studio to write the post and publish.'
+                : 'Pick a layout shell. After create you land in Document Studio to write the page and publish.'}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -306,7 +319,7 @@ export default function AdminCmsPage() {
                   published: false,
                 });
                 setCreateOpen(false);
-                window.location.assign(`/admin/cms/${created.id}`);
+                navigate(`/admin/studio?content_page=${created.id}`);
               } catch (err) {
                 const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
                 setError(typeof detail === 'string' ? detail : 'Could not create page.');
@@ -423,7 +436,7 @@ export default function AdminCmsPage() {
                 Cancel
               </Button>
               <Button type="submit" className="min-h-[44px] text-base" disabled={busy}>
-                {busy ? 'Creating…' : 'Create & edit'}
+                {busy ? 'Creating…' : 'Create & open Studio'}
               </Button>
             </DialogFooter>
           </form>
