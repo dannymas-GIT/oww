@@ -425,6 +425,15 @@ def page_to_dict(page: ContentPage, *, include_draft: bool = True) -> dict[str, 
     }
 
 
+def blog_canonical_url(page: ContentPage) -> str:
+    from app.core.config import settings
+
+    base = (settings.PUBLIC_SITE_URL or f"https://{settings.APP_DOMAIN}").rstrip("/")
+    state = (page.state_code or "NY").lower()
+    slug = (page.slug or "").strip().lower()
+    return f"{base}/{state}/blog/{slug}"
+
+
 def blog_card_dict(page: ContentPage) -> dict[str, Any]:
     full = page_to_dict(page, include_draft=True)
     return {
@@ -437,6 +446,7 @@ def blog_card_dict(page: ContentPage) -> dict[str, Any]:
         "tags": full.get("tags") or [],
         "cover_image_url": full.get("cover_image_url"),
         "state_code": full.get("state_code"),
+        "url": blog_canonical_url(page),
     }
 
 

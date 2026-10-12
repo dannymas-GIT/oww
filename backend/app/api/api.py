@@ -16,6 +16,8 @@ from app.api.v1.endpoints import (
     ambassador,
     admin,
     admin_platform,
+    admin_social,
+    admin_marketing,
     billing,
     impersonation,
     integrations_ww360,
@@ -36,6 +38,8 @@ api_router.include_router(educator.router)
 api_router.include_router(ambassador.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_platform.router)
+api_router.include_router(admin_social.router)
+api_router.include_router(admin_marketing.router)
 api_router.include_router(billing.router)
 api_router.include_router(impersonation.router)
 api_router.include_router(integrations_ww360.router)

@@ -123,6 +123,8 @@ class CommunicationIn(BaseModel):
 class SettingsIn(BaseModel):
     utility_registration_review_required: bool | None = None
     registration_notify_email: str | None = None
+    social_default_platforms: list[str] | None = None
+    social_auto_share_on_publish: bool | None = None
 
 
 class RegistrationReviewIn(BaseModel):

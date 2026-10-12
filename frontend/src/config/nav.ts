@@ -308,7 +308,14 @@ export const roleNavGroups: NavGroup[] = [
             path: '/admin/communications',
             icon: Mail,
             roles: PLATFORM_OPS_ROLES,
-            description: 'Email and SMS by audience',
+            description: 'Email/SMS, marketing & SEO, social',
+          },
+          {
+            label: 'Marketing & SEO',
+            path: '/admin/marketing',
+            icon: Megaphone,
+            roles: [...PLATFORM_OPS_ROLES, ...PLATFORM_EDITOR_ROLES],
+            description: 'Campaigns, SEO briefs, content efforts',
           },
           {
             label: 'Login activity',
@@ -424,6 +431,13 @@ export const roleNavGroups: NavGroup[] = [
           },
           { label: 'Programs', path: '/admin/programs', icon: GraduationCap, roles: PLATFORM_EDITOR_ROLES },
           { label: 'Featured posts', path: '/admin/featured', icon: Star, roles: PLATFORM_EDITOR_ROLES },
+          {
+            label: 'Social posts',
+            path: '/admin/social',
+            icon: Megaphone,
+            roles: PLATFORM_EDITOR_ROLES,
+            description: 'Post once to LinkedIn and other connected networks',
+          },
         ],
       },
       {
