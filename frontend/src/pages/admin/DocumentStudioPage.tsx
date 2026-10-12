@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  Copy,
   FilePlus2,
   History,
   Loader2,
@@ -22,8 +23,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { OwwStudioCategory } from '@/config/owwStudioTemplates';
+import { applyStudioPlaceholders } from '@/lib/studioTemplateFill';
 import * as api from '@/services/docStudioService';
 import type { DocDetail, DocFolder, DocSummary, DocVersion } from '@/services/docStudioService';
+import { isLibrarySampleDocument, sampleSaveAsTitle } from '@/services/docStudioService';
 
 const AUTOSAVE_MS = 2500;
 
@@ -59,6 +62,7 @@ export default function DocumentStudioPage() {
   const [error, setError] = useState<string | null>(null);
   const [socialPlatforms, setSocialPlatforms] = useState<string[]>(['linkedin', 'oww_blog']);
   const bootstrapped = useRef(false);
+  const isSampleDoc = isLibrarySampleDocument(doc);
 
   const refreshFolders = useCallback(async () => {
     const [acc, folds] = await Promise.all([api.fetchAccess(), api.listFolders()]);
@@ -145,6 +149,7 @@ export default function DocumentStudioPage() {
   }, [folderId, refreshDocs]);
 
   function scheduleAutosave() {
+    if (isLibrarySampleDocument(doc)) return;
     setSaveState('dirty');
     if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
     autosaveTimer.current = window.setTimeout(() => {
@@ -153,7 +158,7 @@ export default function DocumentStudioPage() {
   }
 
   async function persist(kind: 'autosave' | 'manual' | 'publish') {
-    if (!doc) return;
+    if (!doc || isLibrarySampleDocument(doc)) return;
     setSaveState('saving');
     try {
       const md = editorRef.current?.getMarkdown() ?? doc.content_markdown ?? '';
@@ -191,10 +196,17 @@ export default function DocumentStudioPage() {
         (folderId && folderId !== ALL_DOCS && folderId !== UNFILED
           ? folds.find(f => f.id === folderId)
           : undefined);
+      let body = payload.bodyHtml;
+      try {
+        const resolved = await api.resolvePlaceholders({ markdown: body, state_code: 'NY' });
+        body = applyStudioPlaceholders(body, resolved.vars || {});
+      } catch {
+        /* keep unfilled tokens */
+      }
       const created = await api.createDocument({
         title: payload.title,
         folder_id: folder?.id,
-        content_markdown: payload.bodyHtml,
+        content_markdown: body,
         template_id: payload.templateId,
         tags: payload.templateId ? [payload.templateId] : undefined,
       });
@@ -203,6 +215,25 @@ export default function DocumentStudioPage() {
       setFlash(`Opened “${created.title}” — edit in place in Document Studio.`);
     } catch {
       setError('Could not create document.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSaveAs() {
+    if (!doc) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api.saveAsDocument(doc.id, {
+        title: sampleSaveAsTitle(doc.title || 'Document'),
+        folder_id: doc.folder_id,
+      });
+      await refreshDocs(folderId);
+      await openDoc(created.id);
+      setFlash('Editable copy created — sample original stays read-only.');
+    } catch {
+      setError('Save As failed.');
     } finally {
       setBusy(false);
     }
@@ -318,20 +349,35 @@ export default function DocumentStudioPage() {
             </div>
           ) : (
             <>
+              {isSampleDoc ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-base text-amber-950">
+                  This is a library sample (read-only). Use <strong>Save As</strong> to create your editable
+                  copy.
+                </div>
+              ) : null}
+
               <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[12rem] flex-1 space-y-1">
                   <Label className="text-base">Title</Label>
                   <Input
                     className="min-h-[44px] text-base"
                     value={title}
+                    disabled={isSampleDoc}
                     onChange={e => {
                       setTitle(e.target.value);
                       scheduleAutosave();
                     }}
                   />
                 </div>
+                {isSampleDoc ? (
+                  <span className="mb-2 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-900">
+                    Sample · Save As
+                  </span>
+                ) : null}
                 <p className="pb-2 text-sm text-slate-500">
-                  {saveState === 'saving' || busy ? (
+                  {isSampleDoc ? (
+                    `v${doc.version_no}`
+                  ) : saveState === 'saving' || busy ? (
                     <span className="inline-flex items-center gap-1">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
                     </span>
@@ -351,25 +397,39 @@ export default function DocumentStudioPage() {
                 key={doc.id}
                 ref={editorRef}
                 documentId={doc.id}
+                readOnly={isSampleDoc}
                 initialMarkdown={doc.content_markdown || ''}
                 onChange={() => scheduleAutosave()}
                 onUploadError={msg => setError(msg)}
               />
 
               <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                <Button
-                  type="button"
-                  className="min-h-[44px] text-base"
-                  disabled={busy}
-                  onClick={() => void persist('manual')}
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save version
-                </Button>
+                {isSampleDoc ? (
+                  <Button
+                    type="button"
+                    className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
+                    disabled={busy}
+                    onClick={() => void onSaveAs()}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Save As…
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    className="min-h-[44px] text-base"
+                    disabled={busy}
+                    onClick={() => void persist('manual')}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save version
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
                   className="min-h-[44px] text-base"
+                  disabled={isSampleDoc}
                   onClick={() => setShowVersions(v => !v)}
                 >
                   <History className="mr-2 h-4 w-4" />
@@ -378,7 +438,7 @@ export default function DocumentStudioPage() {
                 <Button
                   type="button"
                   className="min-h-[44px] bg-oww-cyan text-base text-white hover:bg-sky-700"
-                  disabled={busy}
+                  disabled={busy || isSampleDoc}
                   onClick={() => void onPublishCms()}
                 >
                   <Send className="mr-2 h-4 w-4" />
@@ -390,6 +450,7 @@ export default function DocumentStudioPage() {
                       <input
                         type="checkbox"
                         className="h-4 w-4"
+                        disabled={isSampleDoc}
                         checked={socialPlatforms.includes(p)}
                         onChange={() => togglePlatform(p)}
                       />
@@ -400,7 +461,7 @@ export default function DocumentStudioPage() {
                     type="button"
                     variant="outline"
                     className="min-h-[44px] text-base"
-                    disabled={busy || !socialPlatforms.length}
+                    disabled={busy || isSampleDoc || !socialPlatforms.length}
                     onClick={() => void onPublishSocial()}
                   >
                     <Megaphone className="mr-2 h-4 w-4" />

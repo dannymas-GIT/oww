@@ -147,3 +147,13 @@ class PublishToSocialRequest(BaseModel):
     platforms: list[str] = Field(default_factory=lambda: ["linkedin"])
     publish: bool = True
     link_url: str | None = None
+
+
+class DocDuplicateRequest(BaseModel):
+    title: str | None = None
+    folder_id: str | None = None
+
+
+class ResolvePlaceholdersRequest(BaseModel):
+    markdown: str | None = None
+    state_code: str = "NY"

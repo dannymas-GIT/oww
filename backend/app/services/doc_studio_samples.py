@@ -271,7 +271,7 @@ SAMPLE_DOCUMENTS: list[tuple[str, str, str, str, str]] = [
     (
         "studio-press-release",
         "General docs",
-        "Sample: Press release",
+        "Sample — Press release",
         "Dateline → lead → quote → boilerplate",
         """<p><strong>FOR IMMEDIATE RELEASE</strong></p>
 <p><strong>{{city}}, {{state_code}} — {{date}}</strong> — Lead paragraph with who / what / when / where / why.</p>
@@ -279,5 +279,88 @@ SAMPLE_DOCUMENTS: list[tuple[str, str, str, str, str]] = [
 <blockquote><p>“Quote from spokesperson.”</p>
 <p>— {{spokesperson_name}}, {{spokesperson_title}}</p></blockquote>
 <p><em>About One Water Workforce:</em> NYSAWWA’s initiative connecting learners, educators, and utilities across New York.</p>""",
+    ),
+    (
+        "layout-blog-feature",
+        "Blog drafts",
+        "Sample — Blog feature (2-col story)",
+        "Lead → 2-col story/quote → CTA",
+        """<h2>{{title}}</h2>
+<p><em>Add a cover photo and float it left at ~40% width.</em></p>
+<p>Opening paragraph that hooks the reader.</p>
+<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column">
+<h3>The story</h3>
+<p>Narrative with live metrics like {{metric_open_jobs}} open roles.</p>
+</div>
+<div class="studio-column">
+<blockquote><p>“Pull quote.”</p><p>— {{person_name}}</p></blockquote>
+</div>
+</div>
+<p><a href="{{cta_url}}"><strong>Take the next step →</strong></a></p>""",
+    ),
+    (
+        "layout-stats-story",
+        "Blog drafts",
+        "Sample — Stats story (KPI strip)",
+        "KPI strip → narrative → ask",
+        """<h2>By the numbers</h2>
+<div class="studio-kpi-row">
+<div class="studio-kpi"><strong>{{metric_open_jobs}}</strong><span>Jobs</span></div>
+<div class="studio-kpi"><strong>{{metric_individuals}}</strong><span>Candidates</span></div>
+<div class="studio-kpi"><strong>{{metric_employers}}</strong><span>Employers</span></div>
+</div>
+<p>Interpret the numbers — then use Insert chart for a funnel or engagement snapshot.</p>
+<blockquote><p><strong>Ask:</strong> the single decision this update needs.</p></blockquote>""",
+    ),
+    (
+        "layout-pathway-landing",
+        "Landing pages",
+        "Sample — Pathway landing (3 columns)",
+        "3 benefits → steps → FAQ",
+        """<h2>{{pathway_name}} pathway</h2>
+<div class="studio-columns studio-columns-3" data-cols="3">
+<div class="studio-column"><h3>Clarity</h3><p>Know which certifications get you hired.</p></div>
+<div class="studio-column"><h3>Support</h3><p>Training partners and ambassadors.</p></div>
+<div class="studio-column"><h3>Jobs</h3><p>{{metric_open_jobs}} openings in the catalog.</p></div>
+</div>
+<ol>
+<li>Create or update your profile</li>
+<li>Explore training</li>
+<li>Apply to matched roles</li>
+</ol>""",
+    ),
+    (
+        "layout-hiring-social",
+        "Social posts",
+        "Sample — Hiring pack (social + facts)",
+        "Social copy | role facts",
+        """<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column">
+<p>New York utilities are hiring — {{metric_open_jobs}} roles in the catalog.</p>
+<p>{{url}}</p>
+<p>#WaterJobs #NYSAWWA</p>
+</div>
+<div class="studio-column">
+<p><strong>Title:</strong> {{role_title}}<br/><strong>Utility:</strong> {{utility_name}}</p>
+</div>
+</div>""",
+    ),
+    (
+        "layout-newsletter-pro",
+        "Email and outreach",
+        "Sample — Newsletter (calendar table)",
+        "Lead → calendar → spotlight",
+        """<h2>This month</h2>
+<p>Lead story. Interest submissions: {{metric_interest}}.</p>
+<h2>Training calendar</h2>
+<table>
+<thead><tr><th>Date</th><th>Course</th><th>Region</th></tr></thead>
+<tbody><tr><td></td><td></td><td></td></tr></tbody>
+</table>
+<div class="studio-columns studio-columns-2" data-cols="2">
+<div class="studio-column"><p>Partner spotlight narrative.</p></div>
+<div class="studio-column"><blockquote><p>Partner quote.</p></blockquote></div>
+</div>""",
     ),
 ]
