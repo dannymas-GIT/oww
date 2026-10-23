@@ -246,6 +246,9 @@ def otp_verify(body: OtpVerify, request: Request, db: Session = Depends(get_db))
 
 @router.post("/login")
 def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    from app.core.login_rate_limit import enforce_login_rate_limit
+
+    enforce_login_rate_limit(request)
     ident = (body.username or "").strip()
     try:
         result = auth_service.login_with_password(db, body.username, body.password)

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.api.api import api_router
 from app.core.config import settings
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.db.database import SessionLocal, init_db
 
 logging.basicConfig(level=logging.INFO)
@@ -83,6 +84,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
+app.add_middleware(SecurityHeadersMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/health")
