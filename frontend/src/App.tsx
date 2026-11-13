@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppShell } from '@/components/oww/AppShell';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { PublicAnalyticsTracker } from '@/lib/components/analytics/PublicAnalyticsTracker';
 import { DEFAULT_STATE } from '@/lib/constants';
 import {
   HIRING_ROLES,
@@ -85,6 +86,8 @@ function CmsEditorToStudioRedirect() {
 
 export default function App() {
   return (
+    <>
+    <PublicAnalyticsTracker />
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to={`/${DEFAULT_STATE}`} replace />} />
@@ -453,5 +456,6 @@ export default function App() {
         <Route path="*" element={<Navigate to={`/${DEFAULT_STATE}`} replace />} />
       </Route>
     </Routes>
+    </>
   );
 }

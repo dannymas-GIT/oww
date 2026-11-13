@@ -8,8 +8,12 @@ from starlette.responses import Response
 
 _HSTS = "max-age=31536000; includeSubDomains; preload"
 _CSP = (
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-    "img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; "
+    "default-src 'self'; "
+    "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: https:; font-src 'self' data:; "
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com "
+    "https://www.googletagmanager.com; "
     "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
 )
 _PERMISSIONS = (
